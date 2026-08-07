@@ -84,7 +84,7 @@ class HomeScreen extends StatelessWidget {
       crossAxisSpacing: 16,
       children: [
         _buildMenuButton(context, 'Surah Index', Icons.list, AppRoutes.surahList),
-        _buildMenuButton(context, 'Juz Index', Icons.grid_view, AppRoutes.surahList),
+        _buildMenuButton(context, 'Juz Index', Icons.grid_view, AppRoutes.juzList),
         _buildMenuButton(context, 'Bookmarks', Icons.bookmark_border, AppRoutes.surahList),
         _buildMenuButton(context, 'Settings', Icons.settings_outlined, AppRoutes.settings),
       ],

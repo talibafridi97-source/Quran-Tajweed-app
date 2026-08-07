@@ -29,133 +29,162 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     ]);
   }
 
-  void _copyAyah(String text) {
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Ayah copied to clipboard')),
-    );
-  }
-
-  void _shareAyah(String text, String translation) {
-    Share.share('$text\n\n$translation\n\n(Surah ${widget.surah.englishName})');
-  }
-
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
+      backgroundColor: const Color(0xFFFFF5E1),
       appBar: AppBar(
-        title: Column(
-          children: [
-            Text(widget.surah.englishName),
-            Text(
-              widget.surah.name,
-              style: const TextStyle(fontSize: 14, fontFamily: AppConstants.uthmaniFont),
-            ),
-          ],
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
         ),
+        title: const Text(
+          'Al-Quran',
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
       ),
       body: FutureBuilder<List<dynamic>>(
         future: _dataFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: AppConstants.primaryGreen));
           }
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
-          
+
           final tajweedVerses = snapshot.data![0] as List<Map<String, String>>;
           final translations = snapshot.data![1] as List<Map<String, String>>;
 
-          return ListView.builder(
-            itemCount: tajweedVerses.length,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            itemBuilder: (context, index) {
-              final verse = tajweedVerses[index];
-              final translation = translations[index]['text'] ?? '';
-              final ayahNumber = index + 1;
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child: Card(
-                  elevation: 0,
-                  color: Theme.of(context).cardColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: Colors.grey.withAlpha(50)),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Header with actions
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            CircleAvatar(
-                              radius: 16,
-                              backgroundColor: AppConstants.primaryGreen.withAlpha(30),
-                              child: Text(
-                                '$ayahNumber',
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.copy, size: 20),
-                                  onPressed: () => _copyAyah(verse['text']!),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.share, size: 20),
-                                  onPressed: () => _shareAyah(verse['text']!, translation),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.bookmark_border, size: 20),
-                                  onPressed: () {},
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.play_circle_outline, size: 20),
-                                  onPressed: () {},
-                                ),
-                              ],
-                            ),
-                          ],
+          return Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Column(
+                    children: [
+                      // Surah Name Header Simulation
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.brown.shade300, width: 1),
                         ),
-                        const SizedBox(height: 16),
-                        // Arabic Tajweed Text
-                        TajweedText(
-                          rawText: verse['text']!,
-                          fontSize: settings.arabicFontSize,
-                          fontFamily: AppConstants.uthmaniFont,
-                          ayahNumber: ayahNumber,
+                        child: Text(
+                          widget.surah.name,
+                          style: const TextStyle(
+                            fontFamily: AppConstants.uthmaniFont,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        if (settings.showTranslation) ...[
-                          const SizedBox(height: 16),
-                          // Translation text
-                          Text(
-                            translation,
-                            textDirection: TextDirection.rtl,
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Bismillah
+                      if (widget.surah.number != 1 && widget.surah.number != 9)
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 20),
+                          child: Text(
+                            'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: settings.translationFontSize,
-                              fontFamily: AppConstants.urduFont,
-                              color: Colors.grey[700],
-                              height: 1.6,
+                              fontFamily: AppConstants.uthmaniFont,
+                              fontSize: 24,
                             ),
                           ),
-                        ],
-                      ],
-                    ),
+                        ),
+
+                      // Ayahs in a centered paragraph-like style
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        children: List.generate(tajweedVerses.length, (index) {
+                          final verse = tajweedVerses[index];
+                          final ayahNumber = index + 1;
+                          
+                          return Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: TajweedText(
+                              rawText: '${verse['text']!} ',
+                              fontSize: settings.arabicFontSize,
+                              fontFamily: AppConstants.uthmaniFont,
+                              textAlign: TextAlign.center,
+                            ),
+                          );
+                        }),
+                      ),
+                      
+                      const SizedBox(height: 40),
+                      
+                      // Translation Section (if enabled)
+                      if (settings.showTranslation)
+                        Column(
+                          children: List.generate(translations.length, (index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: Text(
+                                translations[index]['text'] ?? '',
+                                textAlign: TextAlign.center,
+                                textDirection: TextDirection.rtl,
+                                style: TextStyle(
+                                  fontSize: settings.translationFontSize,
+                                  fontFamily: AppConstants.urduFont,
+                                  color: Colors.brown.shade800,
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                    ],
                   ),
                 ),
-              );
-            },
+              ),
+              
+              // Bottom Navigation Bar
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildBottomItem(Icons.bookmark_border, 'Bookmark'),
+                    _buildBottomItem(Icons.remove_red_eye_outlined, 'Eye Shield'),
+                    _buildBottomItem(Icons.color_lens_outlined, 'Theme'),
+                    _buildBottomItem(Icons.settings_outlined, 'Settings'),
+                  ],
+                ),
+              ),
+            ],
           );
         },
       ),
+    );
+  }
+
+  Widget _buildBottomItem(IconData icon, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 24, color: Colors.brown.shade700),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(fontSize: 10, color: Colors.brown.shade700),
+        ),
+      ],
     );
   }
 }

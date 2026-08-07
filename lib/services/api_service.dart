@@ -4,51 +4,60 @@ import '../models/surah.dart';
 
 class ApiService {
   final http.Client _client = http.Client();
-  static const String _baseUrl = 'https://api.quran.com/api/v4';
+  static const String _baseUrl = 'https://api.alquran.cloud/v1';
 
   Future<List<Surah>> getAllSurahs() async {
-    final response = await _client.get(Uri.parse('$_baseUrl/chapters'));
+    final response = await _client.get(Uri.parse('$_baseUrl/surah'));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return (data['chapters'] as List).map((s) {
-        return Surah(
-          number: s['id'],
-          name: s['name_arabic'],
-          englishName: s['name_simple'],
-          englishNameTranslation: s['translated_name']['name'],
-          numberOfAyahs: s['verses_count'],
-          revelationType: s['revelation_place'],
-        );
-      }).toList();
-    } else {
-      throw Exception('Failed to load Surahs');
+      return (data['data'] as List).map((s) => Surah.fromJson(s)).toList();
     }
+    throw Exception('Failed to load Surahs');
   }
 
-  Future<List<Map<String, String>>> getSurahTajweed(int chapterNumber) async {
-    final response = await _client.get(
-      Uri.parse('$_baseUrl/quran/verses/uthmani_tajweed?chapter_number=$chapterNumber')
-    );
+  Future<List<Map<String, String>>> getSurahTajweed(int surahNumber) async {
+    final response = await _client.get(Uri.parse('$_baseUrl/surah/$surahNumber/quran-tajweed'));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return (data['verses'] as List).map<Map<String, String>>((v) => {
-        'verse_key': v['verse_key'].toString(),
-        'text': v['text_uthmani_tajweed'].toString(),
+      return (data['data']['ayahs'] as List).map<Map<String, String>>((a) => {
+        'text': a['text'].toString(),
+        'verse_key': '$surahNumber:${a['numberInSurah']}',
       }).toList();
     }
-    throw Exception('Failed to load Tajweed text');
+    throw Exception('Failed to load Tajweed');
   }
 
-  Future<List<Map<String, String>>> getSurahTranslation(int chapterNumber, {int translationId = 97}) async {
-    final response = await _client.get(
-      Uri.parse('$_baseUrl/quran/translations/$translationId?chapter_number=$chapterNumber')
-    );
+  Future<List<Map<String, String>>> getSurahTranslation(int surahNumber) async {
+    final response = await _client.get(Uri.parse('$_baseUrl/surah/$surahNumber/ur.jalandhry'));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return (data['translations'] as List).map<Map<String, String>>((t) => {
-        'text': t['text'].toString(),
+      return (data['data']['ayahs'] as List).map<Map<String, String>>((a) => {
+        'text': a['text'].toString(),
       }).toList();
     }
     throw Exception('Failed to load Translation');
+  }
+
+  Future<List<Map<String, String>>> getJuzTajweed(int juzNumber) async {
+    final response = await _client.get(Uri.parse('$_baseUrl/juz/$juzNumber/quran-tajweed'));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return (data['data']['ayahs'] as List).map<Map<String, String>>((a) => {
+        'text': a['text'].toString(),
+        'verse_key': '${a['surah']['number']}:${a['numberInSurah']}',
+      }).toList();
+    }
+    throw Exception('Failed to load Juz Tajweed');
+  }
+
+  Future<List<Map<String, String>>> getJuzTranslation(int juzNumber) async {
+    final response = await _client.get(Uri.parse('$_baseUrl/juz/$juzNumber/ur.jalandhry'));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return (data['data']['ayahs'] as List).map<Map<String, String>>((a) => {
+        'text': a['text'].toString(),
+      }).toList();
+    }
+    throw Exception('Failed to load Juz Translation');
   }
 }

@@ -17,6 +17,12 @@ class QuranRepository {
   Future<List<Map<String, String>>> getSurahTranslation(int chapterNumber) => 
       _apiService.getSurahTranslation(chapterNumber);
 
+  Future<List<Map<String, String>>> getJuzTajweed(int juzNumber) => 
+      _apiService.getJuzTajweed(juzNumber);
+
+  Future<List<Map<String, String>>> getJuzTranslation(int juzNumber) => 
+      _apiService.getJuzTranslation(juzNumber);
+
   Future<void> saveResumePoint(ResumeData data) => _localStorageService.saveResumeData(data);
 
   ResumeData? getResumePoint() => _localStorageService.getResumeData();

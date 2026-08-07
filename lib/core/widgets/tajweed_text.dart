@@ -21,27 +21,30 @@ class TajweedText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // PRE-CLEANING: Remove some weird broken prefixes often seen in some APIs
+    String cleanRawText = rawText.replaceAll('/>', '').replaceAll('tajweed>', '');
+
     List<InlineSpan> spans = [];
 
     // Add Ayah Number at the beginning if provided
     if (ayahNumber != null) {
       spans.add(TextSpan(
-        text: '($ayahNumber) ',
+        text: ' ($ayahNumber) ',
         style: TextStyle(
-          color: Theme.of(context).primaryColor,
-          fontSize: fontSize * 0.7,
+          color: const Color(0xFF8B4513), // Brownish for Ayah numbers
+          fontSize: fontSize * 0.8,
           fontWeight: FontWeight.bold,
           fontFamily: fontFamily,
         ),
       ));
     }
 
-    // Parse Tajweed text
+    // Parse Tajweed text using the updated XML/HTML parser
     spans.addAll(TajweedParser.parse(
-      rawText,
+      cleanRawText,
       fontSize: fontSize,
       fontFamily: fontFamily,
-      defaultColor: defaultColor ?? Theme.of(context).textTheme.bodyLarge?.color,
+      defaultColor: defaultColor ?? Colors.black87,
     ));
 
     return RichText(
