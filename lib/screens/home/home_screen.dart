@@ -10,7 +10,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final quranProvider = context.watch<QuranProvider>();
-    final colorScheme = Theme.of(context).colorScheme;
     
     return Scaffold(
       body: CustomScrollView(
@@ -34,7 +33,7 @@ class HomeScreen extends StatelessWidget {
                     Positioned(
                       right: -20,
                       bottom: -20,
-                      child: Icon(Icons.mosque, size: 200, color: Colors.white10),
+                      child: Icon(Icons.castle, size: 200, color: Colors.white10),
                     ),
                   ],
                 ),
