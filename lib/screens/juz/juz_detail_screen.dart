@@ -31,25 +31,15 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
     final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF5E1), // Mushaf Beige Background
+      backgroundColor: const Color(0xFFFCF9F2), // Slightly warmer modern mushaf background
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Al-Quran',
-          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
+        title: Text('Juz ${widget.juzNumber}'),
       ),
       body: FutureBuilder<List<dynamic>>(
         future: _dataFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppConstants.primaryGreen));
+            return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
@@ -61,69 +51,36 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
           return Column(
             children: [
               Expanded(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.brown.shade400, width: 2),
-                    color: const Color(0xFFFFF5E1),
-                  ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        // Page Header
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('سُوْرَةُ الْبَقَرَةِ', style: TextStyle(fontSize: 12, color: Colors.brown.shade700, fontFamily: AppConstants.uthmaniFont)),
-                            Text('${widget.juzNumber}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                            Text('الْجُزْءُ ${widget.juzNumber}', style: TextStyle(fontSize: 12, color: Colors.brown.shade700, fontFamily: AppConstants.uthmaniFont)),
-                          ],
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Column(
+                    children: [
+                      _buildHeaderFrame(),
+                      const SizedBox(height: 24),
+                      Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 4,
+                          runSpacing: 8,
+                          children: List.generate(tajweedVerses.length, (index) {
+                            final verse = tajweedVerses[index];
+                            return TajweedText(
+                              rawText: '${verse['text']!} ',
+                              fontSize: settings.arabicFontSize,
+                              fontFamily: AppConstants.uthmaniFont,
+                              ayahNumber: index + 1,
+                            );
+                          }),
                         ),
-                        const Divider(color: Colors.brown, thickness: 1),
-                        const SizedBox(height: 10),
-
-                        // Paragraph Layout (Mushaf Style)
-                        Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: Wrap(
-                            alignment: WrapAlignment.center,
-                            children: List.generate(tajweedVerses.length, (index) {
-                              final verse = tajweedVerses[index];
-                              return TajweedText(
-                                rawText: '${verse['text']!} ',
-                                fontSize: settings.arabicFontSize,
-                                fontFamily: AppConstants.uthmaniFont,
-                                ayahNumber: index + 1,
-                              );
-                            }),
-                          ),
-                        ),
-                        
-                        const SizedBox(height: 20),
-                        const Divider(color: Colors.brown, thickness: 1),
-                        const Text('منزل ۱', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                        
-                        if (settings.showTranslation) ...[
-                          const SizedBox(height: 30),
-                          const Text('--- Translation ---', style: TextStyle(color: Colors.brown)),
-                          const SizedBox(height: 10),
-                          ...translations.map((t) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Text(
-                              t['text'] ?? '',
-                              textAlign: TextAlign.center,
-                              textDirection: TextDirection.rtl,
-                              style: TextStyle(fontSize: settings.translationFontSize, fontFamily: AppConstants.urduFont, color: Colors.brown.shade900),
-                            ),
-                          )),
-                        ],
-                      ],
-                    ),
+                      ),
+                      if (settings.showTranslation) _buildModernTranslations(translations, settings),
+                      const SizedBox(height: 40),
+                    ],
                   ),
                 ),
               ),
-              _buildBottomBar(),
+              _buildModernBottomBar(context),
             ],
           );
         },
@@ -131,31 +88,93 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
     );
   }
 
-  Widget _buildBottomBar() {
+  Widget _buildHeaderFrame() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, -2))],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppConstants.gold.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
+        ],
+      ),
+      child: const Text(
+        'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+        style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 22),
+      ),
+    );
+  }
+
+  Widget _buildModernTranslations(List<Map<String, String>> translations, SettingsProvider settings) {
+    return Column(
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 30),
+          child: Row(
+            children: [
+              Expanded(child: Divider()),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text('Translation', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+              Expanded(child: Divider()),
+            ],
+          ),
+        ),
+        ...translations.map((t) => Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            t['text'] ?? '',
+            textAlign: TextAlign.center,
+            textDirection: TextDirection.rtl,
+            style: TextStyle(
+              fontSize: settings.translationFontSize,
+              fontFamily: AppConstants.urduFont,
+              color: Colors.black87,
+              height: 1.5,
+            ),
+          ),
+        )),
+      ],
+    );
+  }
+
+  Widget _buildModernBottomBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(top: 12, bottom: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _barItem(Icons.bookmark_border, 'Bookmark'),
-          _barItem(Icons.remove_red_eye_outlined, 'Eye Shield'),
-          _barItem(Icons.color_lens_outlined, 'Theme'),
-          _barItem(Icons.settings_outlined, 'Settings'),
+          _modernBarItem(Icons.bookmark_add_outlined, 'Save'),
+          _modernBarItem(Icons.visibility_outlined, 'View'),
+          _modernBarItem(Icons.palette_outlined, 'Theme'),
+          _modernBarItem(Icons.settings_outlined, 'Settings'),
         ],
       ),
     );
   }
 
-  Widget _barItem(IconData icon, String label) {
+  Widget _modernBarItem(IconData icon, String label) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 22, color: Colors.brown.shade700),
-        Text(label, style: const TextStyle(fontSize: 9)),
+        Icon(icon, size: 24, color: AppConstants.primaryGreen),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
       ],
     );
   }

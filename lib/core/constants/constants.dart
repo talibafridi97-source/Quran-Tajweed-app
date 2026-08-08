@@ -5,10 +5,10 @@ class AppConstants {
   static const String baseUrl = 'https://api.alquran.cloud/v1';
 
   // Colors
-  static const Color primaryGreen = Color(0xFF006400);
-  static const Color accentGreen = Color(0xFF008000);
-  static const Color lightGreen = Color(0xFF90EE90);
-  static const Color darkGreen = Color(0xFF004d00);
+  static const Color primaryGreen = Color(0xFF0D4D4D);
+  static const Color accentGreen = Color(0xFF00BFA5);
+  static const Color backgroundLight = Color(0xFFF5F7F8);
+  static const Color gold = Color(0xFFD4AF37);
   
   // Storage Keys
   static const String lastReadSurahKey = 'last_read_surah';
