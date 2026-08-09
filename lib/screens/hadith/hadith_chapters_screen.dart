@@ -1,44 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/constants.dart';
-import '../../providers/quran_provider.dart';
+import '../../models/hadith_model.dart';
+import '../../providers/hadith_provider.dart';
 import '../../core/widgets/loading_error_widget.dart';
-import 'surah_detail_screen.dart';
+import 'hadith_list_screen.dart';
 
-class SurahListScreen extends StatefulWidget {
-  const SurahListScreen({super.key});
+class HadithChaptersScreen extends StatefulWidget {
+  final HadithBook book;
+  const HadithChaptersScreen({super.key, required this.book});
 
   @override
-  State<SurahListScreen> createState() => _SurahListScreenState();
+  State<HadithChaptersScreen> createState() => _HadithChaptersScreenState();
 }
 
-class _SurahListScreenState extends State<SurahListScreen> {
+class _HadithChaptersScreenState extends State<HadithChaptersScreen> {
   String _searchQuery = '';
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<QuranProvider>();
-      if (provider.surahs.isEmpty) {
-        provider.fetchSurahs();
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final quranProvider = context.watch<QuranProvider>();
-    final filteredSurahs = quranProvider.surahs.where((s) {
-      final q = _searchQuery.toLowerCase();
-      return s.englishName.toLowerCase().contains(q) ||
-          s.name.contains(q) ||
-          s.number.toString() == q;
+    final hadithProvider = context.watch<HadithProvider>();
+    final chapters = hadithProvider.chapters.where((c) {
+      return c.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          c.id.contains(_searchQuery);
     }).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Surah Index'),
+        title: Text(widget.book.name),
       ),
       body: Column(
         children: [
@@ -47,7 +36,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search Surah name or number...',
+                hintText: 'Search chapters...',
                 prefixIcon: const Icon(Icons.search, color: AppConstants.primaryGreen),
                 filled: true,
                 fillColor: Colors.white,
@@ -64,48 +53,52 @@ class _SurahListScreenState extends State<SurahListScreen> {
               },
             ),
           ),
-          
+
           Expanded(
             child: LoadingErrorWidget(
-              isLoading: quranProvider.isLoading,
-              errorMessage: quranProvider.errorMessage,
-              onRetry: () => quranProvider.fetchSurahs(),
+              isLoading: hadithProvider.isLoading,
+              errorMessage: hadithProvider.errorMessage,
+              onRetry: () => hadithProvider.selectBook(widget.book),
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                itemCount: filteredSurahs.length,
+                itemCount: chapters.length,
                 itemBuilder: (context, index) {
-                  final surah = filteredSurahs[index];
+                  final chapter = chapters[index];
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Card(
                       child: InkWell(
                         onTap: () {
+                          hadithProvider.selectChapter(widget.book, chapter);
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => SurahDetailScreen(surah: surah),
+                              builder: (context) => HadithListScreen(
+                                book: widget.book,
+                                chapter: chapter,
+                              ),
                             ),
                           );
                         },
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Row(
                             children: [
                               Container(
-                                width: 44,
-                                height: 44,
+                                width: 38,
+                                height: 38,
                                 decoration: BoxDecoration(
-                                  color: AppConstants.accentGreen.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: AppConstants.primaryGreen.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Center(
                                   child: Text(
-                                    '${surah.number}',
+                                    chapter.id,
                                     style: const TextStyle(
-                                      color: AppConstants.accentGreen,
+                                      color: AppConstants.primaryGreen,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ),
@@ -116,31 +109,28 @@ class _SurahListScreenState extends State<SurahListScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      surah.englishName,
+                                      chapter.title,
                                       style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${surah.englishNameTranslation} • ${surah.numberOfAyahs} Ayahs',
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 12,
+                                    if (chapter.hadithFirst > 0) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Hadith ${chapter.hadithFirst} - ${chapter.hadithLast}',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ],
                                 ),
                               ),
-                              Text(
-                                surah.name,
-                                style: const TextStyle(
-                                  fontFamily: AppConstants.uthmaniFont,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppConstants.primaryGreen,
-                                ),
+                              const Icon(
+                                Icons.chevron_right_rounded,
+                                color: Colors.grey,
                               ),
                             ],
                           ),

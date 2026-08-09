@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/surah.dart';
+import '../../models/ayah.dart';
+import '../../models/resume_data.dart';
 import '../../providers/quran_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../core/constants/constants.dart';
 import '../../core/widgets/tajweed_text.dart';
+import '../../core/widgets/loading_error_widget.dart';
 
 class SurahDetailScreen extends StatefulWidget {
   final Surah surah;
@@ -15,79 +18,102 @@ class SurahDetailScreen extends StatefulWidget {
 }
 
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
-  late Future<List<dynamic>> _dataFuture;
+  late Future<List<Ayah>> _ayahsFuture;
 
   @override
   void initState() {
     super.initState();
+    _loadSurahData();
+  }
+
+  void _loadSurahData() {
     final repository = context.read<QuranProvider>().repository;
-    _dataFuture = Future.wait([
-      repository.getSurahTajweed(widget.surah.number),
-      repository.getSurahTranslation(widget.surah.number),
-    ]);
+    _ayahsFuture = repository.getSurahTajweed(widget.surah.number);
   }
 
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final quranProvider = context.read<QuranProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCF9F2),
+      backgroundColor: const Color(0xFFFAF8F5), // Clean Mushaf paper background
       appBar: AppBar(
         title: Text(widget.surah.englishName),
         actions: [
           IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: () {},
+            icon: const Icon(Icons.bookmark_outline),
+            onPressed: () {
+              quranProvider.saveResume(ResumeData(
+                surahName: widget.surah.name,
+                surahNumber: widget.surah.number,
+                ayahNumber: 1,
+                page: 1,
+                juz: 1,
+                lastRead: DateTime.now(),
+              ));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Saved ${widget.surah.englishName} as last read point')),
+              );
+            },
           )
         ],
       ),
-      body: FutureBuilder<List<dynamic>>(
-        future: _dataFuture,
+      body: FutureBuilder<List<Ayah>>(
+        future: _ayahsFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+          final isLoading = snapshot.connectionState == ConnectionState.waiting;
+          final hasError = snapshot.hasError;
+          final ayahs = snapshot.data ?? [];
 
-          final tajweedVerses = snapshot.data![0] as List<Map<String, String>>;
-          final translations = snapshot.data![1] as List<Map<String, String>>;
-
-          return Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  child: Column(
-                    children: [
-                      _buildSurahHeader(),
-                      const SizedBox(height: 30),
-                      Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 4,
-                          runSpacing: 12,
-                          children: List.generate(tajweedVerses.length, (index) {
-                            return TajweedText(
-                              rawText: '${tajweedVerses[index]['text']!} ',
-                              fontSize: settings.arabicFontSize,
-                              fontFamily: AppConstants.uthmaniFont,
-                              ayahNumber: index + 1,
-                            );
-                          }),
-                        ),
-                      ),
-                      if (settings.showTranslation) _buildTranslationsList(translations, settings),
-                      const SizedBox(height: 40),
+          return LoadingErrorWidget(
+            isLoading: isLoading,
+            errorMessage: hasError ? snapshot.error.toString() : null,
+            onRetry: () {
+              setState(() {
+                _loadSurahData();
+              });
+            },
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              children: [
+                _buildSurahHeader(),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.black.withOpacity(0.06)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
                     ],
                   ),
+                  child: Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 4,
+                      runSpacing: 12,
+                      children: List.generate(ayahs.length, (index) {
+                        final ayah = ayahs[index];
+                        return TajweedText(
+                          rawText: '${ayah.text} ',
+                          fontSize: settings.arabicFontSize,
+                          fontFamily: AppConstants.uthmaniFont,
+                          ayahNumber: ayah.numberInSurah,
+                        );
+                      }),
+                    ),
+                  ),
                 ),
-              ),
-              _buildModernBottomBar(),
-            ],
+                const SizedBox(height: 30),
+              ],
+            ),
           );
         },
       ),
@@ -105,89 +131,44 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppConstants.primaryGreen.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Text(
             widget.surah.name,
-            style: const TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 36, color: Colors.white),
+            style: const TextStyle(
+              fontFamily: AppConstants.uthmaniFont,
+              fontSize: 36,
+              color: Colors.white,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
-            '${widget.surah.englishNameTranslation} • ${widget.surah.numberOfAyahs} Ayahs',
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
+            '${widget.surah.englishNameTranslation} • ${widget.surah.numberOfAyahs} Ayahs • ${widget.surah.revelationType}',
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
-          const SizedBox(height: 16),
-          const Divider(color: Colors.white24),
-          const SizedBox(height: 16),
-          const Text(
-            'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-            style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 24, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTranslationsList(List<Map<String, String>> translations, SettingsProvider settings) {
-    return Column(
-      children: [
-        const SizedBox(height: 40),
-        ...translations.map((t) => Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)],
-          ),
-          child: Text(
-            t['text'] ?? '',
-            textAlign: TextAlign.center,
-            textDirection: TextDirection.rtl,
-            style: TextStyle(
-              fontSize: settings.translationFontSize,
-              fontFamily: AppConstants.urduFont,
-              color: Colors.black87,
-              height: 1.6,
+          if (widget.surah.number != 1 && widget.surah.number != 9) ...[
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white24),
+            const SizedBox(height: 16),
+            const Text(
+              'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+              style: TextStyle(
+                fontFamily: AppConstants.uthmaniFont,
+                fontSize: 26,
+                color: Colors.white,
+              ),
             ),
-          ),
-        )),
-      ],
-    );
-  }
-
-  Widget _buildModernBottomBar() {
-    return Container(
-      padding: const EdgeInsets.only(top: 12, bottom: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))
+          ],
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _barItem(Icons.bookmark_add_outlined, 'Save'),
-          _barItem(Icons.play_circle_outline, 'Audio'),
-          _barItem(Icons.share_outlined, 'Share'),
-          _barItem(Icons.settings_outlined, 'Settings'),
-        ],
-      ),
-    );
-  }
-
-  Widget _barItem(IconData icon, String label) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 24, color: AppConstants.primaryGreen),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
-      ],
     );
   }
 }

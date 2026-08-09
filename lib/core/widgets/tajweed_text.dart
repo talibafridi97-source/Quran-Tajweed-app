@@ -19,38 +19,48 @@ class TajweedText extends StatelessWidget {
     this.ayahNumber,
   });
 
+  // Utility to convert digits to Arabic numerals: 1 -> ١
+  String _toArabicDigits(int number) {
+    const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    return number.toString().split('').map((digit) {
+      final idx = int.tryParse(digit);
+      return idx != null ? arabicDigits[idx] : digit;
+    }).join();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // PRE-CLEANING: Remove some weird broken prefixes often seen in some APIs
-    String cleanRawText = rawText.replaceAll('/>', '').replaceAll('tajweed>', '');
-
     List<InlineSpan> spans = [];
 
-    // Add Ayah Number at the beginning if provided
+    // Parse Tajweed text using the enhanced parser
+    spans.addAll(TajweedParser.parse(
+      rawText,
+      fontSize: fontSize,
+      fontFamily: fontFamily,
+      defaultColor: defaultColor ?? Colors.black87,
+    ));
+
+    // Add Ayah Number badge at the end of text
     if (ayahNumber != null) {
+      final arabicNum = _toArabicDigits(ayahNumber!);
       spans.add(TextSpan(
-        text: ' ($ayahNumber) ',
+        text: ' ﴿$arabicNum﴾ ',
         style: TextStyle(
-          color: const Color(0xFF8B4513), // Brownish for Ayah numbers
-          fontSize: fontSize * 0.8,
+          color: const Color(0xFFD4AF37), // Gold for Ayah numbers
+          fontSize: fontSize * 0.75,
           fontWeight: FontWeight.bold,
           fontFamily: fontFamily,
         ),
       ));
     }
 
-    // Parse Tajweed text using the updated XML/HTML parser
-    spans.addAll(TajweedParser.parse(
-      cleanRawText,
-      fontSize: fontSize,
-      fontFamily: fontFamily,
-      defaultColor: defaultColor ?? Colors.black87,
-    ));
-
-    return RichText(
-      textAlign: textAlign,
+    return Directionality(
       textDirection: TextDirection.rtl,
-      text: TextSpan(children: spans),
+      child: RichText(
+        textAlign: textAlign,
+        textDirection: TextDirection.rtl,
+        text: TextSpan(children: spans),
+      ),
     );
   }
 }

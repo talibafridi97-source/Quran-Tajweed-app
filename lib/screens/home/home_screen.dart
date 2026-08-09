@@ -10,7 +10,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final quranProvider = context.watch<QuranProvider>();
-    
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -19,7 +19,7 @@ class HomeScreen extends StatelessWidget {
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text('Tajweed Quran', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: const Text('Tajweed Quran & Hadith', style: TextStyle(fontWeight: FontWeight.bold)),
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -53,14 +53,14 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildModernResumeCard(context, quranProvider),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 28),
                   const Text(
-                    'Explore Quran',
+                    'Explore Quran & Sunnah',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   _buildModernGrid(context),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 28),
                   _buildDailyVerse(context),
                 ],
               ),
@@ -85,14 +85,14 @@ class HomeScreen extends StatelessWidget {
             offset: const Offset(0, 10),
           ),
         ],
-        gradient: LinearGradient(
-          colors: [AppConstants.primaryGreen, AppConstants.primaryGreen.withOpacity(0.8)],
+        gradient: const LinearGradient(
+          colors: [AppConstants.primaryGreen, Color(0xFF006D6D)],
         ),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => Navigator.pushNamed(context, AppRoutes.surahList),
+          onTap: () => Navigator.pushNamed(context, AppRoutes.quranPage),
           borderRadius: BorderRadius.circular(28),
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -107,19 +107,20 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         Text('Continue Reading', style: TextStyle(color: Colors.white70, fontSize: 14)),
                         SizedBox(height: 4),
-                        Text('Last Read', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text('Last Read Point', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                       ],
                     ),
                     Icon(Icons.play_circle_fill, size: 48, color: Colors.white.withOpacity(0.9)),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 Text(
                   resume?.surahName ?? 'Surah Al-Fatiha',
                   style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                 ),
+                const SizedBox(height: 4),
                 Text(
-                  resume != null ? 'Ayah: ${resume.ayahNumber} • Juz: ${resume.juz}' : 'Ayah: 1 • Page: 1',
+                  resume != null ? 'Ayah: ${resume.ayahNumber} • Juz: ${resume.juz}' : 'Page 1 • Juz 1',
                   style: const TextStyle(color: Colors.white60, fontSize: 14),
                 ),
               ],
@@ -139,10 +140,10 @@ class HomeScreen extends StatelessWidget {
       crossAxisSpacing: 16,
       childAspectRatio: 1.3,
       children: [
-        _buildModernMenuButton(context, 'Surah Index', Icons.menu_book, AppRoutes.surahList, const Color(0xFFE8F5E9), Colors.green),
-        _buildModernMenuButton(context, 'Juz Index', Icons.auto_awesome_motion, AppRoutes.juzList, const Color(0xFFE3F2FD), Colors.blue),
-        _buildModernMenuButton(context, 'Bookmarks', Icons.collections_bookmark, AppRoutes.surahList, const Color(0xFFFFF3E0), Colors.orange),
-        _buildModernMenuButton(context, 'Settings', Icons.tune, AppRoutes.settings, const Color(0xFFF3E5F5), Colors.purple),
+        _buildModernMenuButton(context, '114 Surahs', Icons.menu_book, AppRoutes.surahList, const Color(0xFFE8F5E9), Colors.green),
+        _buildModernMenuButton(context, '30 Paras / Juz', Icons.auto_awesome_motion, AppRoutes.juzList, const Color(0xFFE3F2FD), Colors.blue),
+        _buildModernMenuButton(context, 'Quran Pages', Icons.auto_stories_rounded, AppRoutes.quranPage, const Color(0xFFFFF8E1), Colors.amber.shade800),
+        _buildModernMenuButton(context, 'Hadith Books', Icons.library_books_rounded, AppRoutes.hadithBooks, const Color(0xFFF3E5F5), Colors.purple),
       ],
     );
   }
@@ -199,11 +200,11 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Daily Verse', style: TextStyle(color: Colors.grey, fontSize: 14)),
+          const Text('Ayah of the Day', style: TextStyle(color: Colors.grey, fontSize: 14)),
           const SizedBox(height: 12),
           const Text(
-            '\"Indeed, with hardship [will be] ease.\"',
-            style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
+            '\"إِنَّ مَعَ الْعُسْرِ يُسْرًا\"',
+            style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(

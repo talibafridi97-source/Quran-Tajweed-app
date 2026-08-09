@@ -3,10 +3,13 @@ import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_routes.dart';
 import 'providers/quran_provider.dart';
+import 'providers/hadith_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/bookmark_provider.dart';
 import 'repository/quran_repository.dart';
+import 'repository/hadith_repository.dart';
 import 'services/api_service.dart';
+import 'services/hadith_api_service.dart';
 import 'services/local_storage_service.dart';
 
 void main() async {
@@ -15,14 +18,18 @@ void main() async {
   final storageService = LocalStorageService();
   await storageService.init();
   
-  final apiService = ApiService();
-  final repository = QuranRepository(apiService, storageService);
+  final apiService = ApiService(storageService: storageService);
+  final quranRepository = QuranRepository(apiService, storageService);
+
+  final hadithApiService = HadithApiService(storageService: storageService);
+  final hadithRepository = HadithRepository(hadithApiService);
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => QuranProvider(repository)),
+        ChangeNotifierProvider(create: (_) => QuranProvider(quranRepository)),
+        ChangeNotifierProvider(create: (_) => HadithProvider(hadithRepository)),
         ChangeNotifierProvider(create: (_) => BookmarkProvider(storageService)),
       ],
       child: const TajweedQuranApp(),
@@ -38,7 +45,7 @@ class TajweedQuranApp extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
     
     return MaterialApp(
-      title: 'Tajweed Quran',
+      title: 'Tajweed Quran & Hadith',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

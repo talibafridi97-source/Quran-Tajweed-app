@@ -13,6 +13,9 @@ class QuranProvider with ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  String? _errorMessage;
+  String? get errorMessage => _errorMessage;
+
   ResumeData? _resumeData;
   ResumeData? get resumeData => _resumeData;
 
@@ -22,16 +25,17 @@ class QuranProvider with ChangeNotifier {
 
   Future<void> _loadInitialData() async {
     _resumeData = _repository.getResumePoint();
-    notifyListeners();
+    fetchSurahs();
   }
 
   Future<void> fetchSurahs() async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
     try {
       _surahs = await _repository.getAllSurahs();
     } catch (e) {
-      // Handle error
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -41,6 +45,16 @@ class QuranProvider with ChangeNotifier {
   Future<void> saveResume(ResumeData data) async {
     _resumeData = data;
     await _repository.saveResumePoint(data);
+    notifyListeners();
+  }
+
+  bool getPageReadStatus(int pageNumber) {
+    return _repository.getPageReadStatus(pageNumber);
+  }
+
+  Future<void> togglePageReadStatus(int pageNumber) async {
+    final current = getPageReadStatus(pageNumber);
+    await _repository.setPageReadStatus(pageNumber, !current);
     notifyListeners();
   }
 }

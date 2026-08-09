@@ -1,33 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/constants.dart';
-import '../../models/juz_model.dart';
-import 'juz_detail_screen.dart';
+import '../../providers/hadith_provider.dart';
+import 'hadith_chapters_screen.dart';
 
-class JuzListScreen extends StatelessWidget {
-  const JuzListScreen({super.key});
+class HadithBooksScreen extends StatelessWidget {
+  const HadithBooksScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final juzList = JuzModel.allJuz;
+    final hadithProvider = context.watch<HadithProvider>();
+    final books = hadithProvider.books;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('30 Paras / Juz Index'),
+        title: const Text('Hadith Collections'),
       ),
       body: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        itemCount: juzList.length,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        itemCount: books.length,
         itemBuilder: (context, index) {
-          final juz = juzList[index];
+          final book = books[index];
           return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: 14),
             child: Card(
               child: InkWell(
                 onTap: () {
+                  hadithProvider.selectBook(book);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => JuzDetailScreen(juzNumber: juz.number),
+                      builder: (context) => HadithChaptersScreen(book: book),
                     ),
                   );
                 },
@@ -37,38 +40,32 @@ class JuzListScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       Container(
-                        width: 44,
-                        height: 44,
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppConstants.accentGreen.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          color: AppConstants.primaryGreen.withOpacity(0.1),
+                          shape: BoxShape.circle,
                         ),
-                        child: Center(
-                          child: Text(
-                            '${juz.number}',
-                            style: const TextStyle(
-                              color: AppConstants.accentGreen,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
+                        child: const Icon(
+                          Icons.menu_book_rounded,
+                          color: AppConstants.primaryGreen,
+                          size: 28,
                         ),
                       ),
-                      const SizedBox(width: 20),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Para ${juz.number} - ${juz.nameEnglish}',
+                              book.name,
                               style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 17,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 4),
                             Text(
-                              'Starts at Page ${juz.startPage}',
+                              '${book.author} • ${book.totalHadiths} Hadiths',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 13,
@@ -78,10 +75,10 @@ class JuzListScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        juz.nameArabic,
+                        book.nameArabic,
                         style: const TextStyle(
                           fontFamily: AppConstants.uthmaniFont,
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: AppConstants.primaryGreen,
                         ),
