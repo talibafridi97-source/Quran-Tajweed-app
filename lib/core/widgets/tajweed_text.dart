@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/constants.dart';
 import '../utils/tajweed_parser.dart';
 
 class TajweedText extends StatelessWidget {
@@ -12,7 +13,7 @@ class TajweedText extends StatelessWidget {
   const TajweedText({
     super.key,
     required this.rawText,
-    this.fontSize = 24,
+    this.fontSize = 26,
     this.fontFamily,
     this.textAlign = TextAlign.right,
     this.defaultColor,
@@ -32,11 +33,15 @@ class TajweedText extends StatelessWidget {
   Widget build(BuildContext context) {
     List<InlineSpan> spans = [];
 
+    final activeFontFamily = (fontFamily != null && fontFamily!.isNotEmpty)
+        ? fontFamily!
+        : AppConstants.uthmaniFont;
+
     // Parse Tajweed text using the enhanced parser
     spans.addAll(TajweedParser.parse(
       rawText,
       fontSize: fontSize,
-      fontFamily: fontFamily,
+      fontFamily: activeFontFamily,
       defaultColor: defaultColor ?? Colors.black87,
     ));
 
@@ -49,17 +54,26 @@ class TajweedText extends StatelessWidget {
           color: const Color(0xFFD4AF37), // Gold for Ayah numbers
           fontSize: fontSize * 0.75,
           fontWeight: FontWeight.bold,
-          fontFamily: fontFamily,
+          fontFamily: activeFontFamily,
         ),
       ));
     }
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: RichText(
+      child: Text.rich(
+        TextSpan(
+          style: TextStyle(
+            fontSize: fontSize,
+            height: 2.1,
+            wordSpacing: 1.2,
+            fontFamily: activeFontFamily,
+            color: defaultColor ?? Colors.black87,
+          ),
+          children: spans,
+        ),
         textAlign: textAlign,
         textDirection: TextDirection.rtl,
-        text: TextSpan(children: spans),
       ),
     );
   }

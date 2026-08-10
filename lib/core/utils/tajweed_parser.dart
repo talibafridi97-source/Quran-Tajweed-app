@@ -1,33 +1,35 @@
 import 'package:flutter/material.dart';
+import '../constants/constants.dart';
 
 class TajweedParser {
   static const Map<String, Color> _tajweedColors = {
-    // Silent & Wasl
+    // Silent & Wasl (Muted Gray)
     'h': Color(0xFF9E9E9E), // Hamzatul Wasl
     's': Color(0xFF9E9E9E), // Silent letter
     'l': Color(0xFF9E9E9E), // Lam Shamsiyyah
     'r': Color(0xFF757575), // Idgham without Ghunnah
 
-    // Ghunnah & Idgham
+    // Ghunnah & Idgham (Emerald Green)
     'g': Color(0xFF169777), // Ghunnah
     'n': Color(0xFF169777), // Idgham with Ghunnah
     'u': Color(0xFF169777), // Idgham Shafawi
+    'a': Color(0xFF169777), // Idgham / Alif
     'v': Color(0xFF00695C), // Iqlab
     'd': Color(0xFF00695C), // Iqlab
 
-    // Ikhfa
+    // Ikhfa (Sky Blue / Cyan)
     'i': Color(0xFF00838F), // Ikhfa
     'p': Color(0xFF0097A7), // Ikhfa Shafawi
     'c': Color(0xFF00838F), // Ikhfa
     'f': Color(0xFF0097A7), // Ikhfa Shafawi
 
-    // Qalqalah
+    // Qalqalah (Crimson Red)
     'q': Color(0xFFD32F2F), // Qalqalah
 
-    // Madds
-    'o': Color(0xFFEF6C00), // Madd 4-5
-    'm': Color(0xFFC62828), // Madd 6
-    'w': Color(0xFFAD1457), // Madd 2
+    // Madds (Vibrant Orange / Deep Red / Magenta)
+    'o': Color(0xFFEF6C00), // Madd 4-5 Harakat
+    'm': Color(0xFFC62828), // Madd 6 Harakat
+    'w': Color(0xFFAD1457), // Madd 2 Harakat
   };
 
   static List<InlineSpan> parse(
@@ -38,71 +40,81 @@ class TajweedParser {
   }) {
     List<InlineSpan> spans = [];
 
-    // Pre-cleaning HTML or residual tags if any
-    String cleanText = text
+    // Step 1: Pre-clean any HTML/XML artifacts if present
+    String str = text
         .replaceAll('/>', '')
         .replaceAll('tajweed>', '')
         .replaceAll('<tajweed>', '');
 
-    // Pattern for bracketed Tajweed format: [rule:id]text OR [rule]text
-    // e.g. [h:1]ٱ, [l]ل, [g]نّ, [q]ق
-    final RegExp bracketRegex = RegExp(r'\[([a-z])(?::\d+)?\]([^\[]*)');
+    // Step 2: Pattern matching bracketed Tajweed tags:
+    // Matches [rule:id[content] OR [rule[content] AND consumes any closing bracket ] if present
+    final RegExp tagRegex = RegExp(r'\[([a-zA-Z]+)(?::\d+)?\[([^\]\[]*)\]?');
 
-    int currentIndex = 0;
-    final matches = bracketRegex.allMatches(cleanText);
+    int index = 0;
+    final matches = tagRegex.allMatches(str);
+
+    final selectedFont = (fontFamily != null && fontFamily.isNotEmpty)
+        ? fontFamily
+        : AppConstants.uthmaniFont;
+
+    TextStyle getStyle(Color col, {bool isBold = false}) {
+      return TextStyle(
+        color: col,
+        fontSize: fontSize ?? 26,
+        fontFamily: selectedFont,
+        fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+        height: 2.1,
+        wordSpacing: 1.2,
+      );
+    }
 
     for (final match in matches) {
-      // Add plain text before match
-      if (match.start > currentIndex) {
-        String plainText = cleanText.substring(currentIndex, match.start);
-        if (plainText.isNotEmpty) {
+      // Plain text before tag
+      if (match.start > index) {
+        String plain = str.substring(index, match.start);
+        plain = _cleanRawMarkup(plain);
+        if (plain.isNotEmpty) {
           spans.add(TextSpan(
-            text: plainText,
-            style: TextStyle(
-              color: defaultColor ?? Colors.black87,
-              fontSize: fontSize,
-              fontFamily: fontFamily,
-              height: 1.8,
-            ),
+            text: plain,
+            style: getStyle(defaultColor ?? Colors.black87),
           ));
         }
       }
 
-      String ruleCode = match.group(1) ?? '';
-      String matchedText = match.group(2) ?? '';
+      String rule = match.group(1)?.toLowerCase() ?? '';
+      String content = _cleanRawMarkup(match.group(2) ?? '');
 
-      Color textColor = _tajweedColors[ruleCode] ?? (defaultColor ?? Colors.black87);
+      if (content.isNotEmpty) {
+        Color color = _tajweedColors[rule] ?? (defaultColor ?? Colors.black87);
+        spans.add(TextSpan(
+          text: content,
+          style: getStyle(color, isBold: true),
+        ));
+      }
 
-      spans.add(TextSpan(
-        text: matchedText,
-        style: TextStyle(
-          color: textColor,
-          fontSize: fontSize,
-          fontFamily: fontFamily,
-          fontWeight: FontWeight.bold,
-          height: 1.8,
-        ),
-      ));
-
-      currentIndex = match.end;
+      index = match.end;
     }
 
-    // Add remaining plain text
-    if (currentIndex < cleanText.length) {
-      String remainingText = cleanText.substring(currentIndex);
-      if (remainingText.isNotEmpty) {
+    // Remaining text after last match
+    if (index < str.length) {
+      String remaining = str.substring(index);
+      remaining = _cleanRawMarkup(remaining);
+      if (remaining.isNotEmpty) {
         spans.add(TextSpan(
-          text: remainingText,
-          style: TextStyle(
-            color: defaultColor ?? Colors.black87,
-            fontSize: fontSize,
-            fontFamily: fontFamily,
-            height: 1.8,
-          ),
+          text: remaining,
+          style: getStyle(defaultColor ?? Colors.black87),
         ));
       }
     }
 
     return spans;
+  }
+
+  // Helper method to strip out any raw bracket control tags or stray brackets
+  static String _cleanRawMarkup(String s) {
+    return s
+        .replaceAll(RegExp(r'\[[a-zA-Z0-9:]+\]?'), '') // Strips any raw [h:1], [h:2], etc.
+        .replaceAll('[', '')
+        .replaceAll(']', '');
   }
 }

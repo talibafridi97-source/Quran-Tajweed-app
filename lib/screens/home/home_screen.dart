@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/constants/constants.dart';
 import '../../providers/quran_provider.dart';
+import '../../models/prayer_times_model.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -10,6 +11,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final quranProvider = context.watch<QuranProvider>();
+    final prayerTimes = PrayerTimesModel.calculate();
 
     return Scaffold(
       body: CustomScrollView(
@@ -53,9 +55,11 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildModernResumeCard(context, quranProvider),
+                  const SizedBox(height: 16),
+                  _buildPrayerTimesBanner(context, prayerTimes),
                   const SizedBox(height: 28),
                   const Text(
-                    'Explore Quran & Sunnah',
+                    'Explore Quran & Islamic Utility',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -65,6 +69,51 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrayerTimesBanner(BuildContext context, PrayerTimesModel prayerTimes) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppConstants.gold.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.access_time_filled, color: AppConstants.primaryGreen, size: 28),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Next: ${prayerTimes.nextPrayer}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  Text(prayerTimes.hijriDateString, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                ],
+              ),
+            ],
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.prayerTimes),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppConstants.primaryGreen,
+              foregroundColor: Colors.white,
+              shape: const StadiumBorder(),
+            ),
+            child: Text(prayerTimes.nextPrayerTime),
           ),
         ],
       ),
@@ -136,14 +185,21 @@ class HomeScreen extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      mainAxisSpacing: 16,
-      crossAxisSpacing: 16,
-      childAspectRatio: 1.3,
+      mainAxisSpacing: 14,
+      crossAxisSpacing: 14,
+      childAspectRatio: 1.35,
       children: [
         _buildModernMenuButton(context, '114 Surahs', Icons.menu_book, AppRoutes.surahList, const Color(0xFFE8F5E9), Colors.green),
         _buildModernMenuButton(context, '30 Paras / Juz', Icons.auto_awesome_motion, AppRoutes.juzList, const Color(0xFFE3F2FD), Colors.blue),
         _buildModernMenuButton(context, 'Quran Pages', Icons.auto_stories_rounded, AppRoutes.quranPage, const Color(0xFFFFF8E1), Colors.amber.shade800),
         _buildModernMenuButton(context, 'Hadith Books', Icons.library_books_rounded, AppRoutes.hadithBooks, const Color(0xFFF3E5F5), Colors.purple),
+        _buildModernMenuButton(context, 'Masnoon Duain', Icons.volunteer_activism_rounded, AppRoutes.duas, const Color(0xFFFFF3E0), Colors.orange),
+        _buildModernMenuButton(context, '6 Kalmas', Icons.format_quote_rounded, AppRoutes.kalmas, const Color(0xFFE0F2F1), Colors.teal),
+        _buildModernMenuButton(context, '99 Names of Allah', Icons.star_rounded, AppRoutes.allahNames, const Color(0xFFFCE4EC), Colors.pink),
+        _buildModernMenuButton(context, 'Qibla Finder', Icons.explore_rounded, AppRoutes.qibla, const Color(0xFFE8EAF6), Colors.indigo),
+        _buildModernMenuButton(context, 'Prayer Times', Icons.access_alarm_rounded, AppRoutes.prayerTimes, const Color(0xFFE0F7FA), Colors.cyan.shade800),
+        _buildModernMenuButton(context, 'Digital Tasbeeh', Icons.touch_app_rounded, AppRoutes.tasbeeh, const Color(0xFFF1F8E9), Colors.lightGreen.shade800),
+        _buildModernMenuButton(context, 'Islamic Calendar', Icons.calendar_month_rounded, AppRoutes.calendar, const Color(0xFFFFFDE7), Colors.amber.shade900),
       ],
     );
   }
@@ -152,11 +208,11 @@ class HomeScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
@@ -165,22 +221,22 @@ class HomeScreen extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () => Navigator.pushNamed(context, route),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(12.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: bgColor,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, size: 28, color: iconColor),
+                  child: Icon(icon, size: 24, color: iconColor),
                 ),
-                const SizedBox(height: 12),
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                const SizedBox(height: 8),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13), textAlign: TextAlign.center),
               ],
             ),
           ),
@@ -204,7 +260,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 12),
           const Text(
             '\"إِنَّ مَعَ الْعُسْرِ يُسْرًا\"',
-            style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 22, fontWeight: FontWeight.bold),
+            style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(

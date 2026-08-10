@@ -51,17 +51,20 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # assets:
-  #   - assets/images/
-  #   - assets/fonts/
+  assets:
+    - assets/fonts/
+    - assets/images/
 
   fonts:
+    - family: Uthmani
+      fonts:
+        - asset: assets/fonts/QuranFont.ttf
+    - family: QuranAmiri
+      fonts:
+        - asset: assets/fonts/QuranAmiri.ttf
     - family: Urdu
       fonts:
         - asset: assets/fonts/NotoNastaliqUrdu-Regular.ttf
-  #   - family: JameelNoori
-  #     fonts:
-  #       - asset: assets/fonts/Jameel_Noori_Nastaleeq.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:
