@@ -39,11 +39,9 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Digital Tasbeeh Counter', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppConstants.primaryGreen,
-        foregroundColor: Colors.white,
+        title: const Text('Digital Tasbeeh Counter'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -59,7 +57,7 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppConstants.primaryGreen.withOpacity(0.2)),
               ),
@@ -125,9 +123,9 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
             ),
 
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Tap the circle to count',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
 
             const Spacer(),

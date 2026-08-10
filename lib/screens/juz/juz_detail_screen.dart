@@ -6,6 +6,7 @@ import '../../models/resume_data.dart';
 import '../../providers/quran_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../core/constants/constants.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/widgets/tajweed_text.dart';
 import '../../core/widgets/loading_error_widget.dart';
 
@@ -57,7 +58,7 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('Para ${widget.juzNumber} - ${juzMeta.nameEnglish}'),
         actions: [
@@ -142,12 +143,12 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
                     margin: const EdgeInsets.only(bottom: 20),
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.black.withOpacity(0.06)),
+                      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
+                          color: Colors.black.withOpacity(0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         )
@@ -237,11 +238,7 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppConstants.primaryGreen, Color(0xFF006D6D)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppTheme.brandGradient,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

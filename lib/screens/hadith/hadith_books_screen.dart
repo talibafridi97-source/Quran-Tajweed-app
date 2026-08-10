@@ -66,10 +66,7 @@ class HadithBooksScreen extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               '${book.author} • ${book.totalHadiths} Hadiths',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 13,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],
                         ),

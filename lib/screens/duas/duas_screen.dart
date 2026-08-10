@@ -37,11 +37,9 @@ class _DuasScreenState extends State<DuasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Masnoon Duain', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppConstants.primaryGreen,
-        foregroundColor: Colors.white,
+        title: const Text('Masnoon Duain'),
       ),
       body: Column(
         children: [
@@ -63,13 +61,13 @@ class _DuasScreenState extends State<DuasScreen> {
                     selected: isSelected,
                     selectedColor: AppConstants.primaryGreen,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Colors.black87,
+                      color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
-                    backgroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
                     shape: StadiumBorder(
                       side: BorderSide(
-                        color: isSelected ? AppConstants.primaryGreen : Colors.black12,
+                        color: isSelected ? AppConstants.primaryGreen : Theme.of(context).colorScheme.outlineVariant,
                       ),
                     ),
                     onSelected: (val) {
@@ -94,7 +92,7 @@ class _DuasScreenState extends State<DuasScreen> {
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -133,12 +131,12 @@ class _DuasScreenState extends State<DuasScreen> {
                         textDirection: TextDirection.rtl,
                         child: Text(
                           dua.arabicText,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: AppConstants.uthmaniFont,
                             fontSize: 24,
                             height: 1.9,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                           textAlign: TextAlign.right,
                         ),
@@ -146,9 +144,9 @@ class _DuasScreenState extends State<DuasScreen> {
                       const SizedBox(height: 12),
                       Text(
                         dua.urduTranslation,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.85),
                           height: 1.5,
                         ),
                         textDirection: TextDirection.rtl,
@@ -156,9 +154,9 @@ class _DuasScreenState extends State<DuasScreen> {
                       const SizedBox(height: 8),
                       Text(
                         dua.englishTranslation,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Colors.black54,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
                           fontStyle: FontStyle.italic,
                         ),
                       ),

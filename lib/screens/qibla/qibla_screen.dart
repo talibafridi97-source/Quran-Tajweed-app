@@ -51,11 +51,9 @@ class _QiblaScreenState extends State<QiblaScreen> {
     final distance = _distanceToMakkah;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Qibla Finder (قبلہ رخ)', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppConstants.primaryGreen,
-        foregroundColor: Colors.white,
+        title: const Text('Qibla Finder (قبلہ رخ)'),
       ),
       body: Center(
         child: Padding(
@@ -67,7 +65,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -90,7 +88,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
                     const SizedBox(height: 6),
                     Text(
                       'Distance to Kaaba: ${distance.toStringAsFixed(0)} km',
-                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
                 ),
@@ -107,7 +105,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
                     height: 260,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       border: Border.all(color: AppConstants.primaryGreen.withOpacity(0.3), width: 8),
                       boxShadow: [
                         BoxShadow(
@@ -145,9 +143,9 @@ class _QiblaScreenState extends State<QiblaScreen> {
 
               const SizedBox(height: 40),
 
-              const Text(
+              Text(
                 'Point the top of your device in the direction of the Kaaba icon.',
-                style: TextStyle(color: Colors.grey, fontSize: 13),
+                style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
             ],

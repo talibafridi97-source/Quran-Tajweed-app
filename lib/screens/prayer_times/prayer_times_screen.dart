@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/constants.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/prayer_times_model.dart';
 
 class PrayerTimesScreen extends StatelessWidget {
@@ -10,11 +11,9 @@ class PrayerTimesScreen extends StatelessWidget {
     final prayerTimes = PrayerTimesModel.calculate();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Prayer Times & Ramadan', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppConstants.primaryGreen,
-        foregroundColor: Colors.white,
+        title: const Text('Prayer Times & Ramadan'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -23,11 +22,7 @@ class PrayerTimesScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppConstants.primaryGreen, Color(0xFF006D6D)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: AppTheme.brandGradient,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
@@ -78,12 +73,12 @@ class PrayerTimesScreen extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Prayer Rows
-          _buildPrayerTile('Fajr (فجر)', prayerTimes.fajr, prayerTimes.currentPrayer == 'Fajr'),
-          _buildPrayerTile('Sunrise (اشراق)', prayerTimes.sunrise, prayerTimes.currentPrayer == 'Sunrise'),
-          _buildPrayerTile('Dhuhr (ظهر)', prayerTimes.dhuhr, prayerTimes.currentPrayer == 'Dhuhr'),
-          _buildPrayerTile('Asr (عصر)', prayerTimes.asr, prayerTimes.currentPrayer == 'Asr'),
-          _buildPrayerTile('Maghrib / Iftar (مغرب)', prayerTimes.maghrib, prayerTimes.currentPrayer == 'Maghrib'),
-          _buildPrayerTile('Isha (عشاء)', prayerTimes.isha, prayerTimes.currentPrayer == 'Isha'),
+          _buildPrayerTile(context, 'Fajr (فجر)', prayerTimes.fajr, prayerTimes.currentPrayer == 'Fajr'),
+          _buildPrayerTile(context, 'Sunrise (اشراق)', prayerTimes.sunrise, prayerTimes.currentPrayer == 'Sunrise'),
+          _buildPrayerTile(context, 'Dhuhr (ظهر)', prayerTimes.dhuhr, prayerTimes.currentPrayer == 'Dhuhr'),
+          _buildPrayerTile(context, 'Asr (عصر)', prayerTimes.asr, prayerTimes.currentPrayer == 'Asr'),
+          _buildPrayerTile(context, 'Maghrib / Iftar (مغرب)', prayerTimes.maghrib, prayerTimes.currentPrayer == 'Maghrib'),
+          _buildPrayerTile(context, 'Isha (عشاء)', prayerTimes.isha, prayerTimes.currentPrayer == 'Isha'),
 
           const SizedBox(height: 24),
 
@@ -91,7 +86,7 @@ class PrayerTimesScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppConstants.gold.withOpacity(0.3)),
               boxShadow: [
@@ -109,19 +104,19 @@ class PrayerTimesScreen extends StatelessWidget {
                   children: [
                     const Icon(Icons.wb_twilight, color: AppConstants.gold, size: 28),
                     const SizedBox(height: 4),
-                    const Text('Sehri End (Fajr)', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text('Sehri End (Fajr)', style: Theme.of(context).textTheme.bodySmall),
                     const SizedBox(height: 2),
-                    Text(prayerTimes.fajr, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(prayerTimes.fajr, style: Theme.of(context).textTheme.titleMedium),
                   ],
                 ),
-                Container(height: 40, width: 1, color: Colors.black12),
+                Container(height: 40, width: 1, color: Theme.of(context).colorScheme.outlineVariant),
                 Column(
                   children: [
                     const Icon(Icons.nights_stay, color: AppConstants.primaryGreen, size: 28),
                     const SizedBox(height: 4),
-                    const Text('Iftar (Maghrib)', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text('Iftar (Maghrib)', style: Theme.of(context).textTheme.bodySmall),
                     const SizedBox(height: 2),
-                    Text(prayerTimes.maghrib, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(prayerTimes.maghrib, style: Theme.of(context).textTheme.titleMedium),
                   ],
                 ),
               ],
@@ -132,15 +127,16 @@ class PrayerTimesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPrayerTile(String name, String time, bool isCurrent) {
+  Widget _buildPrayerTile(BuildContext context, String name, String time, bool isCurrent) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: isCurrent ? AppConstants.primaryGreen.withOpacity(0.08) : Colors.white,
+        color: isCurrent ? scheme.primary.withOpacity(0.08) : scheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isCurrent ? AppConstants.primaryGreen : Colors.black.withOpacity(0.05),
+          color: isCurrent ? scheme.primary : scheme.outlineVariant,
           width: isCurrent ? 2 : 1,
         ),
       ),
@@ -151,7 +147,7 @@ class PrayerTimesScreen extends StatelessWidget {
             children: [
               Icon(
                 isCurrent ? Icons.access_time_filled : Icons.access_time,
-                color: isCurrent ? AppConstants.primaryGreen : Colors.grey,
+                color: isCurrent ? scheme.primary : scheme.onSurface.withOpacity(0.45),
                 size: 20,
               ),
               const SizedBox(width: 12),
@@ -160,7 +156,7 @@ class PrayerTimesScreen extends StatelessWidget {
                 style: TextStyle(
                   fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
                   fontSize: 15,
-                  color: isCurrent ? AppConstants.primaryGreen : Colors.black87,
+                  color: isCurrent ? scheme.primary : scheme.onSurface,
                 ),
               ),
             ],
@@ -170,7 +166,7 @@ class PrayerTimesScreen extends StatelessWidget {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: isCurrent ? AppConstants.primaryGreen : Colors.black87,
+              color: isCurrent ? scheme.primary : scheme.onSurface,
             ),
           ),
         ],

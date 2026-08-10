@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/constants.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class MushafPageFrame extends StatelessWidget {
   final int pageNumber;
@@ -17,7 +18,7 @@ class MushafPageFrame extends StatelessWidget {
   const MushafPageFrame({
     super.key,
     required this.pageNumber,
-    this.title = 'قرآن ریڈر',
+    this.title = 'Quran Reader',
     required this.surahNameArabic,
     this.revelationType,
     this.totalAyahs,
@@ -29,7 +30,6 @@ class MushafPageFrame extends StatelessWidget {
     required this.child,
   });
 
-  // Convert number to Arabic digits
   String _toArabicDigits(int number) {
     const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     return number.toString().split('').map((digit) {
@@ -43,70 +43,62 @@ class MushafPageFrame extends StatelessWidget {
     final pageStr = _toArabicDigits(pageNumber);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F3D3E), // Dark Teal Header Background matching screenshot
+      backgroundColor: const Color(0xFFF7F2E9),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F3D3E),
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: const BackButton(color: Colors.white),
+        leading: const BackButton(color: AppConstants.primaryGreen),
         title: Column(
           children: [
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+              style: GoogleFonts.plusJakartaSans(
+                color: AppConstants.primaryGreen,
+                fontWeight: FontWeight.w800,
                 fontSize: 18,
               ),
             ),
-            const SizedBox(height: 2),
             Text(
-              'صفحہ $pageNumber از 604',
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
+              'Page $pageNumber of 604',
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.grey[500],
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.bookmark_outline, color: Colors.white),
+            icon: const Icon(Icons.bookmark_border_rounded, color: AppConstants.primaryGreen),
             onPressed: onBookmarkPressed,
           ),
         ],
       ),
       body: Column(
         children: [
-          // Mushaf Page Canvas with Border & Header matching screenshots
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFAF8F5), // Traditional Mushaf paper background
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: const Color(0xFF0288D1), // Cyan/Blue border frame as in screenshots
-                    width: 3.5,
-                  ),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
-                    // Top Ornate Surah Header Banner (Matching attached screenshots!)
-                    _buildTopSurahBanner(context, pageStr),
-                    
-                    // Main Quran Ayahs Content
+                    _buildModernTopBanner(context, pageStr),
                     Padding(
-                      padding: const EdgeInsets.all(14.0),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                       child: child,
                     ),
                   ],
@@ -114,49 +106,53 @@ class MushafPageFrame extends StatelessWidget {
               ),
             ),
           ),
+          _buildCompletionBar(context),
+        ],
+      ),
+    );
+  }
 
-          // Bottom Read Completion Action Bar ("میں نے یہ پڑھ لیا")
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 10,
-                  offset: const Offset(0, -3),
-                ),
-              ],
+  Widget _buildModernTopBanner(BuildContext context, String pageStr) {
+    return Container(
+      margin: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: AppConstants.primaryGreen.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            juzNameArabic ?? '',
+            style: const TextStyle(
+              fontFamily: AppConstants.uthmaniFont,
+              fontSize: 16,
+              color: AppConstants.primaryGreen,
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Checkbox(
-                  value: isRead,
-                  activeColor: AppConstants.primaryGreen,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  onChanged: onReadChanged,
-                ),
-                GestureDetector(
-                  onTap: () {
-                    if (onReadChanged != null) {
-                      onReadChanged!(!isRead);
-                    }
-                  },
-                  child: const Text(
-                    'میں نے یہ پڑھ لیا',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      fontFamily: AppConstants.urduFont,
-                    ),
-                  ),
-                ),
-              ],
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppConstants.primaryGreen,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              surahNameArabic,
+              style: const TextStyle(
+                fontFamily: AppConstants.uthmaniFont,
+                fontSize: 22,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          Text(
+            pageStr,
+            style: const TextStyle(
+              fontFamily: AppConstants.uthmaniFont,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppConstants.primaryGreen,
             ),
           ),
         ],
@@ -164,85 +160,47 @@ class MushafPageFrame extends StatelessWidget {
     );
   }
 
-  Widget _buildTopSurahBanner(BuildContext context, String pageStr) {
+  Widget _buildCompletionBar(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(6),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFDF7),
-        border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))
+        ],
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Surah Name Title Banner
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                juzNameArabic ?? '',
-                style: const TextStyle(
-                  fontFamily: AppConstants.uthmaniFont,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppConstants.primaryGreen,
-                ),
+          GestureDetector(
+            onTap: () => onReadChanged?.call(!isRead),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              decoration: BoxDecoration(
+                color: isRead ? AppConstants.primaryGreen : AppConstants.primaryGreen.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black38),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  surahNameArabic,
-                  style: const TextStyle(
-                    fontFamily: AppConstants.uthmaniFont,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+              child: Row(
+                children: [
+                  Icon(
+                    isRead ? Icons.check_circle : Icons.circle_outlined,
+                    color: isRead ? Colors.white : AppConstants.primaryGreen,
+                    size: 20,
                   ),
-                ),
-              ),
-              Text(
-                pageStr,
-                style: const TextStyle(
-                  fontFamily: AppConstants.uthmaniFont,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppConstants.primaryGreen,
-                ),
-              ),
-            ],
-          ),
-          
-          if (revelationType != null || totalAyahs != null) ...[
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                if (totalRukus != null)
+                  const SizedBox(width: 12),
                   Text(
-                    'ركوعاتها $totalRukus',
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-                if (revelationType != null)
-                  Text(
-                    revelationType == 'Meccan' ? 'مَكَّيَّةٌ' : 'مَدَنِيَّةٌ',
-                    style: const TextStyle(
-                      fontFamily: AppConstants.uthmaniFont,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
+                    'I have read this page',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: isRead ? Colors.white : AppConstants.primaryGreen,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
                     ),
                   ),
-                if (totalAyahs != null)
-                  Text(
-                    'آياتها $totalAyahs',
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ],
+          ),
         ],
       ),
     );

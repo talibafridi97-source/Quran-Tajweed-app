@@ -29,11 +29,9 @@ class _AllahNamesScreenState extends State<AllahNamesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('99 Names of Allah (أسماء الله الحسنى)', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppConstants.primaryGreen,
-        foregroundColor: Colors.white,
+        title: const Text('99 Names of Allah (أسماء الله الحسنى)'),
       ),
       body: Column(
         children: [
@@ -42,16 +40,9 @@ class _AllahNamesScreenState extends State<AllahNamesScreen> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               onChanged: (val) => setState(() => _searchQuery = val),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search by name, meaning, or number...',
-                prefixIcon: const Icon(Icons.search, color: AppConstants.primaryGreen),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
+                prefixIcon: Icon(Icons.search),
               ),
             ),
           ),
@@ -71,8 +62,9 @@ class _AllahNamesScreenState extends State<AllahNamesScreen> {
                 final name = _filteredNames[index];
                 return Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.03),
@@ -117,17 +109,17 @@ class _AllahNamesScreenState extends State<AllahNamesScreen> {
                             const SizedBox(height: 4),
                             Text(
                               name.transliteration,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 2),
                             Text(
                               name.urduMeaning,
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              style: Theme.of(context).textTheme.bodySmall,
                               textAlign: TextAlign.center,
                               textDirection: TextDirection.rtl,
                             ),

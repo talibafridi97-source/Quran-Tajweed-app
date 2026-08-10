@@ -10,11 +10,9 @@ class KalmasScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('6 Kalmas', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppConstants.primaryGreen,
-        foregroundColor: Colors.white,
+        title: const Text('6 Kalmas'),
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -25,7 +23,7 @@ class KalmasScreen extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 20),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: AppConstants.primaryGreen.withOpacity(0.1)),
               boxShadow: [
@@ -76,12 +74,12 @@ class KalmasScreen extends StatelessWidget {
                   textDirection: TextDirection.rtl,
                   child: Text(
                     kalma.arabicText,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppConstants.uthmaniFont,
                       fontSize: 26,
                       height: 2.0,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     textAlign: TextAlign.right,
                   ),
@@ -100,7 +98,11 @@ class KalmasScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   kalma.urduMeaning,
-                  style: const TextStyle(fontSize: 15, color: Colors.black87, height: 1.6),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.85),
+                    height: 1.6,
+                  ),
                   textDirection: TextDirection.rtl,
                 ),
 
@@ -114,7 +116,11 @@ class KalmasScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   kalma.englishMeaning,
-                  style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.5),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                    height: 1.5,
+                  ),
                 ),
 
                 const SizedBox(height: 16),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/constants.dart';
+import '../../core/theme/app_theme.dart';
 import '../../models/prayer_times_model.dart';
 
 class IslamicCalendarScreen extends StatelessWidget {
@@ -25,11 +26,9 @@ class IslamicCalendarScreen extends StatelessWidget {
     final prayerModel = PrayerTimesModel.calculate(date: now);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Islamic Calendar (التقويم الهجري)', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppConstants.primaryGreen,
-        foregroundColor: Colors.white,
+        title: const Text('Islamic Calendar (التقويم الهجري)'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -38,11 +37,7 @@ class IslamicCalendarScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppConstants.primaryGreen, Color(0xFF006D6D)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: AppTheme.brandGradient,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
@@ -85,9 +80,9 @@ class IslamicCalendarScreen extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.black.withOpacity(0.05)),
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
               ),
               child: Row(
                 children: [

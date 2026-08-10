@@ -35,16 +35,9 @@ class _HadithChaptersScreenState extends State<HadithChaptersScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10),
             child: TextField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search chapters...',
-                prefixIcon: const Icon(Icons.search, color: AppConstants.primaryGreen),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
+                prefixIcon: Icon(Icons.search),
               ),
               onChanged: (val) {
                 setState(() {
@@ -119,10 +112,7 @@ class _HadithChaptersScreenState extends State<HadithChaptersScreen> {
                                       const SizedBox(height: 2),
                                       Text(
                                         'Hadith ${chapter.hadithFirst} - ${chapter.hadithLast}',
-                                        style: TextStyle(
-                                          color: Colors.grey[600],
-                                          fontSize: 12,
-                                        ),
+                                        style: Theme.of(context).textTheme.bodySmall,
                                       ),
                                     ],
                                   ],

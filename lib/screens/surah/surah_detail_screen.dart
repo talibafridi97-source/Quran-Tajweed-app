@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/surah.dart';
 import '../../models/ayah.dart';
-import '../../models/resume_data.dart';
 import '../../providers/quran_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../core/constants/constants.dart';
 import '../../core/widgets/tajweed_text.dart';
 import '../../core/widgets/loading_error_widget.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SurahDetailScreen extends StatefulWidget {
   final Surah surah;
@@ -34,29 +34,16 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
-    final quranProvider = context.read<QuranProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5), // Clean Mushaf paper background
+      backgroundColor: const Color(0xFFFCF9F2),
       appBar: AppBar(
         title: Text(widget.surah.englishName),
         actions: [
           IconButton(
-            icon: const Icon(Icons.bookmark_outline),
-            onPressed: () {
-              quranProvider.saveResume(ResumeData(
-                surahName: widget.surah.name,
-                surahNumber: widget.surah.number,
-                ayahNumber: 1,
-                page: 1,
-                juz: 1,
-                lastRead: DateTime.now(),
-              ));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Saved ${widget.surah.englishName} as last read point')),
-              );
-            },
-          )
+            onPressed: () {},
+            icon: const Icon(Icons.bookmark_add_outlined),
+          ),
         ],
       ),
       body: FutureBuilder<List<Ayah>>(
@@ -69,49 +56,47 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           return LoadingErrorWidget(
             isLoading: isLoading,
             errorMessage: hasError ? snapshot.error.toString() : null,
-            onRetry: () {
-              setState(() {
-                _loadSurahData();
-              });
-            },
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            onRetry: () => setState(() => _loadSurahData()),
+            child: Column(
               children: [
-                _buildSurahHeader(),
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.black.withOpacity(0.06)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      )
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    children: [
+                      _buildSurahHeader(),
+                      const SizedBox(height: 32),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)
+                          ],
+                        ),
+                        child: Directionality(
+                          textDirection: TextDirection.rtl,
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 4,
+                            runSpacing: 14,
+                            children: List.generate(ayahs.length, (index) {
+                              final ayah = ayahs[index];
+                              return TajweedText(
+                                rawText: '${ayah.text} ',
+                                fontSize: settings.arabicFontSize,
+                                fontFamily: AppConstants.uthmaniFont,
+                                ayahNumber: ayah.numberInSurah,
+                              );
+                            }),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 100),
                     ],
                   ),
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Wrap(
-                      alignment: WrapAlignment.center,
-                      spacing: 4,
-                      runSpacing: 12,
-                      children: List.generate(ayahs.length, (index) {
-                        final ayah = ayahs[index];
-                        return TajweedText(
-                          rawText: '${ayah.text} ',
-                          fontSize: settings.arabicFontSize,
-                          fontFamily: AppConstants.uthmaniFont,
-                          ayahNumber: ayah.numberInSurah,
-                        );
-                      }),
-                    ),
-                  ),
                 ),
-                const SizedBox(height: 30),
+                _buildModernActionButtons(),
               ],
             ),
           );
@@ -123,19 +108,19 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   Widget _buildSurahHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppConstants.primaryGreen, Color(0xFF006D6D)],
+          colors: [AppConstants.primaryGreen, Color(0xFF007A72)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
             color: AppConstants.primaryGreen.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -143,32 +128,62 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         children: [
           Text(
             widget.surah.name,
-            style: const TextStyle(
-              fontFamily: AppConstants.uthmaniFont,
-              fontSize: 36,
-              color: Colors.white,
-            ),
+            style: const TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 38, color: Colors.white),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
-            '${widget.surah.englishNameTranslation} • ${widget.surah.numberOfAyahs} Ayahs • ${widget.surah.revelationType}',
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
+            '${widget.surah.englishNameTranslation} • ${widget.surah.numberOfAyahs} Ayahs',
+            style: GoogleFonts.plusJakartaSans(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600),
           ),
-          if (widget.surah.number != 1 && widget.surah.number != 9) ...[
-            const SizedBox(height: 16),
-            const Divider(color: Colors.white24),
-            const SizedBox(height: 16),
-            const Text(
-              'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-              style: TextStyle(
-                fontFamily: AppConstants.uthmaniFont,
-                fontSize: 26,
-                color: Colors.white,
-              ),
-            ),
-          ],
+          const SizedBox(height: 24),
+          const Divider(color: Colors.white24, height: 1),
+          const SizedBox(height: 24),
+          const Text(
+            'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+            style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 26, color: Colors.white),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildModernActionButtons() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _actionItem(Icons.play_circle_fill, 'Listen', AppConstants.softBlue),
+          _actionItem(Icons.translate_rounded, 'Urdu', AppConstants.softPurple),
+          _actionItem(Icons.share_rounded, 'Share', AppConstants.vibrantOrange),
+          _actionItem(Icons.settings_suggest_rounded, 'Config', AppConstants.primaryGreen),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionItem(IconData icon, String label, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(height: 6),
+        Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.grey[600])),
+      ],
     );
   }
 }
