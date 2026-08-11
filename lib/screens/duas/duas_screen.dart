@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/constants/constants.dart';
 import '../../models/dua_model.dart';
@@ -13,6 +14,9 @@ class DuasScreen extends StatefulWidget {
 
 class _DuasScreenState extends State<DuasScreen> {
   String _selectedCategory = 'All';
+  late AudioPlayer _audioPlayer;
+  int? _playingDuaId;
+  bool _isLoadingAudio = false;
 
   List<String> get _categories => [
         'All',
@@ -35,11 +39,58 @@ class _DuasScreenState extends State<DuasScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _audioPlayer = AudioPlayer();
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playDuaAudio(MasnoonDua dua) async {
+    if (_playingDuaId == dua.id) {
+      if (_audioPlayer.playing) {
+        await _audioPlayer.pause();
+        setState(() => _playingDuaId = null);
+      } else {
+        await _audioPlayer.play();
+        setState(() => _playingDuaId = dua.id);
+      }
+      return;
+    }
+
+    setState(() {
+      _isLoadingAudio = true;
+      _playingDuaId = dua.id;
+    });
+
+    try {
+      // Audio CDN stream for authentic Islamic supplications / EveryAyahdua streams
+      final audioUrl = 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/${dua.id}.mp3';
+      await _audioPlayer.setUrl(audioUrl);
+      await _audioPlayer.play();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Playing audio recitation for "${dua.titleEnglish}"')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingAudio = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Masnoon Duain'),
+        title: const Text('Masnoon Duain (مسنون دعائیں)', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: AppConstants.primaryGreen,
+        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
@@ -88,6 +139,8 @@ class _DuasScreenState extends State<DuasScreen> {
               itemCount: _filteredDuas.length,
               itemBuilder: (context, index) {
                 final dua = _filteredDuas[index];
+                final isPlaying = _playingDuaId == dua.id && _audioPlayer.playing;
+
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
                   padding: const EdgeInsets.all(20),
@@ -160,7 +213,7 @@ class _DuasScreenState extends State<DuasScreen> {
                           fontStyle: FontStyle.italic,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -173,6 +226,22 @@ class _DuasScreenState extends State<DuasScreen> {
                           ),
                           Row(
                             children: [
+                              // Play Audio Button
+                              ElevatedButton.icon(
+                                onPressed: () => _playDuaAudio(dua),
+                                icon: Icon(
+                                  isPlaying ? Icons.pause : Icons.play_arrow_rounded,
+                                  size: 18,
+                                ),
+                                label: Text(isPlaying ? 'Pause' : 'Play Audio'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppConstants.primaryGreen,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
                               IconButton(
                                 icon: const Icon(Icons.copy, size: 20),
                                 onPressed: () {

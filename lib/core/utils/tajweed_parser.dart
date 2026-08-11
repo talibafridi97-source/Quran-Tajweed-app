@@ -47,8 +47,8 @@ class TajweedParser {
         .replaceAll('<tajweed>', '');
 
     // Step 2: Pattern matching bracketed Tajweed tags:
-    // Matches [rule:id[content] OR [rule[content] AND consumes any closing bracket ] if present
-    final RegExp tagRegex = RegExp(r'\[([a-zA-Z]+)(?::\d+)?\[([^\]\[]*)\]?');
+    // Matches [rule:id[content] OR [rule:id]content OR [rule[content] OR [rule]content
+    final RegExp tagRegex = RegExp(r'\[([a-zA-Z]+)(?::\d+)?(?:\]|\[)?([^\]\[]*)\]?');
 
     int index = 0;
     final matches = tagRegex.allMatches(str);
@@ -63,8 +63,7 @@ class TajweedParser {
         fontSize: fontSize ?? 26,
         fontFamily: selectedFont,
         fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-        height: 2.1,
-        wordSpacing: 1.2,
+        height: 2.0,
       );
     }
 
@@ -113,7 +112,7 @@ class TajweedParser {
   // Helper method to strip out any raw bracket control tags or stray brackets
   static String _cleanRawMarkup(String s) {
     return s
-        .replaceAll(RegExp(r'\[[a-zA-Z0-9:]+\]?'), '') // Strips any raw [h:1], [h:2], etc.
+        .replaceAll(RegExp(r'\[[a-zA-Z0-9:]+\]?'), '') // Strips any raw [h:1], [h:2], [n], etc.
         .replaceAll('[', '')
         .replaceAll(']', '');
   }

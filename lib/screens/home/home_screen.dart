@@ -296,12 +296,12 @@ class HomeScreen extends StatelessWidget {
       crossAxisSpacing: 12,
       childAspectRatio: 0.9,
       children: [
-        _buildToolIcon(context, 'Prayer', Icons.access_time_filled, AppConstants.softTeal, AppRoutes.settings),
-        _buildToolIcon(context, 'Qibla', Icons.explore, AppConstants.softIndigo, AppRoutes.settings),
-        _buildToolIcon(context, 'Tasbeeh', Icons.vibration, AppConstants.vibrantOrange, AppRoutes.settings),
+        _buildToolIcon(context, 'Prayer', Icons.access_time_filled, AppConstants.softTeal, AppRoutes.prayerTimes),
+        _buildToolIcon(context, 'Qibla', Icons.explore, AppConstants.softIndigo, AppRoutes.qibla),
+        _buildToolIcon(context, 'Tasbeeh', Icons.vibration, AppConstants.vibrantOrange, AppRoutes.tasbeeh),
         _buildToolIcon(context, 'Hadith', Icons.library_books, AppConstants.softBlue, AppRoutes.hadithBooks),
-        _buildToolIcon(context, 'Duas', Icons.front_hand, AppConstants.gold, AppRoutes.settings),
-        _buildToolIcon(context, 'Names', Icons.stars, AppConstants.softPurple, AppRoutes.settings),
+        _buildToolIcon(context, 'Duas', Icons.front_hand, AppConstants.gold, AppRoutes.duas),
+        _buildToolIcon(context, 'Names', Icons.stars, AppConstants.softPurple, AppRoutes.allahNames),
       ],
     );
   }

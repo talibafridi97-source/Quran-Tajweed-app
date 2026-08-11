@@ -65,8 +65,7 @@ class TajweedText extends StatelessWidget {
         TextSpan(
           style: TextStyle(
             fontSize: fontSize,
-            height: 2.1,
-            wordSpacing: 1.2,
+            height: 2.0,
             fontFamily: activeFontFamily,
             color: defaultColor ?? Colors.black87,
           ),

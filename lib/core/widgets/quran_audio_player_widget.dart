@@ -18,7 +18,6 @@ class QuranAudioPlayerWidget extends StatefulWidget {
 
 class _QuranAudioPlayerWidgetState extends State<QuranAudioPlayerWidget> {
   late AudioPlayer _audioPlayer;
-  bool _isPlaying = false;
   bool _isLoading = false;
 
   @override
@@ -33,85 +32,126 @@ class _QuranAudioPlayerWidgetState extends State<QuranAudioPlayerWidget> {
     super.dispose();
   }
 
-  Future<void> _toggleAudio() async {
-    if (_isPlaying) {
-      await _audioPlayer.pause();
-      setState(() => _isPlaying = false);
-    } else {
+  Future<void> _playAudio() async {
+    if (_audioPlayer.playerState.processingState == ProcessingState.idle) {
       setState(() => _isLoading = true);
       try {
-        // AlQuran Cloud CDN MP3 audio stream for Mishary Rashid Alafasy (edition: ar.alafasy)
-        final audioUrl = 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/${widget.surahNumber}.mp3';
-        
+        final audioUrl = 'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/${widget.surahNumber}.mp3';
         await _audioPlayer.setUrl(audioUrl);
-        _audioPlayer.play();
-        setState(() {
-          _isPlaying = true;
-          _isLoading = false;
-        });
+        await _audioPlayer.play();
       } catch (e) {
-        setState(() => _isLoading = false);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error playing audio: $e')),
-          );
+        // Fallback endpoint if primary CDN is unreachable
+        try {
+          final fallbackUrl = 'https://download.quranicaudio.com/qdc/mishari_al_afasy/murattal/${widget.surahNumber}.mp3';
+          await _audioPlayer.setUrl(fallbackUrl);
+          await _audioPlayer.play();
+        } catch (err) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Audio stream error: $err')),
+            );
+          }
         }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
+    } else {
+      await _audioPlayer.play();
     }
+  }
+
+  Future<void> _pauseAudio() async {
+    await _audioPlayer.pause();
+  }
+
+  Future<void> _stopAudio() async {
+    await _audioPlayer.stop();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppConstants.primaryGreen,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppConstants.primaryGreen.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.record_voice_over, color: Colors.white),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Recitation: Mishary Alafasy',
-                  style: const TextStyle(color: Colors.white70, fontSize: 11),
-                ),
-                Text(
-                  'Surah ${widget.surahName}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-          if (_isLoading)
-            const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-            )
-          else
-            IconButton(
-              icon: Icon(
-                _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
-                color: Colors.white,
-                size: 36,
+    return StreamBuilder<PlayerState>(
+      stream: _audioPlayer.playerStateStream,
+      builder: (context, snapshot) {
+        final playerState = snapshot.data;
+        final processingState = playerState?.processingState;
+        final playing = playerState?.playing ?? false;
+
+        final isBuffering = processingState == ProcessingState.loading ||
+            processingState == ProcessingState.buffering ||
+            _isLoading;
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppConstants.primaryGreen,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppConstants.primaryGreen.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              onPressed: _toggleAudio,
-            ),
-        ],
-      ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.record_voice_over, color: Colors.white, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Reciter: Mishary Rashid Alafasy',
+                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                    Text(
+                      'Surah ${widget.surahName}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              if (isBuffering)
+                const SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Padding(
+                    padding: EdgeInsets.all(4.0),
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                  ),
+                )
+              else ...[
+                if (playing) ...[
+                  IconButton(
+                    icon: const Icon(Icons.pause_circle_filled, color: Colors.white, size: 36),
+                    onPressed: _pauseAudio,
+                    tooltip: 'Pause',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.stop_circle_rounded, color: Colors.white70, size: 28),
+                    onPressed: _stopAudio,
+                    tooltip: 'Stop',
+                  ),
+                ] else ...[
+                  IconButton(
+                    icon: const Icon(Icons.play_circle_fill, color: Colors.white, size: 36),
+                    onPressed: _playAudio,
+                    tooltip: 'Play',
+                  ),
+                ],
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }

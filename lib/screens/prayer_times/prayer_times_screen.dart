@@ -1,10 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/prayer_times_model.dart';
 
-class PrayerTimesScreen extends StatelessWidget {
+class PrayerTimesScreen extends StatefulWidget {
   const PrayerTimesScreen({super.key});
+
+  @override
+  State<PrayerTimesScreen> createState() => _PrayerTimesScreenState();
+}
+
+class _PrayerTimesScreenState extends State<PrayerTimesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndNotifyPrayerTime();
+    });
+  }
+
+  Future<void> _checkAndNotifyPrayerTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    final todayStr = '${now.year}-${now.month}-${now.day}';
+
+    final prayerModel = PrayerTimesModel.calculate(date: now);
+    final currentPrayer = prayerModel.currentPrayer;
+
+    // Ignore Sunrise since it's not a prayer
+    if (currentPrayer == 'Sunrise') return;
+
+    final lastPrayer = prefs.getString('last_notified_prayer');
+    final lastDate = prefs.getString('last_notified_date');
+
+    // Trigger notification only ONCE per prayer per day
+    if (lastDate != todayStr || lastPrayer != currentPrayer) {
+      await prefs.setString('last_notified_prayer', currentPrayer);
+      await prefs.setString('last_notified_date', todayStr);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.access_time_filled, color: AppConstants.gold),
+                const SizedBox(width: 12),
+                Text('$currentPrayer prayer time has started.'),
+              ],
+            ),
+            backgroundColor: AppConstants.primaryGreen,
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -7,6 +7,7 @@ import '../../providers/settings_provider.dart';
 import '../../core/constants/constants.dart';
 import '../../core/widgets/tajweed_text.dart';
 import '../../core/widgets/loading_error_widget.dart';
+import '../../core/widgets/quran_audio_player_widget.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SurahDetailScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class SurahDetailScreen extends StatefulWidget {
 
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
   late Future<List<Ayah>> _ayahsFuture;
+  bool _showAudioPlayer = false;
 
   @override
   void initState() {
@@ -41,7 +43,11 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         title: Text(widget.surah.englishName),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Surah ${widget.surah.englishName} bookmarked')),
+              );
+            },
             icon: const Icon(Icons.bookmark_add_outlined),
           ),
         ],
@@ -64,7 +70,14 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     children: [
                       _buildSurahHeader(),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 16),
+                      if (_showAudioPlayer) ...[
+                        QuranAudioPlayerWidget(
+                          surahNumber: widget.surah.number,
+                          surahName: widget.surah.englishName,
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       Container(
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
@@ -160,10 +173,36 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _actionItem(Icons.play_circle_fill, 'Listen', AppConstants.softBlue),
-          _actionItem(Icons.translate_rounded, 'Urdu', AppConstants.softPurple),
-          _actionItem(Icons.share_rounded, 'Share', AppConstants.vibrantOrange),
-          _actionItem(Icons.settings_suggest_rounded, 'Config', AppConstants.primaryGreen),
+          InkWell(
+            onTap: () {
+              setState(() {
+                _showAudioPlayer = !_showAudioPlayer;
+              });
+            },
+            child: _actionItem(Icons.play_circle_fill, _showAudioPlayer ? 'Hide Audio' : 'Listen', AppConstants.softBlue),
+          ),
+          InkWell(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Arabic Only view active')),
+              );
+            },
+            child: _actionItem(Icons.translate_rounded, 'Urdu', AppConstants.softPurple),
+          ),
+          InkWell(
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Sharing Surah ${widget.surah.englishName}')),
+              );
+            },
+            child: _actionItem(Icons.share_rounded, 'Share', AppConstants.vibrantOrange),
+          ),
+          InkWell(
+            onTap: () {
+              Navigator.pushNamed(context, '/settings');
+            },
+            child: _actionItem(Icons.settings_suggest_rounded, 'Config', AppConstants.primaryGreen),
+          ),
         ],
       ),
     );

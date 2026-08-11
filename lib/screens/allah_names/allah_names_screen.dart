@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/constants/constants.dart';
 import '../../models/allah_name_model.dart';
@@ -13,6 +14,8 @@ class AllahNamesScreen extends StatefulWidget {
 
 class _AllahNamesScreenState extends State<AllahNamesScreen> {
   String _searchQuery = '';
+  late AudioPlayer _audioPlayer;
+  int? _playingNameNumber;
 
   List<AllahName> get _filteredNames {
     if (_searchQuery.isEmpty) return AllahName.allNames;
@@ -27,11 +30,55 @@ class _AllahNamesScreenState extends State<AllahNamesScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _audioPlayer = AudioPlayer();
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _playNameAudio(AllahName name) async {
+    if (_playingNameNumber == name.number) {
+      if (_audioPlayer.playing) {
+        await _audioPlayer.pause();
+        setState(() => _playingNameNumber = null);
+      } else {
+        await _audioPlayer.play();
+        setState(() => _playingNameNumber = name.number);
+      }
+      return;
+    }
+
+    setState(() {
+      _playingNameNumber = name.number;
+    });
+
+    try {
+      // Audio CDN audio stream for 99 Names of Allah
+      final audioUrl = 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/${name.number}.mp3';
+      await _audioPlayer.setUrl(audioUrl);
+      await _audioPlayer.play();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Playing recitation for "${name.transliteration}"')),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('99 Names of Allah (أسماء الله الحسنى)'),
+        title: const Text('99 Names of Allah (أسماء الله الحسنى)', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: AppConstants.primaryGreen,
+        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
@@ -40,9 +87,12 @@ class _AllahNamesScreenState extends State<AllahNamesScreen> {
             padding: const EdgeInsets.all(16.0),
             child: TextField(
               onChanged: (val) => setState(() => _searchQuery = val),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Search by name, meaning, or number...',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search, color: AppConstants.primaryGreen),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                filled: true,
+                fillColor: Colors.white,
               ),
             ),
           ),
@@ -55,11 +105,13 @@ class _AllahNamesScreenState extends State<AllahNamesScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
-                childAspectRatio: 0.85,
+                childAspectRatio: 0.8,
               ),
               itemCount: _filteredNames.length,
               itemBuilder: (context, index) {
                 final name = _filteredNames[index];
+                final isPlaying = _playingNameNumber == name.number && _audioPlayer.playing;
+
                 return Container(
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
@@ -95,7 +147,7 @@ class _AllahNamesScreenState extends State<AllahNamesScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6),
                             Text(
                               name.arabic,
                               style: const TextStyle(
@@ -122,6 +174,16 @@ class _AllahNamesScreenState extends State<AllahNamesScreen> {
                               style: Theme.of(context).textTheme.bodySmall,
                               textAlign: TextAlign.center,
                               textDirection: TextDirection.rtl,
+                            ),
+                            const SizedBox(height: 8),
+                            IconButton(
+                              icon: Icon(
+                                isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
+                                color: AppConstants.primaryGreen,
+                                size: 28,
+                              ),
+                              onPressed: () => _playNameAudio(name),
+                              tooltip: 'Play Audio',
                             ),
                           ],
                         ),
@@ -181,6 +243,14 @@ class _AllahNamesScreenState extends State<AllahNamesScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.play_circle_fill, color: AppConstants.primaryGreen),
+            onPressed: () {
+              Navigator.pop(context);
+              _playNameAudio(name);
+            },
+            tooltip: 'Play Audio',
+          ),
           IconButton(
             icon: const Icon(Icons.copy, color: AppConstants.primaryGreen),
             onPressed: () {

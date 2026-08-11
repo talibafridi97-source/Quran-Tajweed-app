@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/constants.dart';
 
 class TasbeehScreen extends StatefulWidget {
@@ -23,29 +24,58 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
     'اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ (Salawat)',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadState();
+  }
+
+  Future<void> _loadState() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _counter = prefs.getInt('tasbeeh_counter') ?? 0;
+      _targetGoal = prefs.getInt('tasbeeh_goal') ?? 33;
+      _selectedDua = prefs.getString('tasbeeh_dua') ?? _presets.first;
+    });
+  }
+
+  Future<void> _saveState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('tasbeeh_counter', _counter);
+    await prefs.setInt('tasbeeh_goal', _targetGoal);
+    await prefs.setString('tasbeeh_dua', _selectedDua);
+  }
+
   void _incrementCounter() {
     HapticFeedback.lightImpact();
     setState(() {
       _counter++;
     });
+    _saveState();
   }
 
   void _resetCounter() {
     setState(() {
       _counter = 0;
     });
+    _saveState();
   }
 
   @override
   Widget build(BuildContext context) {
+    final double progress = (_counter / _targetGoal).clamp(0.0, 1.0);
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Digital Tasbeeh Counter'),
+        title: const Text('Digital Tasbeeh Counter', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: AppConstants.primaryGreen,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _resetCounter,
+            tooltip: 'Reset Counter',
           ),
         ],
       ),
@@ -77,6 +107,7 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
                         _selectedDua = val;
                         _counter = 0;
                       });
+                      _saveState();
                     }
                   },
                 ),
@@ -84,6 +115,19 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
             ),
 
             const Spacer(),
+
+            // Progress Bar Indicator
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 10,
+                backgroundColor: AppConstants.primaryGreen.withOpacity(0.15),
+                color: AppConstants.gold,
+              ),
+            ),
+
+            const SizedBox(height: 32),
 
             // Large Digital Counter Display
             GestureDetector(
@@ -114,8 +158,8 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
                       ),
                     ),
                     Text(
-                      'Target: $_targetGoal',
-                      style: const TextStyle(fontSize: 14, color: Colors.white70),
+                      'Target: $_counter / $_targetGoal',
+                      style: const TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -130,13 +174,13 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
 
             const Spacer(),
 
-            // Goal Selection Buttons
+            // Goal Selection Chips
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [33, 100, 500, 1000].map((goal) {
+              children: [33, 99, 100, 500, 1000].map((goal) {
                 final isSelected = _targetGoal == goal;
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
                   child: ChoiceChip(
                     label: Text('$goal'),
                     selected: isSelected,
@@ -150,6 +194,7 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
                         setState(() {
                           _targetGoal = goal;
                         });
+                        _saveState();
                       }
                     },
                   ),

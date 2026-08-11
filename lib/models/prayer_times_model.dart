@@ -35,7 +35,6 @@ class PrayerTimesModel {
     final y = now.year;
 
     // Approximate Islamic Hijri Date calculation
-    // Gregorian 2026 conversion baseline
     final julianDay = _gregorianToJD(y, m, d);
     final hijriData = _jdToHijri(julianDay);
 
