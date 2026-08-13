@@ -13,6 +13,7 @@ import '../../screens/qibla/qibla_screen.dart';
 import '../../screens/prayer_times/prayer_times_screen.dart';
 import '../../screens/tasbeeh/tasbeeh_screen.dart';
 import '../../screens/calendar/islamic_calendar_screen.dart';
+import '../../screens/khatam/khatam_tracker_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -29,6 +30,7 @@ class AppRoutes {
   static const String prayerTimes = '/prayer-times';
   static const String tasbeeh = '/tasbeeh';
   static const String calendar = '/calendar';
+  static const String khatam = '/khatam';
 
   static Map<String, WidgetBuilder> get routes => {
     splash: (context) => const SplashScreen(),
@@ -45,5 +47,6 @@ class AppRoutes {
     prayerTimes: (context) => const PrayerTimesScreen(),
     tasbeeh: (context) => const TasbeehScreen(),
     calendar: (context) => const IslamicCalendarScreen(),
+    khatam: (context) => const KhatamTrackerScreen(),
   };
 }

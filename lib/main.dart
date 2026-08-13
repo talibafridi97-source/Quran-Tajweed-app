@@ -6,20 +6,24 @@ import 'providers/quran_provider.dart';
 import 'providers/hadith_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/bookmark_provider.dart';
+import 'providers/khatam_provider.dart';
 import 'repository/quran_repository.dart';
 import 'repository/hadith_repository.dart';
 import 'services/api_service.dart';
 import 'services/hadith_api_service.dart';
 import 'services/local_storage_service.dart';
+import 'services/database_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   final storageService = LocalStorageService();
   await storageService.init();
+
+  final databaseService = DatabaseService();
   
   final apiService = ApiService(storageService: storageService);
-  final quranRepository = QuranRepository(apiService, storageService);
+  final quranRepository = QuranRepository(apiService, storageService, databaseService);
 
   final hadithApiService = HadithApiService(storageService: storageService);
   final hadithRepository = HadithRepository(hadithApiService);
@@ -31,6 +35,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => QuranProvider(quranRepository)),
         ChangeNotifierProvider(create: (_) => HadithProvider(hadithRepository)),
         ChangeNotifierProvider(create: (_) => BookmarkProvider(storageService)),
+        ChangeNotifierProvider(create: (_) => KhatamProvider(databaseService)),
       ],
       child: const TajweedQuranApp(),
     ),

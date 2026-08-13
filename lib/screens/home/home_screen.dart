@@ -300,6 +300,7 @@ class HomeScreen extends StatelessWidget {
         _buildToolIcon(context, 'Qibla', Icons.explore, AppConstants.softIndigo, AppRoutes.qibla),
         _buildToolIcon(context, 'Tasbeeh', Icons.vibration, AppConstants.vibrantOrange, AppRoutes.tasbeeh),
         _buildToolIcon(context, 'Hadith', Icons.library_books, AppConstants.softBlue, AppRoutes.hadithBooks),
+        _buildToolIcon(context, 'Tracker', Icons.auto_graph_rounded, AppConstants.softPink, AppRoutes.khatam),
         _buildToolIcon(context, 'Duas', Icons.front_hand, AppConstants.gold, AppRoutes.duas),
         _buildToolIcon(context, 'Names', Icons.stars, AppConstants.softPurple, AppRoutes.allahNames),
       ],
