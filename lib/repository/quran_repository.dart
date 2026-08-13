@@ -34,8 +34,18 @@ class QuranRepository {
     return apiAyahs;
   }
 
-  Future<List<Ayah>> getJuzTajweed(int juzNumber) => 
-      _apiService.getJuzTajweed(juzNumber);
+  Future<List<Ayah>> getJuzTajweed(int juzNumber) async {
+    // Try local database first
+    final localAyahs = await _databaseService.getAyahsForJuz(juzNumber);
+    if (localAyahs.isNotEmpty) return localAyahs;
+
+    // Fetch from API and save locally
+    final apiAyahs = await _apiService.getJuzTajweed(juzNumber);
+    // Since getJuzTajweed returns ayahs for multiple surahs, we don't pass a single surahNumber
+    // The DatabaseService.saveAyahs will handle individual surah numbers from the Ayah objects
+    await _databaseService.saveAyahs(apiAyahs, 0); // 0 as placeholder, model has real number
+    return apiAyahs;
+  }
 
   Future<List<Ayah>> getPageTajweed(int pageNumber) => 
       _apiService.getPageTajweed(pageNumber);
