@@ -13,38 +13,38 @@ class QuranRepository {
   QuranRepository(this._apiService, this._localStorageService, this._databaseService);
 
   Future<List<Surah>> getAllSurahs() async {
-    // Try local database first
     final localSurahs = await _databaseService.getSurahs();
     if (localSurahs.isNotEmpty) return localSurahs;
 
-    // Fetch from API and save locally
     final apiSurahs = await _apiService.getAllSurahs();
     await _databaseService.saveSurahs(apiSurahs);
     return apiSurahs;
   }
 
   Future<List<Ayah>> getSurahTajweed(int chapterNumber) async {
-    // Try local database first
     final localAyahs = await _databaseService.getAyahsForSurah(chapterNumber);
     if (localAyahs.isNotEmpty) return localAyahs;
 
-    // Fetch from API and save locally
     final apiAyahs = await _apiService.getSurahTajweed(chapterNumber);
-    await _databaseService.saveAyahs(apiAyahs, chapterNumber);
+    await _databaseService.saveAyahs(apiAyahs);
     return apiAyahs;
   }
 
   Future<List<Ayah>> getJuzTajweed(int juzNumber) async {
-    // Try local database first
+    try {
+      // Always fetch complete Juz from API / SharedPreferences cache first
+      final apiAyahs = await _apiService.getJuzTajweed(juzNumber);
+      if (apiAyahs.isNotEmpty) {
+        await _databaseService.saveAyahs(apiAyahs);
+        return apiAyahs;
+      }
+    } catch (_) {}
+
+    // Fallback to database
     final localAyahs = await _databaseService.getAyahsForJuz(juzNumber);
     if (localAyahs.isNotEmpty) return localAyahs;
 
-    // Fetch from API and save locally
-    final apiAyahs = await _apiService.getJuzTajweed(juzNumber);
-    // Since getJuzTajweed returns ayahs for multiple surahs, we don't pass a single surahNumber
-    // The DatabaseService.saveAyahs will handle individual surah numbers from the Ayah objects
-    await _databaseService.saveAyahs(apiAyahs, 0); // 0 as placeholder, model has real number
-    return apiAyahs;
+    return [];
   }
 
   Future<List<Ayah>> getPageTajweed(int pageNumber) => 

@@ -83,7 +83,7 @@ class DatabaseService {
     return List.generate(maps.length, (i) => Surah.fromJson(maps[i]));
   }
 
-  Future<void> saveAyahs(List<Ayah> ayahs, int surahNumber) async {
+  Future<void> saveAyahs(List<Ayah> ayahs) async {
     final db = await database;
     Batch batch = db.batch();
     for (var ayah in ayahs) {
@@ -97,7 +97,7 @@ class DatabaseService {
         'ruku': ayah.ruku,
         'hizbQuarter': ayah.hizbQuarter,
         'sajda': ayah.sajda ? 1 : 0,
-        'surahNumber': surahNumber,
+        'surahNumber': ayah.surahNumber,
         'surahName': ayah.surahName,
         'surahEnglishName': ayah.surahEnglishName,
       }, conflictAlgorithm: ConflictAlgorithm.replace);

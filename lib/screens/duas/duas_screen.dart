@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/constants/constants.dart';
 import '../../models/dua_model.dart';
+import '../../services/audio_manager_service.dart';
 
 class DuasScreen extends StatefulWidget {
   const DuasScreen({super.key});
@@ -14,9 +14,7 @@ class DuasScreen extends StatefulWidget {
 
 class _DuasScreenState extends State<DuasScreen> {
   String _selectedCategory = 'All';
-  late AudioPlayer _audioPlayer;
-  int? _playingDuaId;
-  bool _isLoadingAudio = false;
+  final _audioManager = AudioManagerService();
 
   List<String> get _categories => [
         'All',
@@ -41,46 +39,27 @@ class _DuasScreenState extends State<DuasScreen> {
   @override
   void initState() {
     super.initState();
-    _audioPlayer = AudioPlayer();
+    _audioManager.addListener(_onAudioStateChanged);
   }
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
+    _audioManager.removeListener(_onAudioStateChanged);
     super.dispose();
   }
 
+  void _onAudioStateChanged() {
+    if (mounted) setState(() {});
+  }
+
   Future<void> _playDuaAudio(MasnoonDua dua) async {
-    if (_playingDuaId == dua.id) {
-      if (_audioPlayer.playing) {
-        await _audioPlayer.pause();
-        setState(() => _playingDuaId = null);
-      } else {
-        await _audioPlayer.play();
-        setState(() => _playingDuaId = dua.id);
-      }
-      return;
-    }
+    final audioId = 'dua_${dua.id}';
 
-    setState(() {
-      _isLoadingAudio = true;
-      _playingDuaId = dua.id;
-    });
-
-    try {
-      // Audio CDN stream for authentic Islamic supplications / EveryAyahdua streams
-      final audioUrl = 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/${dua.id}.mp3';
-      await _audioPlayer.setUrl(audioUrl);
-      await _audioPlayer.play();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Playing audio recitation for "${dua.titleEnglish}"')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoadingAudio = false);
-    }
+    await _audioManager.playItem(
+      channel: AudioChannel.dua,
+      id: audioId,
+      url: dua.audioUrl,
+    );
   }
 
   @override
@@ -91,6 +70,14 @@ class _DuasScreenState extends State<DuasScreen> {
         title: const Text('Masnoon Duain (مسنون دعائیں)', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: AppConstants.primaryGreen,
         foregroundColor: Colors.white,
+        actions: [
+          if (_audioManager.currentChannel == AudioChannel.dua && _audioManager.isPlaying)
+            IconButton(
+              icon: const Icon(Icons.stop_circle),
+              onPressed: () => _audioManager.stop(),
+              tooltip: 'Stop Audio',
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -139,7 +126,8 @@ class _DuasScreenState extends State<DuasScreen> {
               itemCount: _filteredDuas.length,
               itemBuilder: (context, index) {
                 final dua = _filteredDuas[index];
-                final isPlaying = _playingDuaId == dua.id && _audioPlayer.playing;
+                final audioId = 'dua_${dua.id}';
+                final isPlaying = _audioManager.isItemPlaying(AudioChannel.dua, audioId);
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
@@ -214,8 +202,11 @@ class _DuasScreenState extends State<DuasScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
                           Chip(
                             label: Text(
@@ -225,6 +216,7 @@ class _DuasScreenState extends State<DuasScreen> {
                             backgroundColor: AppConstants.primaryGreen.withOpacity(0.08),
                           ),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               // Play Audio Button
                               ElevatedButton.icon(
@@ -241,7 +233,7 @@ class _DuasScreenState extends State<DuasScreen> {
                                   textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 4),
                               IconButton(
                                 icon: const Icon(Icons.copy, size: 20),
                                 onPressed: () {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import '../../services/audio_manager_service.dart';
 import '../constants/constants.dart';
 
 class QuranAudioPlayerWidget extends StatefulWidget {
@@ -33,6 +34,7 @@ class _QuranAudioPlayerWidgetState extends State<QuranAudioPlayerWidget> {
   }
 
   Future<void> _playAudio() async {
+    await AudioManagerService.instance.stop();
     if (_audioPlayer.playerState.processingState == ProcessingState.idle) {
       setState(() => _isLoading = true);
       try {

@@ -35,7 +35,7 @@ class HadithApiService {
 
     final bookData = infoData![book.id];
     if (bookData == null || bookData['metadata'] == null) {
-      throw Exception('Book ${book.name} metadata not available.');
+      throw Exception('Book ${book.name} metadata is not available.');
     }
 
     final sections = bookData['metadata']['sections'] as Map<String, dynamic>;
@@ -77,53 +77,85 @@ class HadithApiService {
     Map<String, dynamic>? araData;
     Map<String, dynamic>? urdData;
 
-    if (cachedAra != null && cachedUrd != null) {
+    if (cachedAra != null) {
       try {
         araData = json.decode(cachedAra);
+      } catch (_) {}
+    }
+    if (cachedUrd != null) {
+      try {
         urdData = json.decode(cachedUrd);
       } catch (_) {}
     }
 
-    if (araData == null || urdData == null) {
-      final araUri = Uri.parse('$_baseUrl/editions/ara-${book.id}/${chapter.id}.json');
-      final urdUri = Uri.parse('$_baseUrl/editions/urd-${book.id}/${chapter.id}.json');
+    if (araData == null) {
+      // Official endpoint structure: /editions/{editionName}/sections/{sectionNo}.json
+      Uri araUri = Uri.parse('$_baseUrl/editions/ara-${book.id}/sections/${chapter.id}.json');
+      var resAra = await _client.get(araUri);
+      
+      if (resAra.statusCode != 200) {
+        // Fallback endpoint structure: /editions/{editionName}/{sectionNo}.json
+        araUri = Uri.parse('$_baseUrl/editions/ara-${book.id}/${chapter.id}.json');
+        resAra = await _client.get(araUri);
+      }
 
-      final results = await Future.wait([
-        _client.get(araUri),
-        _client.get(urdUri),
-      ]);
-
-      if (results[0].statusCode == 200 && results[1].statusCode == 200) {
-        araData = json.decode(results[0].body);
-        urdData = json.decode(results[1].body);
-
-        await _storageService.cacheString(cacheKeyAra, results[0].body);
-        await _storageService.cacheString(cacheKeyUrd, results[1].body);
+      if (resAra.statusCode == 200) {
+        araData = json.decode(resAra.body);
+        await _storageService.cacheString(cacheKeyAra, resAra.body);
       } else {
-        throw Exception('Failed to load Hadiths. Please check internet connection.');
+        throw Exception('This Hadith is currently unavailable. Please try again later.');
       }
     }
 
-    final araList = araData!['hadiths'] as List;
-    final urdList = urdData!['hadiths'] as List;
+    if (urdData == null) {
+      try {
+        Uri urdUri = Uri.parse('$_baseUrl/editions/urd-${book.id}/sections/${chapter.id}.json');
+        var resUrd = await _client.get(urdUri);
+        if (resUrd.statusCode != 200) {
+          urdUri = Uri.parse('$_baseUrl/editions/urd-${book.id}/${chapter.id}.json');
+          resUrd = await _client.get(urdUri);
+        }
+        if (resUrd.statusCode == 200) {
+          urdData = json.decode(resUrd.body);
+          await _storageService.cacheString(cacheKeyUrd, resUrd.body);
+        }
+      } catch (_) {
+        // Urdu edition fetch failure is handled gracefully below
+      }
+    }
+
+    final araList = (araData != null && araData['hadiths'] is List) ? araData['hadiths'] as List : null;
+    if (araList == null || araList.isEmpty) {
+      throw Exception('This Hadith is currently unavailable. Please try again later.');
+    }
+
+    final urdList = (urdData != null && urdData['hadiths'] is List) ? urdData['hadiths'] as List : [];
 
     Map<int, Map<String, dynamic>> urdMap = {};
     for (var u in urdList) {
-      int hNum = u['hadithnumber'] ?? 0;
-      urdMap[hNum] = u as Map<String, dynamic>;
+      if (u is Map<String, dynamic>) {
+        int hNum = u['hadithnumber'] ?? 0;
+        urdMap[hNum] = u;
+      }
     }
 
     List<HadithItem> items = [];
     for (var a in araList) {
-      int hNum = a['hadithnumber'] ?? 0;
-      Map<String, dynamic> uJson = urdMap[hNum] ?? {'text': 'ترجمہ دستیاب نہیں ہے'};
+      if (a is Map<String, dynamic>) {
+        int hNum = a['hadithnumber'] ?? 0;
+        Map<String, dynamic> uJson = urdMap[hNum] ?? {'text': 'اردو ترجمہ اس باب کا جلد شامل کیا جائے گا'};
 
-      items.add(HadithItem.fromJson(
-        arabicJson: a as Map<String, dynamic>,
-        urduJson: uJson,
-        bookName: book.name,
-        chapterTitle: chapter.title,
-      ));
+        items.add(HadithItem.fromJson(
+          arabicJson: a,
+          urduJson: uJson,
+          bookName: book.name,
+          chapterTitle: chapter.title,
+        ));
+      }
+    }
+
+    if (items.isEmpty) {
+      throw Exception('This Hadith is currently unavailable. Please try again later.');
     }
 
     return items;

@@ -14,6 +14,10 @@ import '../../screens/prayer_times/prayer_times_screen.dart';
 import '../../screens/tasbeeh/tasbeeh_screen.dart';
 import '../../screens/calendar/islamic_calendar_screen.dart';
 import '../../screens/khatam/khatam_tracker_screen.dart';
+import '../../screens/hajj/hajj_guide_screen.dart';
+import '../../screens/zakat/zakat_calculator_screen.dart';
+import '../../screens/daily_ayah/daily_ayah_screen.dart';
+import '../../screens/tajweed/tajweed_rules_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -31,6 +35,10 @@ class AppRoutes {
   static const String tasbeeh = '/tasbeeh';
   static const String calendar = '/calendar';
   static const String khatam = '/khatam';
+  static const String hajjGuide = '/hajj-guide';
+  static const String zakatCalculator = '/zakat-calculator';
+  static const String dailyAyah = '/daily-ayah';
+  static const String tajweedRules = '/tajweed-rules';
 
   static Map<String, WidgetBuilder> get routes => {
     splash: (context) => const SplashScreen(),
@@ -48,5 +56,9 @@ class AppRoutes {
     tasbeeh: (context) => const TasbeehScreen(),
     calendar: (context) => const IslamicCalendarScreen(),
     khatam: (context) => const KhatamTrackerScreen(),
+    hajjGuide: (context) => const HajjGuideScreen(),
+    zakatCalculator: (context) => const ZakatCalculatorScreen(),
+    dailyAyah: (context) => const DailyAyahScreen(),
+    tajweedRules: (context) => const TajweedRulesScreen(),
   };
 }

@@ -4,32 +4,38 @@ import '../constants/constants.dart';
 class TajweedParser {
   static const Map<String, Color> _tajweedColors = {
     // Silent & Wasl (Muted Gray)
-    'h': Color(0xFF9E9E9E), // Hamzatul Wasl
-    's': Color(0xFF9E9E9E), // Silent letter
-    'l': Color(0xFF9E9E9E), // Lam Shamsiyyah
-    'r': Color(0xFF757575), // Idgham without Ghunnah
+    'h': Color(0xFFAAAAAA), // Hamzatul Wasl
+    's': Color(0xFFAAAAAA), // Silent letter
+    'l': Color(0xFFAAAAAA), // Lam Shamsiyyah
+    
+    // Ghunnah (Orange)
+    'n': Color(0xFFFF7E1E), // Ghunnah
+    'g': Color(0xFFFF7E1E), // Ghunnah (alternate)
 
-    // Ghunnah & Idgham (Emerald Green)
-    'g': Color(0xFF169777), // Ghunnah
-    'n': Color(0xFF169777), // Idgham with Ghunnah
+    // Idgham (Green)
+    'm': Color(0xFF169777), // Idgham
     'u': Color(0xFF169777), // Idgham Shafawi
     'a': Color(0xFF169777), // Idgham / Alif
-    'v': Color(0xFF00695C), // Iqlab
-    'd': Color(0xFF00695C), // Iqlab
+    'r': Color(0xFF169777), // Idgham without Ghunnah
 
-    // Ikhfa (Sky Blue / Cyan)
-    'i': Color(0xFF00838F), // Ikhfa
-    'p': Color(0xFF0097A7), // Ikhfa Shafawi
-    'c': Color(0xFF00838F), // Ikhfa
-    'f': Color(0xFF0097A7), // Ikhfa Shafawi
+    // Iqlab (Cyan)
+    'b': Color(0xFF26BFFD), // Iqlab
+    'd': Color(0xFF26BFFD), // Iqlab (alternate)
+    'v': Color(0xFF26BFFD), // Iqlab (alternate)
 
-    // Qalqalah (Crimson Red)
-    'q': Color(0xFFD32F2F), // Qalqalah
+    // Ikhfa (Purple)
+    'i': Color(0xFF9400A8), // Ikhfa
+    'p': Color(0xFF9400A8), // Ikhfa Shafawi
+    'c': Color(0xFF9400A8), // Ikhfa (alternate)
+    'f': Color(0xFF9400A8), // Ikhfa Shafawi (alternate)
 
-    // Madds (Vibrant Orange / Deep Red / Magenta)
-    'o': Color(0xFFEF6C00), // Madd 4-5 Harakat
-    'm': Color(0xFFC62828), // Madd 6 Harakat
-    'w': Color(0xFFAD1457), // Madd 2 Harakat
+    // Qalqalah (Red)
+    'q': Color(0xFFDD0008), // Qalqalah
+
+    // Madds (Blue Tones)
+    'w': Color(0xFF000EBC), // Madd 6 Harakat (Dark Blue)
+    'o': Color(0xFF4050FF), // Madd 4-5 Harakat (Blue)
+    'j': Color(0xFF537FFF), // Madd 2 Harakat (Light Blue)
   };
 
   static List<InlineSpan> parse(
@@ -40,15 +46,12 @@ class TajweedParser {
   }) {
     List<InlineSpan> spans = [];
 
-    // Step 1: Pre-clean any HTML/XML artifacts if present
-    String str = text
-        .replaceAll('/>', '')
-        .replaceAll('tajweed>', '')
-        .replaceAll('<tajweed>', '');
+    // Pre-clean: Remove any remaining XML tags if present, but keep the content
+    String str = text.replaceAll(RegExp(r'<[^>]*>'), '');
 
-    // Step 2: Pattern matching bracketed Tajweed tags:
-    // Matches [rule:id[content] OR [rule:id]content OR [rule[content] OR [rule]content
-    final RegExp tagRegex = RegExp(r'\[([a-zA-Z]+)(?::\d+)?(?:\]|\[)?([^\]\[]*)\]?');
+    // Robust regex to capture Al-Quran Cloud Tajweed format: [rule:id[text]] OR [rule:id[text]
+    // The format is typically [x:y[z]] where x is the rule, y is metadata, and z is the text.
+    final RegExp tagRegex = RegExp(r'\[([a-zA-Z]+):?\d*\[([^\]]+)\]?\]?');
 
     int index = 0;
     final matches = tagRegex.allMatches(str);
@@ -68,10 +71,9 @@ class TajweedParser {
     }
 
     for (final match in matches) {
-      // Plain text before tag
+      // Plain text before the tag
       if (match.start > index) {
         String plain = str.substring(index, match.start);
-        plain = _cleanRawMarkup(plain);
         if (plain.isNotEmpty) {
           spans.add(TextSpan(
             text: plain,
@@ -81,7 +83,7 @@ class TajweedParser {
       }
 
       String rule = match.group(1)?.toLowerCase() ?? '';
-      String content = _cleanRawMarkup(match.group(2) ?? '');
+      String content = match.group(2) ?? '';
 
       if (content.isNotEmpty) {
         Color color = _tajweedColors[rule] ?? (defaultColor ?? Colors.black87);
@@ -97,7 +99,6 @@ class TajweedParser {
     // Remaining text after last match
     if (index < str.length) {
       String remaining = str.substring(index);
-      remaining = _cleanRawMarkup(remaining);
       if (remaining.isNotEmpty) {
         spans.add(TextSpan(
           text: remaining,
@@ -107,13 +108,5 @@ class TajweedParser {
     }
 
     return spans;
-  }
-
-  // Helper method to strip out any raw bracket control tags or stray brackets
-  static String _cleanRawMarkup(String s) {
-    return s
-        .replaceAll(RegExp(r'\[[a-zA-Z0-9:]+\]?'), '') // Strips any raw [h:1], [h:2], [n], etc.
-        .replaceAll('[', '')
-        .replaceAll(']', '');
   }
 }

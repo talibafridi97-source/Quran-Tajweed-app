@@ -7,6 +7,7 @@ class MasnoonDua {
   final String urduTranslation;
   final String englishTranslation;
   final String reference;
+  final String audioUrl;
 
   const MasnoonDua({
     required this.id,
@@ -17,6 +18,7 @@ class MasnoonDua {
     required this.urduTranslation,
     required this.englishTranslation,
     required this.reference,
+    required this.audioUrl,
   });
 
   static const List<MasnoonDua> allDuas = [
@@ -29,6 +31,7 @@ class MasnoonDua {
       urduTranslation: 'اے میرے رب! تیرے نام کے ساتھ میں نے اپنا پہلو رکھا اور تیرے ہی نام کے ساتھ میں اسے اٹھاؤں گا۔',
       englishTranslation: 'In Your name my Lord, I lie down and in Your name I rise.',
       reference: 'Sahih al-Bukhari 6320',
+      audioUrl: 'https://raw.githubusercontent.com/rn0x/Adhkar-json/main/audio/ar_7esn_AlMoslem_by_Doors_028.mp3',
     ),
     MasnoonDua(
       id: 2,
@@ -39,6 +42,7 @@ class MasnoonDua {
       urduTranslation: 'تمام تعریفیں اللہ کے لیے ہیں جس نے ہمیں مارنے کے بعد زندہ کیا اور اسی کی طرف لوٹ کر جانا ہے۔',
       englishTranslation: 'Praise is to Allah Who gave us life after he caused us to die and unto Him is the resurrection.',
       reference: 'Sahih al-Bukhari 6312',
+      audioUrl: 'https://raw.githubusercontent.com/rn0x/Adhkar-json/main/audio/ar_7esn_AlMoslem_by_Doors_001.mp3',
     ),
     MasnoonDua(
       id: 3,
@@ -49,6 +53,7 @@ class MasnoonDua {
       urduTranslation: 'اللہ کے نام کے ساتھ اور اللہ کی برکت پر (میں کھانا شروع کرتا ہوں)۔',
       englishTranslation: 'In the name of Allah and with the blessings of Allah.',
       reference: 'Al-Hakim 7084',
+      audioUrl: 'https://raw.githubusercontent.com/rn0x/Adhkar-json/main/audio/ar_7esn_AlMoslem_by_Doors_101.mp3',
     ),
     MasnoonDua(
       id: 4,
@@ -59,6 +64,7 @@ class MasnoonDua {
       urduTranslation: 'تمام تعریفیں اللہ کے لیے ہیں جس نے ہمیں کھلایا اور پلایا اور ہمیں مسلمان بنایا۔',
       englishTranslation: 'Praise be to Allah Who has fed us and given us drink and made us Muslims.',
       reference: 'Sunan Abu Dawood 3850',
+      audioUrl: 'https://raw.githubusercontent.com/rn0x/Adhkar-json/main/audio/ar_7esn_AlMoslem_by_Doors_102.mp3',
     ),
     MasnoonDua(
       id: 5,
@@ -69,6 +75,7 @@ class MasnoonDua {
       urduTranslation: 'اے اللہ! میرے لیے اپنی رحمت کے دروازے کھول دے۔',
       englishTranslation: 'O Allah, open for me the doors of Your mercy.',
       reference: 'Sahih Muslim 713',
+      audioUrl: 'https://raw.githubusercontent.com/rn0x/Adhkar-json/main/audio/ar_7esn_AlMoslem_by_Doors_020.mp3',
     ),
     MasnoonDua(
       id: 6,
@@ -79,6 +86,7 @@ class MasnoonDua {
       urduTranslation: 'اے اللہ! میں تجھ سے تیرے فضل کا سوال کرتا ہوں۔',
       englishTranslation: 'O Allah, I ask You from Your favor.',
       reference: 'Sahih Muslim 713',
+      audioUrl: 'https://raw.githubusercontent.com/rn0x/Adhkar-json/main/audio/ar_7esn_AlMoslem_by_Doors_021.mp3',
     ),
     MasnoonDua(
       id: 7,
@@ -89,6 +97,7 @@ class MasnoonDua {
       urduTranslation: 'پاک ہے وہ ذات جس نے اس کو ہمارے بس میں کر دیا حالانکہ ہم اسے قابو میں لانے والے نہ تھے، اور بے شک ہم اپنے رب کی طرف لوٹنے والے ہیں۔',
       englishTranslation: 'Glory is to Him Who has subjected this to us, and we could not have otherwise subdued it. And indeed, to our Lord we will return.',
       reference: 'Surah Az-Zukhruf 43:13-14',
+      audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/4348.mp3',
     ),
     MasnoonDua(
       id: 8,
@@ -99,6 +108,7 @@ class MasnoonDua {
       urduTranslation: 'اے اللہ! تو ہی میرا رب ہے، تیرے سوا کوئی معبود نہیں۔ تو نے مجھے پیدا کیا اور میں تیرا بندہ ہوں اور اپنے عہد و وعدہ پر قائم ہوں۔',
       englishTranslation: 'O Allah, You are my Lord, none has the right to be worshipped except You. You created me and I am Your servant.',
       reference: 'Sahih al-Bukhari 6306',
+      audioUrl: 'https://raw.githubusercontent.com/rn0x/Adhkar-json/main/audio/ar_7esn_AlMoslem_by_Doors_079.mp3',
     ),
     MasnoonDua(
       id: 9,
@@ -109,6 +119,7 @@ class MasnoonDua {
       urduTranslation: 'اے میرے رب! میرے علم میں اضافہ فرما۔',
       englishTranslation: 'My Lord, increase me in knowledge.',
       reference: 'Surah Taha 20:114',
+      audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/2462.mp3',
     ),
     MasnoonDua(
       id: 10,
@@ -119,6 +130,7 @@ class MasnoonDua {
       urduTranslation: 'اے میرے رب! ان دونوں پر رحم فرما جیسے انہوں نے بچپن میں میری پرورش کی۔',
       englishTranslation: 'My Lord, have mercy upon them both as they brought me up when I was small.',
       reference: 'Surah Al-Isra 17:24',
+      audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/2053.mp3',
     ),
     MasnoonDua(
       id: 11,
@@ -129,6 +141,7 @@ class MasnoonDua {
       urduTranslation: 'تیرے سوا کوئی معبود نہیں، تو پاک ہے، بے شک میں ہی ظالموں میں سے تھا۔',
       englishTranslation: 'There is no deity except You; exalted are You. Indeed, I have been of the wrongdoers.',
       reference: 'Surah Al-Anbiya 21:87',
+      audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/2570.mp3',
     ),
     MasnoonDua(
       id: 12,
@@ -139,6 +152,7 @@ class MasnoonDua {
       urduTranslation: 'اے اللہ! میں تجھ سے داخل ہونے کی اور نکلنے کی بہتری کا سوال کرتا ہوں۔',
       englishTranslation: 'O Allah, I ask You for the best entering and the best exiting.',
       reference: 'Sunan Abu Dawood 5096',
+      audioUrl: 'https://raw.githubusercontent.com/rn0x/Adhkar-json/main/audio/ar_7esn_AlMoslem_by_Doors_022.mp3',
     ),
     MasnoonDua(
       id: 13,
@@ -149,6 +163,7 @@ class MasnoonDua {
       urduTranslation: 'اللہ کے نام سے، میں نے اللہ پر توکل کیا، اللہ کی مدد کے بغیر نہ گناہوں سے بچنے کی طاقت ہے نہ نیکی کرنے کی قوت۔',
       englishTranslation: 'In the name of Allah, I place my trust in Allah; there is no might nor power except through Allah.',
       reference: 'Sunan Abu Dawood 5095',
+      audioUrl: 'https://raw.githubusercontent.com/rn0x/Adhkar-json/main/audio/ar_7esn_AlMoslem_by_Doors_023.mp3',
     ),
   ];
 }

@@ -20,6 +20,9 @@ class JuzDetailScreen extends StatefulWidget {
 
 class _JuzDetailScreenState extends State<JuzDetailScreen> {
   late Future<List<Ayah>> _juzFuture;
+  bool _isPageViewMode = false;
+  PageController? _pageController;
+  int _currentPageIndex = 0;
 
   @override
   void initState() {
@@ -27,16 +30,31 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
     _loadJuzData();
   }
 
+  @override
+  void dispose() {
+    _pageController?.dispose();
+    super.dispose();
+  }
+
   void _loadJuzData() {
     final repository = context.read<QuranProvider>().repository;
     _juzFuture = repository.getJuzTajweed(widget.juzNumber);
   }
 
-  // Group ayahs by Surah
+  // Group ayahs by actual API page number
+  Map<int, List<Ayah>> _groupAyahsByPage(List<Ayah> ayahs) {
+    final Map<int, List<Ayah>> grouped = {};
+    for (final ayah in ayahs) {
+      grouped.putIfAbsent(ayah.page, () => []).add(ayah);
+    }
+    return grouped;
+  }
+
+  // Group ayahs within a page by Surah
   Map<int, List<Ayah>> _groupAyahsBySurah(List<Ayah> ayahs) {
     final Map<int, List<Ayah>> grouped = {};
     for (final ayah in ayahs) {
-      final sNum = ayah.surahNumber ?? 0;
+      final sNum = ayah.surahNumber ?? 1;
       grouped.putIfAbsent(sNum, () => []).add(ayah);
     }
     return grouped;
@@ -61,9 +79,21 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('Para ${widget.juzNumber} - ${juzMeta.nameEnglish}'),
+        backgroundColor: AppConstants.primaryGreen,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.bookmark_outline),
+            icon: Icon(_isPageViewMode ? Icons.view_headline : Icons.auto_stories),
+            tooltip: _isPageViewMode ? 'Continuous Scroll' : 'Page-by-Page View',
+            onPressed: () {
+              setState(() {
+                _isPageViewMode = !_isPageViewMode;
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.bookmark_add_outlined),
+            tooltip: 'Bookmark Position',
             onPressed: () {
               quranProvider.saveResume(ResumeData(
                 surahName: juzMeta.nameEnglish,
@@ -74,7 +104,7 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
                 lastRead: DateTime.now(),
               ));
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Saved Para ${widget.juzNumber} as last read point')),
+                SnackBar(content: Text('Saved Para ${widget.juzNumber} as last read position')),
               );
             },
           ),
@@ -93,149 +123,128 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.menu_book, size: 64, color: Colors.grey),
+                  const Icon(Icons.menu_book_rounded, size: 64, color: Colors.grey),
                   const SizedBox(height: 16),
                   Text(
                     'No Quran content found for Para ${widget.juzNumber}.',
                     style: const TextStyle(color: Colors.grey, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _loadJuzData();
-                      });
-                    },
+                  ElevatedButton.icon(
+                    onPressed: () => setState(() => _loadJuzData()),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Reload Para Data'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppConstants.primaryGreen,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Reload'),
                   ),
                 ],
               ),
             );
           }
 
-          final groupedSurahs = _groupAyahsBySurah(ayahs);
+          if (isLoading || hasError) {
+            return LoadingErrorWidget(
+              isLoading: isLoading,
+              errorMessage: hasError ? snapshot.error.toString() : null,
+              onRetry: () => setState(() => _loadJuzData()),
+              child: const SizedBox.shrink(),
+            );
+          }
 
-          return LoadingErrorWidget(
-            isLoading: isLoading,
-            errorMessage: hasError ? snapshot.error.toString() : null,
-            onRetry: () {
-              setState(() {
-                _loadJuzData();
-              });
-            },
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          final pageMap = _groupAyahsByPage(ayahs);
+          final pageNumbers = pageMap.keys.toList()..sort();
+
+          if (_isPageViewMode) {
+            _pageController ??= PageController(initialPage: _currentPageIndex);
+            return Column(
               children: [
-                _buildJuzHeader(juzMeta),
-                const SizedBox(height: 20),
-                ...groupedSurahs.entries.map((entry) {
-                  final surahAyahs = entry.value;
-                  final firstAyah = surahAyahs.first;
-                  final surahName = firstAyah.surahName ?? 'سورة';
-                  final surahEngName = firstAyah.surahEnglishName ?? '';
-                  final sNum = entry.key;
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 20),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        )
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        // Surah Section Banner inside Juz
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: AppConstants.primaryGreen.withOpacity(0.06),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppConstants.primaryGreen.withOpacity(0.2)),
+                // Top Page Indicator & Navigation Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: AppConstants.primaryGreen.withOpacity(0.08),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Page ${pageNumbers[_currentPageIndex]} of ${pageNumbers.last}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppConstants.primaryGreen),
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios, size: 18),
+                            onPressed: _currentPageIndex > 0
+                                ? () {
+                                    _pageController?.previousPage(
+                                      duration: const Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  }
+                                : null,
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                surahEngName.isNotEmpty ? surahEngName : 'Surah $sNum',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                  color: AppConstants.primaryGreen,
-                                ),
-                              ),
-                              Text(
-                                surahName,
-                                style: const TextStyle(
-                                  fontFamily: AppConstants.uthmaniFont,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppConstants.primaryGreen,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Bismillah banner if starting at Ayah 1
-                        if (firstAyah.numberInSurah == 1 && sNum != 1 && sNum != 9) ...[
-                          const SizedBox(height: 16),
-                          const Text(
-                            'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-                            style: TextStyle(
-                              fontFamily: AppConstants.uthmaniFont,
-                              fontSize: 24,
-                              color: AppConstants.primaryGreen,
-                            ),
+                          IconButton(
+                            icon: const Icon(Icons.arrow_forward_ios, size: 18),
+                            onPressed: _currentPageIndex < pageNumbers.length - 1
+                                ? () {
+                                    _pageController?.nextPage(
+                                      duration: const Duration(milliseconds: 300),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  }
+                                : null,
                           ),
                         ],
+                      ),
+                    ],
+                  ),
+                ),
 
-                        const SizedBox(height: 16),
-
-                        // Arabic Tajweed Ayahs
-                        Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 4,
-                            runSpacing: 12,
-                            children: surahAyahs.map((ayah) {
-                              return TajweedText(
-                                rawText: '${ayah.text} ',
-                                fontSize: settings.arabicFontSize,
-                                fontFamily: AppConstants.uthmaniFont,
-                                ayahNumber: ayah.numberInSurah,
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-                const SizedBox(height: 30),
+                // PageView for Mushaf Pages
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: pageNumbers.length,
+                    onPageChanged: (idx) {
+                      setState(() {
+                        _currentPageIndex = idx;
+                      });
+                    },
+                    itemBuilder: (context, idx) {
+                      final pageNum = pageNumbers[idx];
+                      final pageAyahs = pageMap[pageNum] ?? [];
+                      return _buildPageCard(context, settings, pageNum, pageAyahs, juzMeta);
+                    },
+                  ),
+                ),
               ],
-            ),
+            );
+          }
+
+          // Continuous Vertical Scroll Mode
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            itemCount: pageNumbers.length + 1,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _buildJuzHeader(juzMeta, ayahs.length, pageNumbers.length);
+              }
+
+              final pageNum = pageNumbers[index - 1];
+              final pageAyahs = pageMap[pageNum] ?? [];
+              return _buildPageCard(context, settings, pageNum, pageAyahs, juzMeta);
+            },
           );
         },
       ),
     );
   }
 
-  Widget _buildJuzHeader(JuzModel juz) {
+  Widget _buildJuzHeader(JuzModel juz, int totalAyahs, int totalPages) {
     return Container(
       width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: AppTheme.brandGradient,
@@ -260,9 +269,153 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Para ${juz.number} • ${juz.nameEnglish} • Starts at Page ${juz.startPage}',
+            'Para ${juz.number} • ${juz.nameEnglish} • $totalAyahs Ayahs • $totalPages Mushaf Pages',
             style: const TextStyle(color: Colors.white70, fontSize: 13),
+            textAlign: TextAlign.center,
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPageCard(
+    BuildContext context,
+    SettingsProvider settings,
+    int pageNum,
+    List<Ayah> pageAyahs,
+    JuzModel juzMeta,
+  ) {
+    final surahGroups = _groupAyahsBySurah(pageAyahs);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Page Header Indicator
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppConstants.primaryGreen.withOpacity(0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppConstants.primaryGreen.withOpacity(0.15)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Mushaf Page $pageNum',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: AppConstants.primaryGreen,
+                  ),
+                ),
+                Text(
+                  'Para ${juzMeta.number}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: AppConstants.gold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Render Ayahs grouped by Surah within this Mushaf Page
+          ...surahGroups.entries.map((entry) {
+            final sNum = entry.key;
+            final sAyahs = entry.value;
+            final firstAyah = sAyahs.first;
+            final surahName = firstAyah.surahName ?? 'سورة';
+            final surahEngName = firstAyah.surahEnglishName ?? '';
+
+            return Column(
+              children: [
+                // Surah Banner if this page includes Ayah 1 or starts a Surah
+                if (firstAyah.numberInSurah == 1) ...[
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppConstants.primaryGreen,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          surahEngName.isNotEmpty ? surahEngName : 'Surah $sNum',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          surahName,
+                          style: const TextStyle(
+                            fontFamily: AppConstants.uthmaniFont,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (sNum != 1 && sNum != 9) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                      style: TextStyle(
+                        fontFamily: AppConstants.uthmaniFont,
+                        fontSize: 24,
+                        color: AppConstants.primaryGreen,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ],
+
+                // Ayahs Text
+                Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 4,
+                    runSpacing: 12,
+                    children: sAyahs.map((ayah) {
+                      return TajweedText(
+                        rawText: '${ayah.text} ',
+                        fontSize: settings.arabicFontSize,
+                        fontFamily: AppConstants.uthmaniFont,
+                        ayahNumber: ayah.numberInSurah,
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            );
+          }),
         ],
       ),
     );

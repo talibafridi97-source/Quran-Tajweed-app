@@ -27,72 +27,129 @@ class PrayerTimesModel {
     required this.hijriDateString,
   });
 
-  // Calculate prayer times for default or user lat/lng
-  factory PrayerTimesModel.calculate({double lat = 24.8607, double lng = 67.0011, DateTime? date}) {
+  // Calculate prayer times dynamically using astronomical solar position equations
+  factory PrayerTimesModel.calculate({
+    double lat = 33.5869,
+    double lng = 71.4426,
+    DateTime? date,
+    double? timeZoneOffsetHours,
+    bool isHanafi = false,
+  }) {
     final now = date ?? DateTime.now();
-    final d = now.day;
-    final m = now.month;
-    final y = now.year;
 
-    // Approximate Islamic Hijri Date calculation
+    // Timezone offset in hours (+5.0 for PKT / Kohat)
+    final tz = timeZoneOffsetHours ??
+        ((lat == 33.5869 && lng == 71.4426) || (lat >= 23.5 && lat <= 37.0 && lng >= 60.0 && lng <= 77.0)
+            ? 5.0
+            : (now.timeZoneOffset.inMinutes / 60.0));
+
+    // Target location local date and time
+    final locationNow = now.toUtc().add(Duration(minutes: (tz * 60).round()));
+    final d = locationNow.day;
+    final m = locationNow.month;
+    final y = locationNow.year;
+
+    // Islamic Hijri Date calculation
     final julianDay = _gregorianToJD(y, m, d);
     final hijriData = _jdToHijri(julianDay);
 
-    // Astronomical Prayer Time approximation
-    final double dayOfYear = now.difference(DateTime(y, 1, 1)).inDays.toDouble();
-    final double eqOfTime = 9.87 * sin(_toRadians(2 * 360 / 365 * (dayOfYear - 81))) - 7.53 * cos(_toRadians(360 / 365 * (dayOfYear - 81)));
+    // Astronomical Calculation
+    final double dayOfYear = DateTime(y, m, d).difference(DateTime(y, 1, 1)).inDays + 1.0;
 
-    final double noonMinutes = 720 - (lng * 4) - eqOfTime + (5 * 60); // GMT+5 default
+    // Solar declination (in degrees)
+    final double declination = 23.44 * sin(_toRadians(360 / 365.24 * (dayOfYear - 81)));
 
-    final fajrTime = _formatTime(noonMinutes - 90);
-    final sunriseTime = _formatTime(noonMinutes - 72);
-    final dhuhrTime = _formatTime(noonMinutes + 15);
-    final asrTime = _formatTime(noonMinutes + 130);
-    final maghribTime = _formatTime(noonMinutes + 200);
-    final ishaTime = _formatTime(noonMinutes + 275);
+    // Equation of time (in minutes)
+    final double eqOfTime = 9.87 * sin(_toRadians(2 * 360 / 365.24 * (dayOfYear - 81))) -
+        7.53 * cos(_toRadians(360 / 365.24 * (dayOfYear - 81)));
+
+    // Solar noon in minutes from midnight
+    final double solarNoonMinutes = 720.0 + (tz * 60.0) - (lng * 4.0) - eqOfTime;
+
+    // Helper to calculate hour angle H for a target sun altitude angle (in degrees)
+    double? calculateHourAngle(double angleDeg) {
+      final latRad = _toRadians(lat);
+      final decRad = _toRadians(declination);
+      final angleRad = _toRadians(angleDeg);
+
+      final cosH = (sin(angleRad) - sin(latRad) * sin(decRad)) / (cos(latRad) * cos(decRad));
+      if (cosH < -1.0 || cosH > 1.0) return null;
+      return acos(cosH) * 180.0 / pi * 4.0; // convert degrees to minutes (1 deg = 4 mins)
+    }
+
+    // Sunrise / Maghrib: Sun is 0.833 degrees below horizon
+    final sunRiseSetMinutes = calculateHourAngle(-0.833) ?? 340.0;
+    final sunriseMinutes = solarNoonMinutes - sunRiseSetMinutes;
+    final maghribMinutes = solarNoonMinutes + sunRiseSetMinutes;
+
+    // Fajr: Sun is 18 degrees below horizon (Karachi / Pakistan Standard)
+    final fajrMinutesOffset = calculateHourAngle(-18.0) ?? (sunRiseSetMinutes + 90.0);
+    final fajrMinutes = solarNoonMinutes - fajrMinutesOffset;
+
+    // Isha: Sun is 18 degrees below horizon (Karachi / Pakistan Standard)
+    final ishaMinutesOffset = calculateHourAngle(-18.0) ?? (sunRiseSetMinutes + 90.0);
+    final ishaMinutes = solarNoonMinutes + ishaMinutesOffset;
+
+    // Dhuhr: Solar noon + 1 minute
+    final dhuhrMinutes = solarNoonMinutes + 1.0;
+
+    // Asr: Shadow factor N = 1 (Standard Shafi/Maliki/Hanbali) or N = 2 (Hanafi)
+    final shadowFactor = isHanafi ? 2.0 : 1.0;
+    final latDecDiffRad = _toRadians((lat - declination).abs());
+    final asrAngleRad = atan(1.0 / (shadowFactor + tan(latDecDiffRad)));
+    final asrAngleDeg = asrAngleRad * 180.0 / pi;
+    final asrMinutesOffset = calculateHourAngle(asrAngleDeg) ?? 230.0;
+    final asrMinutes = solarNoonMinutes + asrMinutesOffset;
+
+    final fajrTime = _formatTime(fajrMinutes);
+    final sunriseTime = _formatTime(sunriseMinutes);
+    final dhuhrTime = _formatTime(dhuhrMinutes);
+    final asrTime = _formatTime(asrMinutes);
+    final maghribTime = _formatTime(maghribMinutes);
+    final ishaTime = _formatTime(ishaMinutes);
 
     // Determine current & next prayer
-    final currentMinutes = now.hour * 60 + now.minute;
+    final currentMinutes = locationNow.hour * 60 + locationNow.minute;
     String current = 'Isha';
     String next = 'Fajr';
     String nextTimeStr = fajrTime;
-    int targetMinutes = (noonMinutes - 90).toInt();
+    int targetMinutes = fajrMinutes.toInt();
 
-    if (currentMinutes < (noonMinutes - 90)) {
+    if (currentMinutes < fajrMinutes) {
       current = 'Isha';
       next = 'Fajr';
       nextTimeStr = fajrTime;
-      targetMinutes = (noonMinutes - 90).toInt();
-    } else if (currentMinutes < (noonMinutes - 72)) {
+      targetMinutes = fajrMinutes.toInt();
+    } else if (currentMinutes < sunriseMinutes) {
       current = 'Fajr';
       next = 'Sunrise';
       nextTimeStr = sunriseTime;
-      targetMinutes = (noonMinutes - 72).toInt();
-    } else if (currentMinutes < (noonMinutes + 15)) {
+      targetMinutes = sunriseMinutes.toInt();
+    } else if (currentMinutes < dhuhrMinutes) {
       current = 'Sunrise';
       next = 'Dhuhr';
       nextTimeStr = dhuhrTime;
-      targetMinutes = (noonMinutes + 15).toInt();
-    } else if (currentMinutes < (noonMinutes + 130)) {
+      targetMinutes = dhuhrMinutes.toInt();
+    } else if (currentMinutes < asrMinutes) {
       current = 'Dhuhr';
       next = 'Asr';
       nextTimeStr = asrTime;
-      targetMinutes = (noonMinutes + 130).toInt();
-    } else if (currentMinutes < (noonMinutes + 200)) {
+      targetMinutes = asrMinutes.toInt();
+    } else if (currentMinutes < maghribMinutes) {
       current = 'Asr';
       next = 'Maghrib';
       nextTimeStr = maghribTime;
-      targetMinutes = (noonMinutes + 200).toInt();
-    } else if (currentMinutes < (noonMinutes + 275)) {
+      targetMinutes = maghribMinutes.toInt();
+    } else if (currentMinutes < ishaMinutes) {
       current = 'Maghrib';
       next = 'Isha';
       nextTimeStr = ishaTime;
-      targetMinutes = (noonMinutes + 275).toInt();
+      targetMinutes = ishaMinutes.toInt();
     } else {
       current = 'Isha';
       next = 'Fajr';
       nextTimeStr = fajrTime;
-      targetMinutes = (noonMinutes - 90).toInt() + (24 * 60);
+      targetMinutes = fajrMinutes.toInt() + (24 * 60);
     }
 
     final remainingMins = (targetMinutes - currentMinutes) % (24 * 60);
@@ -110,6 +167,23 @@ class PrayerTimesModel {
       timeRemaining: Duration(minutes: max(0, remainingMins)),
       hijriDateString: '${hijriData[0]} ${hijriData[1]} ${hijriData[2]} AH',
     );
+  }
+
+  static String getPrayerAlertMessage(String prayerName) {
+    switch (prayerName) {
+      case 'Fajr':
+        return 'Fajr prayer time has started.';
+      case 'Dhuhr':
+        return 'Dhuhr prayer time has started.';
+      case 'Asr':
+        return 'Asr prayer time has started.';
+      case 'Maghrib':
+        return 'Maghrib prayer time has started.';
+      case 'Isha':
+        return 'Isha prayer time has started.';
+      default:
+        return '$prayerName prayer time has started.';
+    }
   }
 
   static double _toRadians(double degree) => degree * pi / 180.0;
@@ -135,15 +209,17 @@ class PrayerTimesModel {
     return (365.25 * (year + 4716)).floorToDouble() + (30.6001 * (month + 1)).floorToDouble() + day + b - 1524.5;
   }
 
-  static List<String> _jdToHijri(double jd) {
-    double l = jd - 1948440 + 10632;
-    double n = ((l - 1) / 10631).floorToDouble();
-    l = l - 10631 * n + 354;
-    double j = (((10985 - l) / 5316)).floorToDouble() * (((50 * l) / 17719)).floorToDouble() + ((l / 5670)).floorToDouble() * (((43 * l) / 15238)).floorToDouble();
-    l = l - (((30 - j) / 15)).floorToDouble() * (((17719 * j) / 50)).floorToDouble() - ((j / 16)).floorToDouble() * (((15238 * j) / 43)).floorToDouble() + 29;
-    double month = ((24 * l) / 709).floorToDouble();
-    double day = l - ((709 * month) / 24).floorToDouble();
-    double year = 30 * n + j - 30;
+  static List<String> _jdToHijri(double jd, {int offsetDays = 1}) {
+    // Kuwaiti algorithm for Gregorian to Hijri date conversion
+    double z = (jd + 0.5).floorToDouble() - 1948440 + offsetDays;
+    double i = (z / 10631.0).floorToDouble();
+    double f = z - 10631.0 * i;
+    double j = ((f - 1.0) / 354.366).floorToDouble();
+    if (j > 29) j = 29;
+    double h = (f - 1.0) - (354.366 * j).floorToDouble();
+    double month = ((h + 29.5) / 29.5).floorToDouble();
+    double day = h - (29.5 * (month - 1.0)).roundToDouble() + 1.0;
+    double year = 30.0 * i + j + 1.0;
 
     const hijriMonths = [
       'Muharram', 'Safar', 'Rabi al-Awwal', 'Rabi al-Thani',
@@ -152,6 +228,9 @@ class PrayerTimesModel {
     ];
 
     int mIdx = (month.toInt() - 1).clamp(0, 11);
-    return ['${day.toInt()}', hijriMonths[mIdx], '${year.toInt()}'];
+    int dayVal = day.toInt().clamp(1, 30);
+    int yearVal = year.toInt();
+
+    return ['$dayVal', hijriMonths[mIdx], '$yearVal'];
   }
 }

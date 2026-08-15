@@ -85,7 +85,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Unable to get location: $e';
+        _errorMessage = 'Unable to get location. Please verify your GPS signal.';
         _isLoadingLocation = false;
       });
     }
@@ -131,7 +131,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
     final relativeQiblaAngle = (bearing - heading + 360.0) % 360.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Qibla Finder (قبلہ رخ)', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: AppConstants.primaryGreen,
@@ -167,7 +167,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 15, color: Colors.black87),
+                          style: const TextStyle(fontSize: 15),
                         ),
                         const SizedBox(height: 20),
                         ElevatedButton.icon(
@@ -183,115 +183,129 @@ class _QiblaScreenState extends State<QiblaScreen> {
                     ),
                   ),
                 )
-              : Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Location Info Card
-                        Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                'Qibla Direction: ${bearing.toStringAsFixed(1)}° True North',
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppConstants.primaryGreen,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Your Position: ${_userLat!.toStringAsFixed(4)}°, ${_userLng!.toStringAsFixed(4)}°',
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                              Text(
-                                'Distance to Kaaba: ${_distanceToMakkah.toStringAsFixed(0)} km',
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final availableWidth = constraints.maxWidth;
+                    final availableHeight = constraints.maxHeight;
+                    final compassSize = (min(availableWidth, availableHeight) * 0.52).clamp(180.0, 260.0);
 
-                        const SizedBox(height: 36),
-
-                        // Dynamic Rotatable Compass Dial
-                        Stack(
-                          alignment: Alignment.center,
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minHeight: max(0, availableHeight - 40)),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Outer Dial Background
-                            Transform.rotate(
-                              angle: -heading * pi / 180.0,
-                              child: Container(
-                                width: 260,
-                                height: 260,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                  border: Border.all(color: AppConstants.primaryGreen.withOpacity(0.3), width: 8),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppConstants.primaryGreen.withOpacity(0.15),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
-                                child: const Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Positioned(top: 14, child: Text('N', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red))),
-                                    Positioned(bottom: 14, child: Text('S', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey))),
-                                    Positioned(left: 14, child: Text('W', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey))),
-                                    Positioned(right: 14, child: Text('E', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey))),
-                                  ],
-                                ),
+                            // Location Info Card
+                            Container(
+                              padding: const EdgeInsets.all(18),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
-                            ),
-
-                            // Qibla Pointer Arrow (Rotates directly to Kaaba angle)
-                            Transform.rotate(
-                              angle: relativeQiblaAngle * pi / 180.0,
                               child: Column(
-                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.location_on_rounded, size: 52, color: AppConstants.gold),
-                                  Container(
-                                    width: 4,
-                                    height: 75,
-                                    color: AppConstants.primaryGreen,
+                                  Text(
+                                    'Qibla Direction: ${bearing.toStringAsFixed(1)}° True North',
+                                    style: const TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppConstants.primaryGreen,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Position: ${_userLat!.toStringAsFixed(4)}°, ${_userLng!.toStringAsFixed(4)}°',
+                                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                                  ),
+                                  Text(
+                                    'Distance to Kaaba: ${_distanceToMakkah.toStringAsFixed(0)} km',
+                                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
                                   ),
                                 ],
                               ),
                             ),
+
+                            const SizedBox(height: 24),
+
+                            // Dynamically Scaled Rotatable Compass Dial
+                            Center(
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // Outer Dial Background
+                                  Transform.rotate(
+                                    angle: -heading * pi / 180.0,
+                                    child: Container(
+                                      width: compassSize,
+                                      height: compassSize,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Theme.of(context).colorScheme.surface,
+                                        border: Border.all(color: AppConstants.primaryGreen.withOpacity(0.3), width: 6),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppConstants.primaryGreen.withOpacity(0.15),
+                                            blurRadius: 20,
+                                            offset: const Offset(0, 8),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          Positioned(top: 10, child: Text('N', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.red))),
+                                          Positioned(bottom: 10, child: Text('S', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey))),
+                                          Positioned(left: 10, child: Text('W', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey))),
+                                          Positioned(right: 10, child: Text('E', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey))),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Qibla Pointer Arrow (Rotates directly to Kaaba angle)
+                                  Transform.rotate(
+                                    angle: relativeQiblaAngle * pi / 180.0,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.location_on_rounded, size: compassSize * 0.2, color: AppConstants.gold),
+                                        Container(
+                                          width: 4,
+                                          height: compassSize * 0.28,
+                                          color: AppConstants.primaryGreen,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            Text(
+                              _deviceHeading == null
+                                  ? 'Rotate device to align with Kaaba indicator.'
+                                  : 'Rotate phone until indicator points straight ahead.',
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 13),
+                              textAlign: TextAlign.center,
+                            ),
                           ],
                         ),
-
-                        const SizedBox(height: 36),
-
-                        Text(
-                          _deviceHeading == null
-                              ? 'Rotate your device to align with the Kaaba indicator.'
-                              : 'Rotate your phone until the indicator points straight ahead.',
-                          style: const TextStyle(color: Colors.black54, fontSize: 13),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
     );
   }

@@ -38,11 +38,11 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     _buildModernResumeCard(context, quranProvider),
                     const SizedBox(height: 32),
-                    _buildSectionHeader('Holy Quran'),
+                    _buildSectionHeader('Holy Quran Navigation'),
                     const SizedBox(height: 16),
                     _buildQuranGrid(context),
                     const SizedBox(height: 32),
-                    _buildSectionHeader('Islamic Tools'),
+                    _buildSectionHeader('Islamic Utility Tools'),
                     const SizedBox(height: 16),
                     _buildToolsGrid(context),
                     const SizedBox(height: 32),
@@ -64,29 +64,30 @@ class HomeScreen extends StatelessWidget {
       pinned: true,
       elevation: 0,
       stretch: true,
-      backgroundColor: Colors.white.withOpacity(0.8),
+      backgroundColor: Colors.white.withOpacity(0.85),
       flexibleSpace: FlexibleSpaceBar(
         centerTitle: false,
         titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
         title: Text(
-          'Tajweed Quran',
+          'Tajweed Quran & Hadith',
           style: GoogleFonts.plusJakartaSans(
             color: AppConstants.primaryGreen,
             fontWeight: FontWeight.w800,
-            fontSize: 22,
+            fontSize: 20,
           ),
         ),
       ),
       actions: [
         IconButton(
           onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
+          tooltip: 'App Settings',
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: AppConstants.primaryGreen.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.settings_outlined, size: 20),
+            child: const Icon(Icons.settings_outlined, size: 20, color: AppConstants.primaryGreen),
           ),
         ),
         const SizedBox(width: 12),
@@ -108,7 +109,7 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Talib Afridi', // Dynamic name can be added later
+          'Talib Afridi',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 26,
             fontWeight: FontWeight.w800,
@@ -123,9 +124,9 @@ class HomeScreen extends StatelessWidget {
     final resume = provider.resumeData;
     return Container(
       width: double.infinity,
-      height: 180,
+      constraints: const BoxConstraints(minHeight: 180),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(28),
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -151,24 +152,27 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 18.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.menu_book, color: Colors.white, size: 20),
+                    const Icon(Icons.menu_book, color: Colors.white, size: 18),
                     const SizedBox(width: 8),
                     Text(
-                      'Last Read',
+                      'Last Read Position',
                       style: GoogleFonts.plusJakartaSans(
                         color: Colors.white.withOpacity(0.8),
                         fontWeight: FontWeight.w600,
+                        fontSize: 13,
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -176,7 +180,7 @@ class HomeScreen extends StatelessWidget {
                       resume?.surahName ?? 'Surah Al-Fatiha',
                       style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -187,18 +191,19 @@ class HomeScreen extends StatelessWidget {
                           : 'Page 1 • Juz 1',
                       style: GoogleFonts.plusJakartaSans(
                         color: Colors.white.withOpacity(0.7),
-                        fontSize: 14,
+                        fontSize: 13,
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 14),
                 GestureDetector(
                   onTap: () => Navigator.pushNamed(context, AppRoutes.quranPage),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       'Continue Reading',
@@ -228,14 +233,6 @@ class HomeScreen extends StatelessWidget {
             fontSize: 20,
             fontWeight: FontWeight.w800,
             color: AppConstants.textPrimaryLight,
-          ),
-        ),
-        Text(
-          'See all',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: AppConstants.primaryGreen,
           ),
         ),
       ],
@@ -269,19 +266,19 @@ class HomeScreen extends StatelessWidget {
         ),
         _buildColorfulCard(
           context,
-          'Pages',
-          'Read by Page',
+          '604 Pages',
+          'Read Mushaf Page',
           Icons.auto_stories_rounded,
           AppConstants.softPink,
           AppRoutes.quranPage,
         ),
         _buildColorfulCard(
           context,
-          'Audio',
-          'Listen Quran',
-          Icons.headset_mic_rounded,
+          'Khatam Plan',
+          'Completion Tracker',
+          Icons.track_changes_rounded,
           AppConstants.softOrange,
-          AppRoutes.surahList,
+          AppRoutes.khatam,
         ),
       ],
     );
@@ -294,15 +291,20 @@ class HomeScreen extends StatelessWidget {
       crossAxisCount: 3,
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
-      childAspectRatio: 0.9,
+      childAspectRatio: 0.85,
       children: [
-        _buildToolIcon(context, 'Prayer', Icons.access_time_filled, AppConstants.softTeal, AppRoutes.prayerTimes),
-        _buildToolIcon(context, 'Qibla', Icons.explore, AppConstants.softIndigo, AppRoutes.qibla),
+        _buildToolIcon(context, 'Prayer Times', Icons.access_time_filled, AppConstants.softTeal, AppRoutes.prayerTimes),
+        _buildToolIcon(context, 'Qibla Finder', Icons.explore, AppConstants.softIndigo, AppRoutes.qibla),
         _buildToolIcon(context, 'Tasbeeh', Icons.vibration, AppConstants.vibrantOrange, AppRoutes.tasbeeh),
-        _buildToolIcon(context, 'Hadith', Icons.library_books, AppConstants.softBlue, AppRoutes.hadithBooks),
-        _buildToolIcon(context, 'Tracker', Icons.auto_graph_rounded, AppConstants.softPink, AppRoutes.khatam),
-        _buildToolIcon(context, 'Duas', Icons.front_hand, AppConstants.gold, AppRoutes.duas),
-        _buildToolIcon(context, 'Names', Icons.stars, AppConstants.softPurple, AppRoutes.allahNames),
+        _buildToolIcon(context, 'Hadith Books', Icons.library_books, AppConstants.softBlue, AppRoutes.hadithBooks),
+        _buildToolIcon(context, 'Masnoon Duas', Icons.front_hand, AppConstants.gold, AppRoutes.duas),
+        _buildToolIcon(context, '99 Names', Icons.stars, AppConstants.softPurple, AppRoutes.allahNames),
+        _buildToolIcon(context, 'Daily Ayah', Icons.lightbulb, AppConstants.gold, AppRoutes.dailyAyah),
+        _buildToolIcon(context, 'Islamic Calendar', Icons.calendar_month, AppConstants.softTeal, AppRoutes.calendar),
+        _buildToolIcon(context, 'Hajj Guide', Icons.mosque, AppConstants.softOrange, AppRoutes.hajjGuide),
+        _buildToolIcon(context, 'Zakat Calc', Icons.calculate, AppConstants.softBlue, AppRoutes.zakatCalculator),
+        _buildToolIcon(context, '6 Kalmas', Icons.collections_bookmark, AppConstants.softPink, AppRoutes.kalmas),
+        _buildToolIcon(context, 'Tracker', Icons.auto_graph, AppConstants.primaryGreen, AppRoutes.khatam),
       ],
     );
   }
@@ -383,10 +385,11 @@ class HomeScreen extends StatelessWidget {
           Text(
             title,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: AppConstants.textPrimaryLight,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -412,15 +415,31 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.lightbulb, color: AppConstants.gold, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                'Daily Inspiration',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.grey[500],
+              Row(
+                children: [
+                  const Icon(Icons.lightbulb, color: AppConstants.gold, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Daily Inspiration',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () => Navigator.pushNamed(context, AppRoutes.dailyAyah),
+                child: Text(
+                  'View All',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppConstants.primaryGreen,
+                  ),
                 ),
               ),
             ],
