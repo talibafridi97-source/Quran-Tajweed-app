@@ -43,6 +43,7 @@ class TajweedParser {
     double? fontSize,
     Color? defaultColor,
     String? fontFamily,
+    bool showTajweed = true,
   }) {
     List<InlineSpan> spans = [];
 
@@ -60,13 +61,14 @@ class TajweedParser {
         ? fontFamily
         : AppConstants.uthmaniFont;
 
-    TextStyle getStyle(Color col, {bool isBold = false}) {
+    TextStyle getStyle(Color col) {
       return TextStyle(
         color: col,
         fontSize: fontSize ?? 26,
         fontFamily: selectedFont,
-        fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-        height: 2.0,
+        fontWeight: FontWeight.normal,
+        height: 1.95,
+        letterSpacing: 0.0,
       );
     }
 
@@ -86,10 +88,12 @@ class TajweedParser {
       String content = match.group(2) ?? '';
 
       if (content.isNotEmpty) {
-        Color color = _tajweedColors[rule] ?? (defaultColor ?? Colors.black87);
+        Color color = showTajweed
+            ? (_tajweedColors[rule] ?? (defaultColor ?? Colors.black87))
+            : (defaultColor ?? Colors.black87);
         spans.add(TextSpan(
           text: content,
-          style: getStyle(color, isBold: true),
+          style: getStyle(color),
         ));
       }
 

@@ -87,22 +87,12 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                             BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)
                           ],
                         ),
-                        child: Directionality(
-                          textDirection: TextDirection.rtl,
-                          child: Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 4,
-                            runSpacing: 14,
-                            children: List.generate(ayahs.length, (index) {
-                              final ayah = ayahs[index];
-                              return TajweedText(
-                                rawText: '${ayah.text} ',
-                                fontSize: settings.arabicFontSize,
-                                fontFamily: AppConstants.uthmaniFont,
-                                ayahNumber: ayah.numberInSurah,
-                              );
-                            }),
-                          ),
+                        child: TajweedText(
+                          ayahs: ayahs,
+                          fontSize: settings.arabicFontSize,
+                          fontFamily: AppConstants.uthmaniFont,
+                          showTajweed: settings.showTajweed,
+                          textAlign: TextAlign.justify,
                         ),
                       ),
                       const SizedBox(height: 100),

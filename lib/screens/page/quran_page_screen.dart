@@ -172,18 +172,11 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
                 _loadData();
               });
             },
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 2,
-              runSpacing: 8,
-              children: ayahs.map((a) {
-                return TajweedText(
-                  rawText: '${a.text} ',
-                  fontSize: 22,
-                  fontFamily: AppConstants.uthmaniFont,
-                  ayahNumber: a.numberInSurah,
-                );
-              }).toList(),
+            child: TajweedText(
+              ayahs: ayahs,
+              fontSize: 22,
+              fontFamily: AppConstants.uthmaniFont,
+              textAlign: TextAlign.justify,
             ),
           ),
         );

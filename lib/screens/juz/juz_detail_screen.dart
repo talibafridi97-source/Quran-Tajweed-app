@@ -396,21 +396,12 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
                 ],
 
                 // Ayahs Text
-                Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 4,
-                    runSpacing: 12,
-                    children: sAyahs.map((ayah) {
-                      return TajweedText(
-                        rawText: '${ayah.text} ',
-                        fontSize: settings.arabicFontSize,
-                        fontFamily: AppConstants.uthmaniFont,
-                        ayahNumber: ayah.numberInSurah,
-                      );
-                    }).toList(),
-                  ),
+                TajweedText(
+                  ayahs: sAyahs,
+                  fontSize: settings.arabicFontSize,
+                  fontFamily: AppConstants.uthmaniFont,
+                  showTajweed: settings.showTajweed,
+                  textAlign: TextAlign.justify,
                 ),
                 const SizedBox(height: 16),
               ],
