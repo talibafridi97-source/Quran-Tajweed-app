@@ -62,7 +62,9 @@ flutter:
   fonts:
     - family: Uthmani
       fonts:
+        - asset: assets/fonts/QuranAmiri.ttf
         - asset: assets/fonts/QuranFont.ttf
+          weight: 700
     - family: QuranAmiri
       fonts:
         - asset: assets/fonts/QuranAmiri.ttf

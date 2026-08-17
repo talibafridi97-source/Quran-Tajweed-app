@@ -14,7 +14,7 @@ class DatabaseService {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'quran_db_v2.db');
+    String path = join(await getDatabasesPath(), 'quran_db_v3.db');
     return await openDatabase(
       path,
       version: 1,

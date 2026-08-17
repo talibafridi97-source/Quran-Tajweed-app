@@ -138,13 +138,15 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             '${widget.surah.englishNameTranslation} • ${widget.surah.numberOfAyahs} Ayahs',
             style: GoogleFonts.plusJakartaSans(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 24),
-          const Divider(color: Colors.white24, height: 1),
-          const SizedBox(height: 24),
-          const Text(
-            'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-            style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 26, color: Colors.white),
-          ),
+          if (widget.surah.number != 1 && widget.surah.number != 9) ...[
+            const SizedBox(height: 24),
+            const Divider(color: Colors.white24, height: 1),
+            const SizedBox(height: 24),
+            const Text(
+              'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+              style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 26, color: Colors.white),
+            ),
+          ],
         ],
       ),
     );

@@ -14,7 +14,7 @@ class ApiService {
         _storageService = storageService;
 
   Future<List<Surah>> getAllSurahs() async {
-    const cacheKey = 'surah_list';
+    const cacheKey = 'surah_list_v3';
     final cached = _storageService.getCachedString(cacheKey);
     if (cached != null) {
       try {
@@ -34,7 +34,7 @@ class ApiService {
   }
 
   Future<List<Ayah>> getSurahTajweed(int surahNumber) async {
-    final cacheKey = 'surah_tajweed_$surahNumber';
+    final cacheKey = 'surah_tajweed_v3_$surahNumber';
     final cached = _storageService.getCachedString(cacheKey);
     if (cached != null) {
       try {
@@ -54,7 +54,7 @@ class ApiService {
   }
 
   Future<List<Ayah>> getJuzTajweed(int juzNumber) async {
-    final cacheKey = 'juz_tajweed_$juzNumber';
+    final cacheKey = 'juz_tajweed_v3_$juzNumber';
     final cached = _storageService.getCachedString(cacheKey);
     if (cached != null) {
       try {
@@ -74,7 +74,7 @@ class ApiService {
   }
 
   Future<List<Ayah>> getPageTajweed(int pageNumber) async {
-    final cacheKey = 'page_tajweed_$pageNumber';
+    final cacheKey = 'page_tajweed_v3_$pageNumber';
     final cached = _storageService.getCachedString(cacheKey);
     if (cached != null) {
       try {
