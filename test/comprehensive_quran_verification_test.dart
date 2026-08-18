@@ -25,7 +25,7 @@ void main() {
         ];
 
         for (final sNum in representativeSurahs) {
-          final res = await http.get(Uri.parse('https://api.alquran.cloud/v1/surah/$sNum/quran-tajweed'));
+          final res = await http.get(Uri.parse('https://api.alquran.cloud/v1/surah/$sNum/quran-uthmani'));
           expect(res.statusCode, 200);
           final ayahs = json.decode(res.body)['data']['ayahs'] as List;
 
@@ -35,8 +35,11 @@ void main() {
           for (final a in ayahs) {
             final raw = a['text'] as String;
 
-            // Test Tajweed ON
+            // Test Tajweed ON with canonical Uthmani text
             final spansWithTajweed = TajweedParser.parse(raw, showTajweed: true);
+            final reconstructed = spansWithTajweed.map((s) => (s is TextSpan) ? s.text : '').join('');
+            expect(reconstructed, raw, reason: 'Parser must NOT change a single character of canonical Uthmani text');
+
             for (final span in spansWithTajweed) {
               if (span is TextSpan) {
                 final t = span.text ?? '';
@@ -53,14 +56,12 @@ void main() {
             final spansWithoutTajweed = TajweedParser.parse(raw, showTajweed: false);
             expect(spansWithoutTajweed.length, 1);
             final cleanText = (spansWithoutTajweed.first as TextSpan).text ?? '';
-            expect(cleanText.contains('['), false);
-            expect(cleanText.contains(']'), false);
-            expect(cleanText.contains('\u0672'), false);
+            expect(cleanText, raw);
           }
 
           expect(orphanedMarksCount, 0, reason: 'Found orphaned combining marks in Surah $sNum');
           expect(substitutedCharCount, 0, reason: 'Found substituted U+0672 in Surah $sNum');
-          print('  Surah $sNum (${ayahs.length} Ayahs): VERIFIED 100% CLEAN');
+          print('  Surah $sNum (${ayahs.length} Ayahs): VERIFIED 100% CANONICAL UTHMANI');
         }
       },
       timeout: const Timeout(Duration(minutes: 2)),
@@ -73,7 +74,7 @@ void main() {
         final testJuzList = [1, 2, 15, 29, 30];
 
         for (final jNum in testJuzList) {
-          final res = await http.get(Uri.parse('https://api.alquran.cloud/v1/juz/$jNum/quran-tajweed'));
+          final res = await http.get(Uri.parse('https://api.alquran.cloud/v1/juz/$jNum/quran-uthmani'));
           expect(res.statusCode, 200);
           final ayahs = json.decode(res.body)['data']['ayahs'] as List;
 
@@ -81,6 +82,9 @@ void main() {
           for (final a in ayahs) {
             final raw = a['text'] as String;
             final spans = TajweedParser.parse(raw, showTajweed: true);
+            final reconstructed = spans.map((s) => (s is TextSpan) ? s.text : '').join('');
+            expect(reconstructed, raw, reason: 'Parser must NOT change a single character of canonical Uthmani text');
+
             for (final span in spans) {
               if (span is TextSpan) {
                 final t = span.text ?? '';
@@ -91,7 +95,7 @@ void main() {
             }
           }
           expect(orphanedMarksCount, 0, reason: 'Found orphaned marks in Juz $jNum');
-          print('  Juz $jNum (${ayahs.length} Ayahs): VERIFIED 100% CLEAN');
+          print('  Juz $jNum (${ayahs.length} Ayahs): VERIFIED 100% CANONICAL UTHMANI');
         }
       },
       timeout: const Timeout(Duration(minutes: 2)),
@@ -104,7 +108,7 @@ void main() {
         final testPages = [1, 2, 3, 300, 604];
 
         for (final pNum in testPages) {
-          final res = await http.get(Uri.parse('https://api.alquran.cloud/v1/page/$pNum/quran-tajweed'));
+          final res = await http.get(Uri.parse('https://api.alquran.cloud/v1/page/$pNum/quran-uthmani'));
           expect(res.statusCode, 200);
           final ayahs = json.decode(res.body)['data']['ayahs'] as List;
 
@@ -112,6 +116,9 @@ void main() {
           for (final a in ayahs) {
             final raw = a['text'] as String;
             final spans = TajweedParser.parse(raw, showTajweed: true);
+            final reconstructed = spans.map((s) => (s is TextSpan) ? s.text : '').join('');
+            expect(reconstructed, raw, reason: 'Parser must NOT change a single character of canonical Uthmani text');
+
             for (final span in spans) {
               if (span is TextSpan) {
                 final t = span.text ?? '';
@@ -122,7 +129,7 @@ void main() {
             }
           }
           expect(orphanedMarksCount, 0, reason: 'Found orphaned marks on Page $pNum');
-          print('  Mushaf Page $pNum (${ayahs.length} Ayahs): VERIFIED 100% CLEAN');
+          print('  Mushaf Page $pNum (${ayahs.length} Ayahs): VERIFIED 100% CANONICAL UTHMANI');
         }
       },
       timeout: const Timeout(Duration(minutes: 2)),

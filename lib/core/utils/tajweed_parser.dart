@@ -57,6 +57,106 @@ class TajweedParser {
         (codeUnit >= 0x08E3 && codeUnit <= 0x08FF);
   }
 
+  // Split authentic string into Grapheme Clusters
+  static List<String> toGraphemeClusters(String text) {
+    List<String> clusters = [];
+    StringBuffer current = StringBuffer();
+
+    for (int i = 0; i < text.length; i++) {
+      int cu = text.codeUnitAt(i);
+      if (isArabicCombiningMark(cu)) {
+        current.writeCharCode(cu);
+      } else {
+        if (current.isNotEmpty) {
+          clusters.add(current.toString());
+          current.clear();
+        }
+        current.writeCharCode(cu);
+      }
+    }
+    if (current.isNotEmpty) {
+      clusters.add(current.toString());
+    }
+    return clusters;
+  }
+
+  static List<InlineSpan> _parseCanonicalUthmani(
+    String text,
+    TextStyle style,
+    Color resolvedColor,
+    bool showTajweed,
+  ) {
+    if (!showTajweed) {
+      return [TextSpan(text: text, style: style)];
+    }
+
+    final clusters = toGraphemeClusters(text);
+    final List<Color> colors = List.filled(clusters.length, resolvedColor);
+
+    const qalqalahLetters = {'ق', 'ط', 'ب', 'ج', 'د'};
+
+    for (int i = 0; i < clusters.length; i++) {
+      final cluster = clusters[i];
+      if (cluster.isEmpty) continue;
+      final base = cluster[0];
+
+      // 1. Hamzatul Wasl: ٱ (U+0671)
+      if (base == '\u0671') {
+        colors[i] = _tajweedColors['h'] ?? resolvedColor;
+      }
+      // 2. Silent Letter: Letter with U+06DF (Small High Rounded Zero ۟) or U+06E0
+      else if (cluster.contains('\u06DF') || cluster.contains('\u06E0')) {
+        colors[i] = _tajweedColors['s'] ?? resolvedColor;
+      }
+      // 3. Ghunnah: Noon or Meem with Shadda (ّ U+0651)
+      else if ((base == 'ن' || base == 'م') && cluster.contains('\u0651')) {
+        colors[i] = _tajweedColors['n'] ?? resolvedColor;
+      }
+      // 4. Madd: Any letter containing Maddah (ٓ U+0653 or ۤ U+06E4)
+      else if (cluster.contains('\u0653') || cluster.contains('\u06E4')) {
+        colors[i] = _tajweedColors['o'] ?? resolvedColor;
+      }
+      // 5. Iqlab: Small Meem (ۢ U+06E2 or ۭ U+06ED)
+      else if (cluster.contains('\u06E2') || cluster.contains('\u06ED')) {
+        colors[i] = _tajweedColors['b'] ?? resolvedColor;
+      }
+      // 6. Qalqalah: Qaf, Taa, Baa, Jeem, Dal with Sukun (ْ U+0652 or ۡ U+06E1)
+      else if (qalqalahLetters.contains(base) &&
+          (cluster.contains('\u0652') || cluster.contains('\u06E1'))) {
+        colors[i] = _tajweedColors['q'] ?? resolvedColor;
+      }
+    }
+
+    // Merge consecutive clusters with same color into TextSpans
+    final List<InlineSpan> spans = [];
+    StringBuffer buffer = StringBuffer();
+    Color currentColor = colors.isNotEmpty ? colors[0] : resolvedColor;
+
+    for (int i = 0; i < clusters.length; i++) {
+      if (colors[i] == currentColor) {
+        buffer.write(clusters[i]);
+      } else {
+        if (buffer.isNotEmpty) {
+          spans.add(TextSpan(
+            text: buffer.toString(),
+            style: style.copyWith(color: currentColor),
+          ));
+          buffer.clear();
+        }
+        currentColor = colors[i];
+        buffer.write(clusters[i]);
+      }
+    }
+    if (buffer.isNotEmpty) {
+      spans.add(TextSpan(
+        text: buffer.toString(),
+        style: style.copyWith(color: currentColor),
+      ));
+    }
+
+    return spans;
+  }
+
   static List<InlineSpan> parse(
     String text, {
     double? fontSize,
@@ -79,6 +179,11 @@ class TajweedParser {
         height: 1.95,
         letterSpacing: 0.0,
       );
+    }
+
+    // If pure canonical Uthmani text (no tags present), parse via pure grapheme cluster engine
+    if (!text.contains('[')) {
+      return _parseCanonicalUthmani(text, getStyle(resolvedColor), resolvedColor, showTajweed);
     }
 
     if (!showTajweed) {
