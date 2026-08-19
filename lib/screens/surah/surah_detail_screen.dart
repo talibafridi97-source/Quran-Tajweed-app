@@ -59,6 +59,33 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           final hasError = snapshot.hasError;
           final ayahs = snapshot.data ?? [];
 
+          List<Ayah> processedAyahs = ayahs;
+          if (widget.surah.number != 1 && ayahs.isNotEmpty) {
+            final first = ayahs.first;
+            if (first.text.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ')) {
+              final cleanText = first.text.replaceFirst(RegExp(r'^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*'), '');
+              if (cleanText.isNotEmpty) {
+                processedAyahs = [
+                  Ayah(
+                    number: first.number,
+                    text: cleanText,
+                    numberInSurah: first.numberInSurah,
+                    juz: first.juz,
+                    manzil: first.manzil,
+                    page: first.page,
+                    ruku: first.ruku,
+                    hizbQuarter: first.hizbQuarter,
+                    sajda: first.sajda,
+                    surahNumber: first.surahNumber,
+                    surahName: first.surahName,
+                    surahEnglishName: first.surahEnglishName,
+                  ),
+                  ...ayahs.skip(1),
+                ];
+              }
+            }
+          }
+
           return LoadingErrorWidget(
             isLoading: isLoading,
             errorMessage: hasError ? snapshot.error.toString() : null,
@@ -88,7 +115,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                           ],
                         ),
                         child: TajweedText(
-                          ayahs: ayahs,
+                          ayahs: processedAyahs,
                           fontSize: settings.arabicFontSize,
                           fontFamily: AppConstants.uthmaniFont,
                           showTajweed: settings.showTajweed,

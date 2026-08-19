@@ -14,7 +14,7 @@ class ApiService {
         _storageService = storageService;
 
   Future<List<Surah>> getAllSurahs() async {
-    const cacheKey = 'surah_list_v3';
+    const cacheKey = 'surah_list_v5';
     final cached = _storageService.getCachedString(cacheKey);
     if (cached != null) {
       try {
@@ -33,8 +33,19 @@ class ApiService {
     throw Exception('Failed to load Surahs from Quran API. Please check your internet connection.');
   }
 
+  static List<Ayah> _parseAndSanitizeAyahs(List dynamicList) {
+    return dynamicList.map((a) {
+      final map = Map<String, dynamic>.from(a as Map);
+      if (map['text'] is String) {
+        // Strip BOM and clean edges without altering any Arabic/Quranic characters
+        map['text'] = (map['text'] as String).replaceAll('\uFEFF', '').trim();
+      }
+      return Ayah.fromJson(map);
+    }).toList();
+  }
+
   Future<List<Ayah>> getSurahTajweed(int surahNumber) async {
-    final cacheKey = 'surah_uthmani_v4_$surahNumber';
+    final cacheKey = 'surah_uthmani_v5_$surahNumber';
     final cached = _storageService.getCachedString(cacheKey);
     if (cached != null) {
       try {
@@ -47,14 +58,15 @@ class ApiService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final ayahsList = data['data']['ayahs'] as List;
-      await _storageService.cacheString(cacheKey, json.encode(ayahsList));
-      return ayahsList.map((a) => Ayah.fromJson(a)).toList();
+      final parsed = _parseAndSanitizeAyahs(ayahsList);
+      await _storageService.cacheString(cacheKey, json.encode(parsed.map((a) => a.toJson()).toList()));
+      return parsed;
     }
     throw Exception('Unable to load Surah $surahNumber content. Please check internet connection.');
   }
 
   Future<List<Ayah>> getJuzTajweed(int juzNumber) async {
-    final cacheKey = 'juz_uthmani_v4_$juzNumber';
+    final cacheKey = 'juz_uthmani_v5_$juzNumber';
     final cached = _storageService.getCachedString(cacheKey);
     if (cached != null) {
       try {
@@ -67,14 +79,15 @@ class ApiService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final ayahsList = data['data']['ayahs'] as List;
-      await _storageService.cacheString(cacheKey, json.encode(ayahsList));
-      return ayahsList.map((a) => Ayah.fromJson(a)).toList();
+      final parsed = _parseAndSanitizeAyahs(ayahsList);
+      await _storageService.cacheString(cacheKey, json.encode(parsed.map((a) => a.toJson()).toList()));
+      return parsed;
     }
     throw Exception('Unable to load Para $juzNumber content. Please check internet connection.');
   }
 
   Future<List<Ayah>> getPageTajweed(int pageNumber) async {
-    final cacheKey = 'page_uthmani_v4_$pageNumber';
+    final cacheKey = 'page_uthmani_v5_$pageNumber';
     final cached = _storageService.getCachedString(cacheKey);
     if (cached != null) {
       try {
@@ -87,8 +100,9 @@ class ApiService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final ayahsList = data['data']['ayahs'] as List;
-      await _storageService.cacheString(cacheKey, json.encode(ayahsList));
-      return ayahsList.map((a) => Ayah.fromJson(a)).toList();
+      final parsed = _parseAndSanitizeAyahs(ayahsList);
+      await _storageService.cacheString(cacheKey, json.encode(parsed.map((a) => a.toJson()).toList()));
+      return parsed;
     }
     throw Exception('Unable to load Page $pageNumber content. Please check internet connection.');
   }

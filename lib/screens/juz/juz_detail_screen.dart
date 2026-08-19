@@ -383,7 +383,7 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
                   if (sNum != 1 && sNum != 9) ...[
                     const SizedBox(height: 8),
                     const Text(
-                      'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                      'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
                       style: TextStyle(
                         fontFamily: AppConstants.uthmaniFont,
                         fontSize: 24,
@@ -396,12 +396,42 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
                 ],
 
                 // Ayahs Text
-                TajweedText(
-                  ayahs: sAyahs,
-                  fontSize: settings.arabicFontSize,
-                  fontFamily: AppConstants.uthmaniFont,
-                  showTajweed: settings.showTajweed,
-                  textAlign: TextAlign.justify,
+                Builder(
+                  builder: (context) {
+                    List<Ayah> processedSAyahs = sAyahs;
+                    if (sNum != 1 && sAyahs.isNotEmpty && sAyahs.first.numberInSurah == 1) {
+                      final first = sAyahs.first;
+                      if (first.text.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ')) {
+                        final cleanText = first.text.replaceFirst(RegExp(r'^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*'), '');
+                        if (cleanText.isNotEmpty) {
+                          processedSAyahs = [
+                            Ayah(
+                              number: first.number,
+                              text: cleanText,
+                              numberInSurah: first.numberInSurah,
+                              juz: first.juz,
+                              manzil: first.manzil,
+                              page: first.page,
+                              ruku: first.ruku,
+                              hizbQuarter: first.hizbQuarter,
+                              sajda: first.sajda,
+                              surahNumber: first.surahNumber,
+                              surahName: first.surahName,
+                              surahEnglishName: first.surahEnglishName,
+                            ),
+                            ...sAyahs.skip(1),
+                          ];
+                        }
+                      }
+                    }
+                    return TajweedText(
+                      ayahs: processedSAyahs,
+                      fontSize: settings.arabicFontSize,
+                      fontFamily: AppConstants.uthmaniFont,
+                      showTajweed: settings.showTajweed,
+                      textAlign: TextAlign.justify,
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
               ],

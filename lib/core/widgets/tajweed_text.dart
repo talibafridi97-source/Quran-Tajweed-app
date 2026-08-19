@@ -47,7 +47,7 @@ class TajweedText extends StatelessWidget {
       for (int i = 0; i < ayahs!.length; i++) {
         final ayah = ayahs![i];
         spans.addAll(TajweedParser.parse(
-          '${ayah.text} ',
+          ayah.text,
           fontSize: fontSize,
           fontFamily: activeFontFamily,
           defaultColor: defaultColor ?? Colors.black87,
@@ -61,6 +61,7 @@ class TajweedText extends StatelessWidget {
             fontSize: fontSize * 0.75,
             fontWeight: FontWeight.normal,
             fontFamily: activeFontFamily,
+            height: 2.05,
           ),
         ));
       }
@@ -82,6 +83,7 @@ class TajweedText extends StatelessWidget {
             fontSize: fontSize * 0.75,
             fontWeight: FontWeight.normal,
             fontFamily: activeFontFamily,
+            height: 2.05,
           ),
         ));
       }
@@ -93,7 +95,7 @@ class TajweedText extends StatelessWidget {
         TextSpan(
           style: TextStyle(
             fontSize: fontSize,
-            height: 1.95,
+            height: 2.05,
             letterSpacing: 0.0,
             fontFamily: activeFontFamily,
             color: defaultColor ?? Colors.black87,
@@ -103,6 +105,7 @@ class TajweedText extends StatelessWidget {
         ),
         textAlign: textAlign,
         textDirection: TextDirection.rtl,
+        softWrap: true,
         textHeightBehavior: const TextHeightBehavior(
           applyHeightToFirstAscent: true,
           applyHeightToLastDescent: true,

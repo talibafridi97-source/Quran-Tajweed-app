@@ -176,7 +176,7 @@ class TajweedParser {
         fontSize: fontSize ?? 24,
         fontFamily: selectedFont,
         fontWeight: FontWeight.normal,
-        height: 1.95,
+        height: 2.05,
         letterSpacing: 0.0,
       );
     }
