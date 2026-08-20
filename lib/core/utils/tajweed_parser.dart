@@ -9,39 +9,39 @@ class _SpanToken {
 
 class TajweedParser {
   static const Map<String, Color> _tajweedColors = {
-    // Silent & Wasl (Muted Gray)
-    'h': Color(0xFFAAAAAA), // Hamzatul Wasl
-    's': Color(0xFFAAAAAA), // Silent letter
-    'l': Color(0xFFAAAAAA), // Lam Shamsiyyah
+    // Silent & Wasl (Muted Slate Gray)
+    'h': Color(0xFF8A9096), // Hamzatul Wasl
+    's': Color(0xFF8A9096), // Silent letter
+    'l': Color(0xFF8A9096), // Lam Shamsiyyah
     
-    // Ghunnah (Orange)
-    'n': Color(0xFFFF7E1E), // Ghunnah
-    'g': Color(0xFFFF7E1E), // Ghunnah (alternate)
+    // Ghunnah (Vibrant Orange)
+    'n': Color(0xFFE65100), // Ghunnah
+    'g': Color(0xFFE65100), // Ghunnah (alternate)
 
-    // Idgham (Green)
-    'm': Color(0xFF169777), // Idgham
-    'u': Color(0xFF169777), // Idgham Shafawi
-    'a': Color(0xFF169777), // Idgham / Alif
-    'r': Color(0xFF169777), // Idgham without Ghunnah
+    // Idgham (Emerald Green)
+    'm': Color(0xFF00897B), // Idgham
+    'u': Color(0xFF00897B), // Idgham Shafawi
+    'a': Color(0xFF00897B), // Idgham / Alif
+    'r': Color(0xFF00897B), // Idgham without Ghunnah
 
-    // Iqlab (Cyan)
-    'b': Color(0xFF26BFFD), // Iqlab
-    'd': Color(0xFF26BFFD), // Iqlab (alternate)
-    'v': Color(0xFF26BFFD), // Iqlab (alternate)
+    // Iqlab (Sky Cyan)
+    'b': Color(0xFF00B0FF), // Iqlab
+    'd': Color(0xFF00B0FF), // Iqlab (alternate)
+    'v': Color(0xFF00B0FF), // Iqlab (alternate)
 
-    // Ikhfa (Purple)
-    'i': Color(0xFF9400A8), // Ikhfa
-    'p': Color(0xFF9400A8), // Ikhfa Shafawi
-    'c': Color(0xFF9400A8), // Ikhfa (alternate)
-    'f': Color(0xFF9400A8), // Ikhfa Shafawi (alternate)
+    // Ikhfa (Royal Purple / Magenta)
+    'i': Color(0xFF8E24AA), // Ikhfa
+    'p': Color(0xFF8E24AA), // Ikhfa Shafawi
+    'c': Color(0xFF8E24AA), // Ikhfa (alternate)
+    'f': Color(0xFF8E24AA), // Ikhfa Shafawi (alternate)
 
-    // Qalqalah (Red)
-    'q': Color(0xFFDD0008), // Qalqalah
+    // Qalqalah (Electric Azure / Blue)
+    'q': Color(0xFF0288D1), // Qalqalah
 
-    // Madds (Blue Tones)
-    'w': Color(0xFF000EBC), // Madd 6 Harakat (Dark Blue)
-    'o': Color(0xFF4050FF), // Madd 4-5 Harakat (Blue)
-    'j': Color(0xFF537FFF), // Madd 2 Harakat (Light Blue)
+    // Madds (Crimson / Magenta Tones)
+    'w': Color(0xFFC2185B), // Madd 6 Harakat (Dark Magenta)
+    'o': Color(0xFFD81B60), // Madd 4-5 Harakat (Vibrant Magenta)
+    'j': Color(0xFFE91E63), // Madd 2 Harakat (Bright Pink)
   };
 
   /// Returns true if the Unicode code unit is an Arabic non-spacing combining mark.
@@ -94,6 +94,19 @@ class TajweedParser {
     final List<Color> colors = List.filled(clusters.length, resolvedColor);
 
     const qalqalahLetters = {'ق', 'ط', 'ب', 'ج', 'د'};
+    const ikhfaLetters = {'ت', 'ث', 'ج', 'د', 'ذ', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ف', 'ق', 'ك'};
+    const idghamLetters = {'ي', 'ر', 'م', 'ل', 'و', 'ن'};
+
+    bool isTanween(String cl) =>
+        cl.contains('\u064B') || cl.contains('\u064C') || cl.contains('\u064D');
+
+    bool isPlainNoonSakinah(String cl) =>
+        cl.startsWith('ن') &&
+        !cl.contains('\u064E') &&
+        !cl.contains('\u0650') &&
+        !cl.contains('\u064F') &&
+        !cl.contains('\u0651') &&
+        !cl.contains('\u0652');
 
     for (int i = 0; i < clusters.length; i++) {
       final cluster = clusters[i];
@@ -124,6 +137,22 @@ class TajweedParser {
       else if (qalqalahLetters.contains(base) &&
           (cluster.contains('\u0652') || cluster.contains('\u06E1'))) {
         colors[i] = _tajweedColors['q'] ?? resolvedColor;
+      }
+      // 7. Ikhfa / Idgham on Noon Sakinah or Tanween
+      else if (isPlainNoonSakinah(cluster) || isTanween(cluster)) {
+        // Look ahead for next non-space cluster
+        int nextIdx = i + 1;
+        while (nextIdx < clusters.length && clusters[nextIdx].trim().isEmpty) {
+          nextIdx++;
+        }
+        if (nextIdx < clusters.length) {
+          final nextBase = clusters[nextIdx].isNotEmpty ? clusters[nextIdx][0] : '';
+          if (ikhfaLetters.contains(nextBase)) {
+            colors[i] = _tajweedColors['i'] ?? resolvedColor;
+          } else if (idghamLetters.contains(nextBase)) {
+            colors[i] = _tajweedColors['m'] ?? resolvedColor;
+          }
+        }
       }
     }
 

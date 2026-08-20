@@ -289,54 +289,61 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        color: const Color(0xFFFCFAF5), // Authentic Warm Ivory Parchment
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF2C7A9E), width: 3),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           )
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Page Header Indicator
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppConstants.primaryGreen.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppConstants.primaryGreen.withOpacity(0.15)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Mushaf Page $pageNum',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: AppConstants.primaryGreen,
+      child: Container(
+        margin: const EdgeInsets.all(2),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFC9A227), width: 1.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Page Header Indicator
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7F1E5),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFF2C7A9E), width: 1),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'صفحہ $pageNum',
+                    style: const TextStyle(
+                      fontFamily: AppConstants.uthmaniFont,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Color(0xFF144747),
+                    ),
                   ),
-                ),
-                Text(
-                  'Para ${juzMeta.number}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: AppConstants.gold,
+                  Text(
+                    'الجزء ${juzMeta.number}',
+                    style: const TextStyle(
+                      fontFamily: AppConstants.uthmaniFont,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Color(0xFFC9A227),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
           // Render Ayahs grouped by Surah within this Mushaf Page
           ...surahGroups.entries.map((entry) {
@@ -439,6 +446,7 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
           }),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

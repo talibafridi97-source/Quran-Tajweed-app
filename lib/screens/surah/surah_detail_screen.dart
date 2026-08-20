@@ -106,20 +106,31 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                         const SizedBox(height: 16),
                       ],
                       Container(
-                        padding: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(32),
+                          color: const Color(0xFFFCFAF5), // Authentic Warm Ivory Parchment
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF2C7A9E), width: 2.5),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20)
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
                           ],
                         ),
-                        child: TajweedText(
-                          ayahs: processedAyahs,
-                          fontSize: settings.arabicFontSize,
-                          fontFamily: AppConstants.uthmaniFont,
-                          showTajweed: settings.showTajweed,
-                          textAlign: TextAlign.justify,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xFFC9A227), width: 1),
+                          ),
+                          child: TajweedText(
+                            ayahs: processedAyahs,
+                            fontSize: settings.arabicFontSize,
+                            fontFamily: AppConstants.uthmaniFont,
+                            showTajweed: settings.showTajweed,
+                            textAlign: TextAlign.justify,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 100),

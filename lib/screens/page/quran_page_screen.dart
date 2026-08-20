@@ -122,6 +122,16 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
     _pageFuture = widget.quranProvider.repository.getPageTajweed(widget.pageNumber);
   }
 
+  // Group ayahs within a page by Surah
+  Map<int, List<Ayah>> _groupAyahsBySurah(List<Ayah> ayahs) {
+    final Map<int, List<Ayah>> grouped = {};
+    for (final ayah in ayahs) {
+      final sNum = ayah.surahNumber ?? 1;
+      grouped.putIfAbsent(sNum, () => []).add(ayah);
+    }
+    return grouped;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isRead = widget.quranProvider.getPageReadStatus(widget.pageNumber);
@@ -155,6 +165,8 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
           });
         }
 
+        final surahGroups = _groupAyahsBySurah(ayahs);
+
         return MushafPageFrame(
           pageNumber: widget.pageNumber,
           surahNameArabic: surahName,
@@ -172,15 +184,159 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
                 _loadData();
               });
             },
-            child: TajweedText(
-              ayahs: ayahs,
-              fontSize: 22,
-              fontFamily: AppConstants.uthmaniFont,
-              textAlign: TextAlign.justify,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: surahGroups.entries.map((entry) {
+                final sNum = entry.key;
+                final sAyahs = entry.value;
+                final firstAyah = sAyahs.first;
+                final currentSurahName = firstAyah.surahName ?? 'سورة';
+
+                List<Ayah> processedAyahs = sAyahs;
+                if (sNum != 1 && sAyahs.isNotEmpty && firstAyah.numberInSurah == 1) {
+                  if (firstAyah.text.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ')) {
+                    final cleanText = firstAyah.text.replaceFirst(RegExp(r'^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*'), '');
+                    if (cleanText.isNotEmpty) {
+                      processedAyahs = [
+                        Ayah(
+                          number: firstAyah.number,
+                          text: cleanText,
+                          numberInSurah: firstAyah.numberInSurah,
+                          juz: firstAyah.juz,
+                          manzil: firstAyah.manzil,
+                          page: firstAyah.page,
+                          ruku: firstAyah.ruku,
+                          hizbQuarter: firstAyah.hizbQuarter,
+                          sajda: firstAyah.sajda,
+                          surahNumber: firstAyah.surahNumber,
+                          surahName: firstAyah.surahName,
+                          surahEnglishName: firstAyah.surahEnglishName,
+                        ),
+                        ...sAyahs.skip(1),
+                      ];
+                    }
+                  }
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // If Surah starts on this page, render illuminated Surah Header
+                    if (firstAyah.numberInSurah == 1) ...[
+                      _buildIlluminatedSurahHeader(currentSurahName, sNum),
+                      if (sNum != 1 && sNum != 9) ...[
+                        const SizedBox(height: 8),
+                        _buildIlluminatedBismillah(),
+                        const SizedBox(height: 12),
+                      ],
+                    ],
+
+                    // Page Text with authentic Tajweed styling
+                    TajweedText(
+                      ayahs: processedAyahs,
+                      fontSize: 23,
+                      fontFamily: AppConstants.uthmaniFont,
+                      textAlign: TextAlign.justify,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                );
+              }).toList(),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildIlluminatedSurahHeader(String name, int sNum) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F1E5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF2C7A9E), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFC9A227).withOpacity(0.25),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Container(
+        margin: const EdgeInsets.all(2),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFC9A227), width: 1.5),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2C7A9E),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'مَدَنِيَّةٌ',
+                style: TextStyle(
+                  fontFamily: AppConstants.uthmaniFont,
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Text(
+              'سُورَةُ $name',
+              style: const TextStyle(
+                fontFamily: AppConstants.uthmaniFont,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF144747),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2C7A9E),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                'رقم $sNum',
+                style: const TextStyle(
+                  fontFamily: AppConstants.uthmaniFont,
+                  fontSize: 12,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIlluminatedBismillah() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF7F1E5),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFC9A227), width: 1),
+      ),
+      child: const Text(
+        'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+        style: TextStyle(
+          fontFamily: AppConstants.uthmaniFont,
+          fontSize: 22,
+          color: Color(0xFF144747),
+        ),
+        textAlign: TextAlign.center,
+      ),
     );
   }
 }

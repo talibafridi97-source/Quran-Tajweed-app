@@ -18,7 +18,7 @@ class MushafPageFrame extends StatelessWidget {
   const MushafPageFrame({
     super.key,
     required this.pageNumber,
-    this.title = 'Quran Reader',
+    this.title = 'قرآن مجید',
     required this.surahNameArabic,
     this.revelationType,
     this.totalAyahs,
@@ -31,7 +31,7 @@ class MushafPageFrame extends StatelessWidget {
   });
 
   String _toArabicDigits(int number) {
-    const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    const arabicDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     return number.toString().split('').map((digit) {
       final idx = int.tryParse(digit);
       return idx != null ? arabicDigits[idx] : digit;
@@ -43,116 +43,165 @@ class MushafPageFrame extends StatelessWidget {
     final pageStr = _toArabicDigits(pageNumber);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F2E9),
+      backgroundColor: const Color(0xFF144747), // Deep Islamic Green background for reader
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF0F3838),
         elevation: 0,
         centerTitle: true,
-        leading: const BackButton(color: AppConstants.primaryGreen),
-        title: Column(
-          children: [
-            Text(
-              title,
-              style: GoogleFonts.plusJakartaSans(
-                color: AppConstants.primaryGreen,
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-              ),
-            ),
-            Text(
-              'Page $pageNumber of 604',
-              style: GoogleFonts.plusJakartaSans(
-                color: Colors.grey[500],
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
+        leading: const BackButton(color: Colors.white),
+        title: Text(
+          'صفحہ $pageNumber از ۶۰۴',
+          style: GoogleFonts.notoNastaliqUrdu(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.bookmark_border_rounded, color: AppConstants.primaryGreen),
+            icon: Icon(
+              isRead ? Icons.bookmark_added : Icons.bookmark_border_rounded,
+              color: isRead ? AppConstants.gold : Colors.white,
+            ),
             onPressed: onBookmarkPressed,
+            tooltip: 'Go to Page / Bookmark',
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                child: Center(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFCFAF5), // Authentic Warm Ivory Parchment
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFF2C7A9E), // Turquoise Blue Outer Border
+                        width: 3.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.35),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _buildModernTopBanner(context, pageStr),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                      child: child,
+                    child: Container(
+                      margin: const EdgeInsets.all(2.5),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: const Color(0xFFC9A227), // Gold Accent Inset Border
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Top Mushaf Header (Surah Name, Page Medallion, Juz Name)
+                          _buildAuthenticTopHeader(pageStr),
+
+                          // Inner Content Area with Margin Pillar Lines
+                          Container(
+                            padding: const EdgeInsets.fromLTRB(14, 10, 14, 18),
+                            child: child,
+                          ),
+
+                          // Bottom Ornamental Border Footer
+                          _buildPageFooter(pageStr),
+                        ],
+                      ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
-          _buildCompletionBar(context),
-        ],
+            _buildCompletionBottomBar(context),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildModernTopBanner(BuildContext context, String pageStr) {
+  Widget _buildAuthenticTopHeader(String pageStr) {
     return Container(
-      margin: const EdgeInsets.all(12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: AppConstants.primaryGreen.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(24),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF7F1E5),
+        border: Border(
+          bottom: BorderSide(color: Color(0xFF2C7A9E), width: 2),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            juzNameArabic ?? '',
-            style: const TextStyle(
-              fontFamily: AppConstants.uthmaniFont,
-              fontSize: 16,
-              color: AppConstants.primaryGreen,
+          // Right: Juz / Para Title
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8DCC2),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFFC9A227), width: 1),
+            ),
+            child: Text(
+              juzNameArabic ?? 'الجزء',
+              style: const TextStyle(
+                fontFamily: AppConstants.uthmaniFont,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF144747),
+              ),
             ),
           ),
+
+          // Center: Ornamental Page Medallion
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              color: AppConstants.primaryGreen,
-              borderRadius: BorderRadius.circular(12),
+              shape: BoxShape.circle,
+              color: const Color(0xFFFCFAF5),
+              border: Border.all(color: const Color(0xFF2C7A9E), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFC9A227).withOpacity(0.3),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              pageStr,
+              style: const TextStyle(
+                fontFamily: AppConstants.uthmaniFont,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF144747),
+              ),
+            ),
+          ),
+
+          // Left: Surah Title
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8DCC2),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFFC9A227), width: 1),
             ),
             child: Text(
               surahNameArabic,
               style: const TextStyle(
                 fontFamily: AppConstants.uthmaniFont,
-                fontSize: 22,
-                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF144747),
               ),
-            ),
-          ),
-          Text(
-            pageStr,
-            style: const TextStyle(
-              fontFamily: AppConstants.uthmaniFont,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppConstants.primaryGreen,
             ),
           ),
         ],
@@ -160,41 +209,82 @@ class MushafPageFrame extends StatelessWidget {
     );
   }
 
-  Widget _buildCompletionBar(BuildContext context) {
+  Widget _buildPageFooter(String pageStr) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, -5))
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF7F1E5),
+        border: Border(
+          top: BorderSide(color: Color(0xFF2C7A9E), width: 1.5),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'منزل',
+            style: GoogleFonts.notoNastaliqUrdu(fontSize: 10, color: const Color(0xFF8A7342)),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2C7A9E),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              'صفحہ $pageStr',
+              style: const TextStyle(
+                fontFamily: AppConstants.uthmaniFont,
+                fontSize: 11,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Text(
+            'رکوع',
+            style: GoogleFonts.notoNastaliqUrdu(fontSize: 10, color: const Color(0xFF8A7342)),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCompletionBottomBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF0F3838),
+        border: Border(top: BorderSide(color: Color(0xFF1D5C5C), width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          GestureDetector(
+          InkWell(
             onTap: () => onReadChanged?.call(!isRead),
+            borderRadius: BorderRadius.circular(12),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
-                color: isRead ? AppConstants.primaryGreen : AppConstants.primaryGreen.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
+                color: isRead ? const Color(0xFFC9A227) : const Color(0xFF1A5959),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFC9A227), width: 1),
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isRead ? Icons.check_circle : Icons.circle_outlined,
-                    color: isRead ? Colors.white : AppConstants.primaryGreen,
-                    size: 20,
+                    isRead ? Icons.check_circle : Icons.radio_button_unchecked,
+                    color: isRead ? Colors.black87 : Colors.white,
+                    size: 18,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Text(
-                    'I have read this page',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: isRead ? Colors.white : AppConstants.primaryGreen,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
+                    isRead ? 'یہ صفحہ پڑھ لیا ہے' : 'میں نے یہ پڑھ لیا',
+                    style: GoogleFonts.notoNastaliqUrdu(
+                      color: isRead ? Colors.black87 : Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
                     ),
                   ),
                 ],

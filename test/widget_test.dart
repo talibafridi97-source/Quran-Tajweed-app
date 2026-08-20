@@ -4,7 +4,6 @@ import 'package:tajweed_quran/core/utils/tajweed_parser.dart';
 import 'package:tajweed_quran/core/widgets/tajweed_text.dart';
 import 'package:tajweed_quran/models/ayah.dart';
 import 'package:tajweed_quran/models/juz_model.dart';
-import 'package:tajweed_quran/models/hadith_model.dart';
 
 void main() {
   group('Tajweed & Model Tests', () {

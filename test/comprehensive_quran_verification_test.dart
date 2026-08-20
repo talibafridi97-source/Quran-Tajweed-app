@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:tajweed_quran/core/utils/tajweed_parser.dart';
-import 'package:tajweed_quran/core/widgets/tajweed_text.dart';
-import 'package:tajweed_quran/models/ayah.dart';
 
 void main() {
   group('Comprehensive Quran Text & Diacritics Verification', () {
