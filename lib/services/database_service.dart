@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/surah.dart';
 import '../models/ayah.dart';
+import '../models/quran_word.dart';
 import '../models/khatam_model.dart';
 
 class DatabaseService {
@@ -14,7 +15,7 @@ class DatabaseService {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'quran_db_v5.db');
+    String path = join(await getDatabasesPath(), 'quran_db_v6.db');
     return await openDatabase(
       path,
       version: 1,
@@ -44,6 +45,21 @@ class DatabaseService {
             surahName TEXT,
             surahEnglishName TEXT,
             FOREIGN KEY (surahNumber) REFERENCES surahs (number)
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE qcf_words (
+            id INTEGER PRIMARY KEY,
+            page_number INTEGER,
+            line_number INTEGER,
+            position INTEGER,
+            code_v2 TEXT,
+            text_uthmani TEXT,
+            verse_key TEXT,
+            char_type_name TEXT,
+            audio_url TEXT,
+            translation TEXT,
+            transliteration TEXT
           )
         ''');
         await db.execute('''
@@ -123,6 +139,37 @@ class DatabaseService {
       whereArgs: [juzNumber],
     );
     return List.generate(maps.length, (i) => Ayah.fromJson(maps[i]));
+  }
+
+  Future<List<Ayah>> getAyahsForPage(int pageNumber) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'ayahs',
+      where: 'page = ?',
+      whereArgs: [pageNumber],
+      orderBy: 'number ASC',
+    );
+    return List.generate(maps.length, (i) => Ayah.fromJson(maps[i]));
+  }
+
+  Future<void> saveQcfWords(List<QuranWord> words) async {
+    final db = await database;
+    Batch batch = db.batch();
+    for (var word in words) {
+      batch.insert('qcf_words', word.toDbMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    await batch.commit();
+  }
+
+  Future<List<QuranWord>> getQcfWordsForPage(int pageNumber) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'qcf_words',
+      where: 'page_number = ?',
+      whereArgs: [pageNumber],
+      orderBy: 'line_number ASC, position ASC',
+    );
+    return List.generate(maps.length, (i) => QuranWord.fromDb(maps[i]));
   }
 
   // Khatam methods

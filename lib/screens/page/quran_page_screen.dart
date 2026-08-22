@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/ayah.dart';
+import '../../models/quran_word.dart';
 import '../../providers/quran_provider.dart';
-import '../../core/widgets/tajweed_text.dart';
+import '../../core/widgets/mushaf_line_view.dart';
 import '../../core/widgets/mushaf_page_frame.dart';
 import '../../core/widgets/loading_error_widget.dart';
+import '../../services/qcf_font_manager.dart';
 import '../../models/resume_data.dart';
 import '../../core/constants/constants.dart';
 
@@ -111,6 +113,7 @@ class _SingleMushafPage extends StatefulWidget {
 
 class _SingleMushafPageState extends State<_SingleMushafPage> {
   late Future<List<Ayah>> _pageFuture;
+  late Future<void> _fontFuture;
 
   @override
   void initState() {
@@ -119,17 +122,10 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
   }
 
   void _loadData() {
-    _pageFuture = widget.quranProvider.repository.getPageTajweed(widget.pageNumber);
-  }
-
-  // Group ayahs within a page by Surah
-  Map<int, List<Ayah>> _groupAyahsBySurah(List<Ayah> ayahs) {
-    final Map<int, List<Ayah>> grouped = {};
-    for (final ayah in ayahs) {
-      final sNum = ayah.surahNumber ?? 1;
-      grouped.putIfAbsent(sNum, () => []).add(ayah);
-    }
-    return grouped;
+    _pageFuture = widget.quranProvider.repository.getPageQcfV2(widget.pageNumber);
+    _fontFuture = QcfFontManager.loadPageFont(widget.pageNumber);
+    // Prefetch next and previous page fonts in background
+    QcfFontManager.prefetchAdjacentFonts(widget.pageNumber);
   }
 
   @override
@@ -165,7 +161,14 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
           });
         }
 
-        final surahGroups = _groupAyahsBySurah(ayahs);
+        // Collect all words and group by line_number (1..15)
+        final Map<int, List<QuranWord>> lineMap = {};
+        for (final ayah in ayahs) {
+          for (final word in ayah.words) {
+            final line = word.lineNumber ?? 1;
+            lineMap.putIfAbsent(line, () => []).add(word);
+          }
+        }
 
         return MushafPageFrame(
           pageNumber: widget.pageNumber,
@@ -184,64 +187,62 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
                 _loadData();
               });
             },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: surahGroups.entries.map((entry) {
-                final sNum = entry.key;
-                final sAyahs = entry.value;
-                final firstAyah = sAyahs.first;
-                final currentSurahName = firstAyah.surahName ?? 'سورة';
-
-                List<Ayah> processedAyahs = sAyahs;
-                if (sNum != 1 && sAyahs.isNotEmpty && firstAyah.numberInSurah == 1) {
-                  if (firstAyah.text.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ')) {
-                    final cleanText = firstAyah.text.replaceFirst(RegExp(r'^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*'), '');
-                    if (cleanText.isNotEmpty) {
-                      processedAyahs = [
-                        Ayah(
-                          number: firstAyah.number,
-                          text: cleanText,
-                          numberInSurah: firstAyah.numberInSurah,
-                          juz: firstAyah.juz,
-                          manzil: firstAyah.manzil,
-                          page: firstAyah.page,
-                          ruku: firstAyah.ruku,
-                          hizbQuarter: firstAyah.hizbQuarter,
-                          sajda: firstAyah.sajda,
-                          surahNumber: firstAyah.surahNumber,
-                          surahName: firstAyah.surahName,
-                          surahEnglishName: firstAyah.surahEnglishName,
-                        ),
-                        ...sAyahs.skip(1),
-                      ];
-                    }
-                  }
+            child: FutureBuilder<void>(
+              future: _fontFuture,
+              builder: (context, fontSnap) {
+                if (fontSnap.connectionState == ConnectionState.waiting &&
+                    !QcfFontManager.isFontLoaded(widget.pageNumber)) {
+                  return const SizedBox(
+                    height: 480,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppConstants.primaryGreen,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  );
                 }
 
+                // Check if this page starts a new Surah
+                final hasSurahStart = ayahs.any((a) => a.numberInSurah == 1);
+                final startAyah = hasSurahStart ? ayahs.firstWhere((a) => a.numberInSurah == 1) : null;
+                final startSurahNum = startAyah?.surahNumber ?? surahNum ?? 1;
+                final startSurahName = startAyah?.surahName ?? surahName;
+
                 return Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // If Surah starts on this page, render illuminated Surah Header
-                    if (firstAyah.numberInSurah == 1) ...[
-                      _buildIlluminatedSurahHeader(currentSurahName, sNum),
-                      if (sNum != 1 && sNum != 9) ...[
-                        const SizedBox(height: 8),
+                    if (hasSurahStart) ...[
+                      _buildIlluminatedSurahHeader(startSurahName, startSurahNum),
+                      if (startSurahNum != 1 && startSurahNum != 9) ...[
+                        const SizedBox(height: 4),
                         _buildIlluminatedBismillah(),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 6),
                       ],
                     ],
 
-                    // Page Text with authentic Tajweed styling
-                    TajweedText(
-                      ayahs: processedAyahs,
-                      fontSize: 23,
-                      fontFamily: AppConstants.uthmaniFont,
-                      textAlign: TextAlign.justify,
-                    ),
-                    const SizedBox(height: 8),
+                    // Render the 15 fixed Madani Mushaf lines
+                    ...List.generate(15, (index) {
+                      final lineNum = index + 1;
+                      final lineWords = lineMap[lineNum] ?? [];
+                      if (lineWords.isEmpty && hasSurahStart && lineNum <= 3) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2.0),
+                        child: MushafLineView(
+                          pageNumber: widget.pageNumber,
+                          lineNumber: lineNum,
+                          words: lineWords,
+                          fontSize: 21.5,
+                        ),
+                      );
+                    }),
                   ],
                 );
-              }).toList(),
+              },
             ),
           ),
         );
@@ -251,7 +252,7 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
 
   Widget _buildIlluminatedSurahHeader(String name, int sNum) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
         color: const Color(0xFFF7F1E5),
         borderRadius: BorderRadius.circular(8),
@@ -266,7 +267,7 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
       ),
       child: Container(
         margin: const EdgeInsets.all(2),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
           border: Border.all(color: const Color(0xFFC9A227), width: 1.5),
         ),
@@ -293,7 +294,7 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
               'سُورَةُ $name',
               style: const TextStyle(
                 fontFamily: AppConstants.uthmaniFont,
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF144747),
               ),
@@ -322,7 +323,7 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
 
   Widget _buildIlluminatedBismillah() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFF7F1E5),
         borderRadius: BorderRadius.circular(6),
@@ -332,7 +333,7 @@ class _SingleMushafPageState extends State<_SingleMushafPage> {
         'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
         style: TextStyle(
           fontFamily: AppConstants.uthmaniFont,
-          fontSize: 22,
+          fontSize: 20,
           color: Color(0xFF144747),
         ),
         textAlign: TextAlign.center,

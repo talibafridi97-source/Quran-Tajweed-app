@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/surah.dart';
 import '../models/ayah.dart';
+import '../core/config/app_config.dart';
 import 'local_storage_service.dart';
 
 class ApiService {
@@ -105,6 +106,42 @@ class ApiService {
       return parsed;
     }
     throw Exception('Unable to load Page $pageNumber content. Please check internet connection.');
+  }
+
+  Future<List<Ayah>> getPageQcfV2(int pageNumber) async {
+    final cacheKey = 'page_qcf_v6_$pageNumber';
+    final cached = _storageService.getCachedString(cacheKey);
+    if (cached != null) {
+      try {
+        final data = json.decode(cached);
+        return (data as List).map((a) => Ayah.fromJson(a as Map<String, dynamic>)).toList();
+      } catch (_) {}
+    }
+
+    final url = 'https://api.quran.com/api/v4/verses/by_page/$pageNumber?mushaf=1&words=true&word_fields=code_v2,text_uthmani,line_number,page_number,v2_page,char_type_name';
+    final response = await _client.get(
+      Uri.parse(url),
+      headers: AppConfig.apiHeaders,
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final versesList = data['verses'] as List? ?? [];
+      final List<Ayah> ayahs = [];
+
+      for (final v in versesList) {
+        final vMap = Map<String, dynamic>.from(v as Map);
+        final ayah = Ayah.fromJson(vMap);
+        ayahs.add(ayah);
+      }
+
+      await _storageService.cacheString(
+        cacheKey,
+        json.encode(ayahs.map((a) => a.toJson()).toList()),
+      );
+      return ayahs;
+    }
+    throw Exception('Unable to load Page $pageNumber QCF data. Please check internet connection.');
   }
 
   Future<List<Map<String, String>>> getSurahTranslation(int surahNumber) async {

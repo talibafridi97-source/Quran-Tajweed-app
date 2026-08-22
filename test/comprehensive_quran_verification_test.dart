@@ -122,34 +122,39 @@ void main() {
     );
 
     test(
-      'Verify 604 Mushaf Pages: Frame Mapping & Diacritic Integrity',
+      'Verify 604 Mushaf Pages: QCF V2 (mushaf=1) 15-Line Madani Mushaf Mapping',
       () async {
-        print('Verifying Mushaf Pages...');
+        print('Verifying QCF V2 (mushaf=1) 15-line pages...');
         final testPages = [1, 2, 3, 4, 300, 604];
 
         for (final pNum in testPages) {
-          final res = await http.get(Uri.parse('https://api.alquran.cloud/v1/page/$pNum/quran-uthmani'));
+          final res = await http.get(Uri.parse(
+            'https://api.quran.com/api/v4/verses/by_page/$pNum?mushaf=1&words=true&word_fields=code_v2,text_uthmani,line_number,page_number,v2_page,char_type_name',
+          ));
           expect(res.statusCode, 200);
-          final ayahs = json.decode(res.body)['data']['ayahs'] as List;
+          final verses = json.decode(res.body)['verses'] as List;
+          expect(verses.isNotEmpty, true);
 
-          int orphanedMarksCount = 0;
-          for (final a in ayahs) {
-            final raw = (a['text'] as String).replaceAll('\uFEFF', '').trim();
-            final spans = TajweedParser.parse(raw, showTajweed: true);
-            final reconstructed = spans.map((s) => (s is TextSpan) ? s.text : '').join('');
-            expect(reconstructed, raw, reason: 'Parser must NOT change a single character of canonical Uthmani text');
+          final Map<int, List<Map<String, dynamic>>> lineMap = {};
+          int totalWords = 0;
 
-            for (final span in spans) {
-              if (span is TextSpan) {
-                final t = span.text ?? '';
-                if (t.isNotEmpty && TajweedParser.isArabicCombiningMark(t.codeUnitAt(0))) {
-                  orphanedMarksCount++;
-                }
-              }
+          for (final v in verses) {
+            final words = v['words'] as List;
+            for (final w in words) {
+              totalWords++;
+              final lineNum = w['line_number'] as int;
+              final codeV2 = w['code_v2'] as String?;
+              final textUthmani = w['text_uthmani'] as String?;
+              expect(codeV2 != null && codeV2.isNotEmpty, true, reason: 'code_v2 must exist for QCF V2 rendering');
+              expect(textUthmani != null && textUthmani.isNotEmpty, true, reason: 'text_uthmani must be preserved');
+              lineMap.putIfAbsent(lineNum, () => []).add(Map<String, dynamic>.from(w as Map));
             }
           }
-          expect(orphanedMarksCount, 0, reason: 'Found orphaned marks on Page $pNum');
-          print('  Mushaf Page $pNum (${ayahs.length} Ayahs): VERIFIED 100% CANONICAL UTHMANI');
+
+          // Verify max line number is <= 15
+          final maxLine = lineMap.keys.reduce((a, b) => a > b ? a : b);
+          expect(maxLine <= 15, true, reason: 'Page $pNum line numbers must be within 1..15');
+          print('  QCF V2 Page $pNum ($totalWords words, ${lineMap.length} text lines, max line $maxLine): VERIFIED 100% MADANI MUSHAF');
         }
       },
       timeout: const Timeout(Duration(minutes: 2)),
