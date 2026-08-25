@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../models/surah.dart';
 import '../../models/ayah.dart';
+import '../../models/translation_model.dart';
 import '../../providers/quran_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../providers/translation_provider.dart';
+import '../../providers/bookmark_provider.dart';
 import '../../core/constants/constants.dart';
 import '../../core/widgets/tajweed_text.dart';
 import '../../core/widgets/loading_error_widget.dart';
 import '../../core/widgets/quran_audio_player_widget.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../tafsir/ayah_tafsir_modal.dart';
+import '../bookmarks/edit_ayah_note_dialog.dart';
+import 'ayah_action_sheet.dart';
 
 class SurahDetailScreen extends StatefulWidget {
   final Surah surah;
@@ -21,11 +28,15 @@ class SurahDetailScreen extends StatefulWidget {
 class _SurahDetailScreenState extends State<SurahDetailScreen> {
   late Future<List<Ayah>> _ayahsFuture;
   bool _showAudioPlayer = false;
+  bool _showTranslation = false;
 
   @override
   void initState() {
     super.initState();
     _loadSurahData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TranslationProvider>().loadTranslationsForSurah(widget.surah.number);
+    });
   }
 
   void _loadSurahData() {
@@ -33,9 +44,46 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     _ayahsFuture = repository.getSurahTajweed(widget.surah.number);
   }
 
+  void _showTranslationSelectorDialog() {
+    final transProvider = context.read<TranslationProvider>();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Text('Select Translation'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: TranslationEdition.availableEditions.map((edition) {
+              final isSelected = edition.id == transProvider.selectedEditionId;
+              return ListTile(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                selected: isSelected,
+                selectedTileColor: AppConstants.primaryGreen.withOpacity(0.1),
+                leading: Icon(
+                  isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                  color: isSelected ? AppConstants.primaryGreen : Colors.grey,
+                ),
+                title: Text(edition.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(edition.author, style: const TextStyle(fontSize: 12)),
+                onTap: () {
+                  transProvider.setEdition(edition.id, activeSurahNumber: widget.surah.number);
+                  Navigator.pop(context);
+                  setState(() => _showTranslation = true);
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final transProvider = context.watch<TranslationProvider>();
+    final bookmarkProvider = context.watch<BookmarkProvider>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFCF9F2),
@@ -43,12 +91,18 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         title: Text(widget.surah.englishName),
         actions: [
           IconButton(
+            tooltip: 'Choose Translation',
+            onPressed: _showTranslationSelectorDialog,
+            icon: const Icon(Icons.translate_rounded),
+          ),
+          IconButton(
+            tooltip: 'View Mode',
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Surah ${widget.surah.englishName} bookmarked')),
-              );
+              setState(() {
+                _showTranslation = !_showTranslation;
+              });
             },
-            icon: const Icon(Icons.bookmark_add_outlined),
+            icon: Icon(_showTranslation ? Icons.view_agenda_rounded : Icons.menu_book_rounded),
           ),
         ],
       ),
@@ -94,7 +148,8 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               children: [
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    physics: const BouncingScrollPhysics(),
                     children: [
                       _buildSurahHeader(),
                       const SizedBox(height: 16),
@@ -105,43 +160,208 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                         ),
                         const SizedBox(height: 16),
                       ],
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFCFAF5), // Authentic Warm Ivory Parchment
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF2C7A9E), width: 2.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 16,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
+
+                      if (_showTranslation) ...[
+                        // Ayah by Ayah Translation Mode
+                        ...processedAyahs.map((a) {
+                          final transText = transProvider.getTranslationForAyah(a.numberInSurah);
+                          final isBookmarked = bookmarkProvider.isBookmarked(
+                            widget.surah.number,
+                            a.numberInSurah,
+                          );
+
+                          return _buildAyahTranslationCard(
+                            context,
+                            a,
+                            transText,
+                            isBookmarked,
+                            bookmarkProvider,
+                            settings,
+                          );
+                        }),
+                      ] else ...[
+                        // Continuous Tajweed Reading Mode
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                           decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFFC9A227), width: 1),
+                            color: const Color(0xFFFCFAF5),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFF2C7A9E), width: 2.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: TajweedText(
-                            ayahs: processedAyahs,
-                            fontSize: settings.arabicFontSize,
-                            fontFamily: AppConstants.uthmaniFont,
-                            showTajweed: settings.showTajweed,
-                            textAlign: TextAlign.justify,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: const Color(0xFFC9A227), width: 1),
+                            ),
+                            child: TajweedText(
+                              ayahs: processedAyahs,
+                              fontSize: settings.arabicFontSize,
+                              fontFamily: AppConstants.uthmaniFont,
+                              showTajweed: settings.showTajweed,
+                              textAlign: TextAlign.justify,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                       const SizedBox(height: 100),
                     ],
                   ),
                 ),
-                _buildModernActionButtons(),
+                _buildModernActionButtons(transProvider),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildAyahTranslationCard(
+    BuildContext context,
+    Ayah ayah,
+    String translationText,
+    bool isBookmarked,
+    BookmarkProvider bookmarkProvider,
+    SettingsProvider settings,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Card Header Bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppConstants.primaryGreen.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${ayah.numberInSurah}',
+                      style: const TextStyle(
+                        color: AppConstants.primaryGreen,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    // Tafsir Button
+                    IconButton(
+                      icon: const Icon(Icons.menu_book_outlined, size: 20, color: AppConstants.primaryGreen),
+                      tooltip: 'Ayah Tafsir',
+                      onPressed: () => AyahTafsirModal.show(context, ayah),
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                    ),
+                    // Note Button
+                    IconButton(
+                      icon: const Icon(Icons.edit_note_rounded, size: 22, color: AppConstants.primaryGreen),
+                      tooltip: 'Ayah Reflection Note',
+                      onPressed: () => EditAyahNoteDialog.show(context, ayah),
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                    ),
+                    // Bookmark Button
+                    IconButton(
+                      icon: Icon(
+                        isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                        size: 20,
+                        color: isBookmarked ? AppConstants.gold : Colors.grey[600],
+                      ),
+                      tooltip: 'Bookmark',
+                      onPressed: () {
+                        bookmarkProvider.toggleBookmark(
+                          surahNumber: widget.surah.number,
+                          ayahNumber: ayah.numberInSurah,
+                          surahName: widget.surah.name,
+                          surahEnglishName: widget.surah.englishName,
+                          pageNumber: ayah.page,
+                          ayahText: ayah.text,
+                        );
+                      },
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                    ),
+                    // More Actions
+                    IconButton(
+                      icon: const Icon(Icons.more_vert_rounded, size: 20, color: Colors.grey),
+                      tooltip: 'More Actions',
+                      onPressed: () => AyahActionSheet.show(context, ayah),
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Arabic Verse Body
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            child: Directionality(
+              textDirection: TextDirection.rtl,
+              child: Text(
+                ayah.text,
+                style: TextStyle(
+                  fontFamily: AppConstants.uthmaniFont,
+                  fontSize: settings.arabicFontSize,
+                  height: 2.0,
+                  color: AppConstants.textPrimaryLight,
+                ),
+                textAlign: TextAlign.right,
+              ),
+            ),
+          ),
+
+          // Translation Body
+          if (translationText.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: Text(
+                translationText,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  height: 1.6,
+                  color: Colors.grey[800],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -190,7 +410,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     );
   }
 
-  Widget _buildModernActionButtons() {
+  Widget _buildModernActionButtons(TranslationProvider transProvider) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       decoration: BoxDecoration(
@@ -213,25 +433,25 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           ),
           InkWell(
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Arabic Only view active')),
-              );
+              setState(() {
+                _showTranslation = !_showTranslation;
+              });
             },
-            child: _actionItem(Icons.translate_rounded, 'Urdu', AppConstants.softPurple),
+            child: _actionItem(
+              _showTranslation ? Icons.menu_book_rounded : Icons.translate_rounded,
+              _showTranslation ? 'Arabic View' : 'Translation',
+              AppConstants.softPurple,
+            ),
           ),
           InkWell(
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Sharing Surah ${widget.surah.englishName}')),
-              );
+              Share.share('Surah ${widget.surah.englishName} (${widget.surah.name}) — Holy Quran');
             },
             child: _actionItem(Icons.share_rounded, 'Share', AppConstants.vibrantOrange),
           ),
           InkWell(
-            onTap: () {
-              Navigator.pushNamed(context, '/settings');
-            },
-            child: _actionItem(Icons.settings_suggest_rounded, 'Config', AppConstants.primaryGreen),
+            onTap: _showTranslationSelectorDialog,
+            child: _actionItem(Icons.language_rounded, 'Editions', AppConstants.primaryGreen),
           ),
         ],
       ),

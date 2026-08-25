@@ -42,7 +42,7 @@ class MasnoonDua {
       urduTranslation: 'تمام تعریفیں اللہ کے لیے ہیں جس نے ہمیں مارنے کے بعد زندہ کیا اور اسی کی طرف لوٹ کر جانا ہے۔',
       englishTranslation: 'Praise is to Allah Who gave us life after he caused us to die and unto Him is the resurrection.',
       reference: 'Sahih al-Bukhari 6312',
-      audioUrl: 'https://raw.githubusercontent.com/rn0x/Adhkar-json/main/audio/ar_7esn_AlMoslem_by_Doors_001.mp3',
+      audioUrl: 'https://raw.githubusercontent.com/rn0x/Adhkar-json/main/audio/ar_7esn_AlMoslem_by_Doors_002.mp3',
     ),
     MasnoonDua(
       id: 3,
@@ -97,7 +97,7 @@ class MasnoonDua {
       urduTranslation: 'پاک ہے وہ ذات جس نے اس کو ہمارے بس میں کر دیا حالانکہ ہم اسے قابو میں لانے والے نہ تھے، اور بے شک ہم اپنے رب کی طرف لوٹنے والے ہیں۔',
       englishTranslation: 'Glory is to Him Who has subjected this to us, and we could not have otherwise subdued it. And indeed, to our Lord we will return.',
       reference: 'Surah Az-Zukhruf 43:13-14',
-      audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/4348.mp3',
+      audioUrl: 'https://everyayah.com/data/Alafasy_128kbps/043013.mp3',
     ),
     MasnoonDua(
       id: 8,
@@ -119,7 +119,7 @@ class MasnoonDua {
       urduTranslation: 'اے میرے رب! میرے علم میں اضافہ فرما۔',
       englishTranslation: 'My Lord, increase me in knowledge.',
       reference: 'Surah Taha 20:114',
-      audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/2462.mp3',
+      audioUrl: 'https://everyayah.com/data/Alafasy_128kbps/020114.mp3',
     ),
     MasnoonDua(
       id: 10,
@@ -130,7 +130,7 @@ class MasnoonDua {
       urduTranslation: 'اے میرے رب! ان دونوں پر رحم فرما جیسے انہوں نے بچپن میں میری پرورش کی۔',
       englishTranslation: 'My Lord, have mercy upon them both as they brought me up when I was small.',
       reference: 'Surah Al-Isra 17:24',
-      audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/2053.mp3',
+      audioUrl: 'https://everyayah.com/data/Alafasy_128kbps/017024.mp3',
     ),
     MasnoonDua(
       id: 11,
@@ -141,7 +141,7 @@ class MasnoonDua {
       urduTranslation: 'تیرے سوا کوئی معبود نہیں، تو پاک ہے، بے شک میں ہی ظالموں میں سے تھا۔',
       englishTranslation: 'There is no deity except You; exalted are You. Indeed, I have been of the wrongdoers.',
       reference: 'Surah Al-Anbiya 21:87',
-      audioUrl: 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/2570.mp3',
+      audioUrl: 'https://everyayah.com/data/Alafasy_128kbps/021087.mp3',
     ),
     MasnoonDua(
       id: 12,

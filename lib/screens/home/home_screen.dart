@@ -79,6 +79,30 @@ class HomeScreen extends StatelessWidget {
       ),
       actions: [
         IconButton(
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
+          tooltip: 'Search Quran',
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppConstants.primaryGreen.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.search_rounded, size: 20, color: AppConstants.primaryGreen),
+          ),
+        ),
+        IconButton(
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.bookmarksNotes),
+          tooltip: 'Saved & Notes',
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppConstants.primaryGreen.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.bookmarks_rounded, size: 20, color: AppConstants.primaryGreen),
+          ),
+        ),
+        IconButton(
           onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
           tooltip: 'App Settings',
           icon: Container(
@@ -90,7 +114,7 @@ class HomeScreen extends StatelessWidget {
             child: const Icon(Icons.settings_outlined, size: 20, color: AppConstants.primaryGreen),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
       ],
     );
   }

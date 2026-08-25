@@ -145,13 +145,43 @@ class ApiService {
   }
 
   Future<List<Map<String, String>>> getSurahTranslation(int surahNumber) async {
-    final response = await _client.get(Uri.parse('$_baseUrl/surah/$surahNumber/ur.jalandhry'));
+    return getSurahTranslationByEdition(surahNumber, 'ur.jalandhry');
+  }
+
+  Future<List<Map<String, String>>> getSurahTranslationByEdition(int surahNumber, String editionId) async {
+    final response = await _client.get(Uri.parse('$_baseUrl/surah/$surahNumber/$editionId'));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return (data['data']['ayahs'] as List).map<Map<String, String>>((a) => {
         'text': a['text'].toString(),
+        'numberInSurah': a['numberInSurah'].toString(),
       }).toList();
     }
-    throw Exception('Failed to load Translation');
+    throw Exception('Failed to load Translation ($editionId) for Surah $surahNumber');
+  }
+
+  Future<String> getAyahTafsir(int surahNumber, int ayahNumber, String tafsirId) async {
+    // Primary: Quran.com API v4 or AlQuran Cloud Tafsir endpoint
+    final url = 'https://api.qurancdn.com/api/qdc/tafsirs/$tafsirId/by_ayah/$surahNumber:$ayahNumber';
+    try {
+      final response = await _client.get(Uri.parse(url), headers: AppConfig.apiHeaders);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final tafsirText = data['tafsir']?['text']?.toString() ?? '';
+        if (tafsirText.isNotEmpty) return tafsirText;
+      }
+    } catch (_) {}
+
+    // Fallback: Islamic Network endpoint
+    final fallbackUrl = '$_baseUrl/ayah/$surahNumber:$ayahNumber/$tafsirId';
+    try {
+      final response = await _client.get(Uri.parse(fallbackUrl));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['data']?['text']?.toString() ?? 'Tafsir commentary unavailable for this verse.';
+      }
+    } catch (_) {}
+
+    throw Exception('Unable to load Tafsir for Surah $surahNumber Ayah $ayahNumber. Please check your connection.');
   }
 }

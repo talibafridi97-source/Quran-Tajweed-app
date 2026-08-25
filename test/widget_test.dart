@@ -4,6 +4,7 @@ import 'package:tajweed_quran/core/utils/tajweed_parser.dart';
 import 'package:tajweed_quran/core/widgets/tajweed_text.dart';
 import 'package:tajweed_quran/models/ayah.dart';
 import 'package:tajweed_quran/models/juz_model.dart';
+import 'package:tajweed_quran/services/audio_manager_service.dart';
 
 void main() {
   group('Tajweed & Model Tests', () {
@@ -75,6 +76,22 @@ void main() {
       expect(textWidget.textDirection, TextDirection.rtl);
       expect(textWidget.softWrap, true);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('Phase 1 Navigation & Global Audio Tests', () {
+    test('AudioManagerService surahNames array has all 114 Surahs', () {
+      expect(AudioManagerService.surahNames.length, 114);
+      expect(AudioManagerService.surahNames[0], 'Al-Fatihah');
+      expect(AudioManagerService.surahNames[1], 'Al-Baqarah');
+      expect(AudioManagerService.surahNames[113], 'An-Nas');
+    });
+
+    test('AudioManagerService set and clear metadata works correctly', () {
+      final manager = AudioManagerService.instance;
+      expect(manager.currentTitle, null);
+      expect(manager.currentSubtitle, null);
+      expect(manager.currentSurahNumber, null);
     });
   });
 }

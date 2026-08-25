@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../navigation/main_navigation_shell.dart';
 import '../../screens/splash/splash_screen.dart';
 import '../../screens/home/home_screen.dart';
+import '../../screens/quran/quran_hub_screen.dart';
 import '../../screens/surah/surah_list_screen.dart';
 import '../../screens/juz/juz_list_screen.dart';
 import '../../screens/page/quran_page_screen.dart';
@@ -18,13 +20,18 @@ import '../../screens/hajj/hajj_guide_screen.dart';
 import '../../screens/zakat/zakat_calculator_screen.dart';
 import '../../screens/daily_ayah/daily_ayah_screen.dart';
 import '../../screens/tajweed/tajweed_rules_screen.dart';
+import '../../screens/search/quran_search_screen.dart';
+import '../../screens/bookmarks/bookmarks_notes_hub_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
   static const String home = '/home';
+  static const String quranHub = '/quran-hub';
   static const String surahList = '/surah-list';
   static const String juzList = '/juz-list';
   static const String quranPage = '/quran-page';
+  static const String search = '/search';
+  static const String bookmarksNotes = '/bookmarks-notes';
   static const String hadithBooks = '/hadith-books';
   static const String settings = '/settings';
   static const String duas = '/duas';
@@ -42,10 +49,13 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> get routes => {
     splash: (context) => const SplashScreen(),
-    home: (context) => const HomeScreen(),
+    home: (context) => const MainNavigationShell(),
+    quranHub: (context) => const QuranHubScreen(),
     surahList: (context) => const SurahListScreen(),
     juzList: (context) => const JuzListScreen(),
     quranPage: (context) => const QuranPageScreen(),
+    search: (context) => const QuranSearchScreen(),
+    bookmarksNotes: (context) => const BookmarksNotesHubScreen(),
     hadithBooks: (context) => const HadithBooksScreen(),
     settings: (context) => const SettingsScreen(),
     duas: (context) => const DuasScreen(),

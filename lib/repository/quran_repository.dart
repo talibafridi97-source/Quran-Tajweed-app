@@ -6,12 +6,17 @@ import '../services/database_service.dart';
 import '../models/resume_data.dart';
 import '../models/quran_word.dart';
 
+import '../models/translation_model.dart';
+import '../models/tafsir_model.dart';
+
 class QuranRepository {
   final ApiService _apiService;
   final LocalStorageService _localStorageService;
   final DatabaseService _databaseService;
 
   QuranRepository(this._apiService, this._localStorageService, this._databaseService);
+
+  DatabaseService get databaseService => _databaseService;
 
   Future<List<Surah>> getAllSurahs() async {
     final localSurahs = await _databaseService.getSurahs();
@@ -33,7 +38,6 @@ class QuranRepository {
 
   Future<List<Ayah>> getJuzTajweed(int juzNumber) async {
     try {
-      // Always fetch complete Juz from API / SharedPreferences cache first
       final apiAyahs = await _apiService.getJuzTajweed(juzNumber);
       if (apiAyahs.isNotEmpty) {
         await _databaseService.saveAyahs(apiAyahs);
@@ -41,7 +45,6 @@ class QuranRepository {
       }
     } catch (_) {}
 
-    // Fallback to database
     final localAyahs = await _databaseService.getAyahsForJuz(juzNumber);
     if (localAyahs.isNotEmpty) return localAyahs;
 
@@ -95,6 +98,72 @@ class QuranRepository {
     }
     return apiAyahs;
   }
+
+  // --- Multi-Translation with SQLite Offline Caching ---
+  Future<List<AyahTranslation>> getSurahTranslations({
+    required int surahNumber,
+    required String editionId,
+  }) async {
+    // 1. Try local SQLite cache
+    final local = await _databaseService.getTranslationsForSurah(surahNumber, editionId);
+    if (local.isNotEmpty) return local;
+
+    // 2. Fetch from API & cache
+    try {
+      final rawList = await _apiService.getSurahTranslationByEdition(surahNumber, editionId);
+      final List<AyahTranslation> list = [];
+      for (int i = 0; i < rawList.length; i++) {
+        final item = rawList[i];
+        final aNum = int.tryParse(item['numberInSurah'] ?? '') ?? (i + 1);
+        list.add(AyahTranslation(
+          surahNumber: surahNumber,
+          ayahNumber: aNum,
+          editionId: editionId,
+          text: item['text'] ?? '',
+        ));
+      }
+      if (list.isNotEmpty) {
+        await _databaseService.saveTranslations(list);
+      }
+      return list;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // --- Ayah Tafsir with SQLite Offline Caching ---
+  Future<AyahTafsir?> getAyahTafsir({
+    required int surahNumber,
+    required int ayahNumber,
+    required String tafsirId,
+  }) async {
+    // 1. Try local cache
+    final local = await _databaseService.getTafsir(surahNumber, ayahNumber, tafsirId);
+    if (local != null) return local;
+
+    // 2. Fetch from API & cache
+    try {
+      final text = await _apiService.getAyahTafsir(surahNumber, ayahNumber, tafsirId);
+      final edition = TafsirEdition.findById(tafsirId);
+      final tafsir = AyahTafsir(
+        surahNumber: surahNumber,
+        ayahNumber: ayahNumber,
+        tafsirId: tafsirId,
+        authorName: edition.author,
+        text: text,
+        language: edition.language,
+        updatedAt: DateTime.now(),
+      );
+      await _databaseService.saveTafsir(tafsir);
+      return tafsir;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // --- Universal Search ---
+  Future<List<Map<String, dynamic>>> searchQuran(String query, {int limit = 60}) =>
+      _databaseService.searchQuran(query, limit: limit);
 
   Future<List<Map<String, String>>> getSurahTranslation(int chapterNumber) => 
       _apiService.getSurahTranslation(chapterNumber);

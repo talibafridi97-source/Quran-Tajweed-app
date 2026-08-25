@@ -14,6 +14,12 @@ import 'services/hadith_api_service.dart';
 import 'services/local_storage_service.dart';
 import 'services/database_service.dart';
 
+import 'services/audio_manager_service.dart';
+
+import 'providers/translation_provider.dart';
+import 'providers/search_provider.dart';
+import 'providers/notes_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
@@ -34,8 +40,12 @@ void main() async {
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => QuranProvider(quranRepository)),
         ChangeNotifierProvider(create: (_) => HadithProvider(hadithRepository)),
-        ChangeNotifierProvider(create: (_) => BookmarkProvider(storageService)),
+        ChangeNotifierProvider(create: (_) => BookmarkProvider(storageService, databaseService: databaseService)),
         ChangeNotifierProvider(create: (_) => KhatamProvider(databaseService)),
+        ChangeNotifierProvider(create: (_) => TranslationProvider(quranRepository)),
+        ChangeNotifierProvider(create: (_) => SearchProvider(quranRepository)),
+        ChangeNotifierProvider(create: (_) => NotesProvider(databaseService: databaseService)),
+        ChangeNotifierProvider.value(value: AudioManagerService.instance),
       ],
       child: const TajweedQuranApp(),
     ),
