@@ -53,13 +53,21 @@ class _DuasScreenState extends State<DuasScreen> {
   }
 
   Future<void> _playDuaAudio(MasnoonDua dua) async {
-    final audioId = 'dua_${dua.id}';
-
-    await _audioManager.playItem(
-      channel: AudioChannel.dua,
-      id: audioId,
-      url: dua.audioUrl,
-    );
+    try {
+      final verifiedUrl = DuaAudioResolver.resolveAudioUrl(dua.duaId);
+      await _audioManager.playDua(
+        duaId: dua.duaId,
+        audioUrl: verifiedUrl,
+        title: dua.titleEnglish,
+        subtitle: dua.titleUrdu,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Audio Error: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -126,7 +134,7 @@ class _DuasScreenState extends State<DuasScreen> {
               itemCount: _filteredDuas.length,
               itemBuilder: (context, index) {
                 final dua = _filteredDuas[index];
-                final audioId = 'dua_${dua.id}';
+                final audioId = 'dua_${dua.duaId}';
                 final isPlaying = _audioManager.isItemPlaying(AudioChannel.dua, audioId);
 
                 return Container(
@@ -137,7 +145,7 @@ class _DuasScreenState extends State<DuasScreen> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -187,7 +195,7 @@ class _DuasScreenState extends State<DuasScreen> {
                         dua.urduTranslation,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.85),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85),
                           height: 1.5,
                         ),
                         textDirection: TextDirection.rtl,
@@ -197,7 +205,7 @@ class _DuasScreenState extends State<DuasScreen> {
                         dua.englishTranslation,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -213,7 +221,7 @@ class _DuasScreenState extends State<DuasScreen> {
                               dua.reference,
                               style: const TextStyle(fontSize: 11, color: AppConstants.primaryGreen),
                             ),
-                            backgroundColor: AppConstants.primaryGreen.withOpacity(0.08),
+                            backgroundColor: AppConstants.primaryGreen.withValues(alpha: 0.08),
                           ),
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -248,9 +256,7 @@ class _DuasScreenState extends State<DuasScreen> {
                               IconButton(
                                 icon: const Icon(Icons.share, size: 20),
                                 onPressed: () {
-                                  Share.share(
-                                    '${dua.titleEnglish} (${dua.titleUrdu})\n\n${dua.arabicText}\n\n${dua.urduTranslation}\n\n${dua.englishTranslation}\n\nRef: ${dua.reference}',
-                                  );
+                                  Share.share('${dua.titleEnglish} (${dua.titleUrdu})\n\n${dua.arabicText}\n\n${dua.urduTranslation}\n\nRef: ${dua.reference}');
                                 },
                               ),
                             ],

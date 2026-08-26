@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../core/constants/constants.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/quran/quran_hub_screen.dart';
 import '../../screens/prayer_times/prayer_times_screen.dart';
@@ -46,6 +45,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -63,11 +65,17 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
+          border: Border(
+            top: BorderSide(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+              width: 0.5,
+            ),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 20,
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 16,
               offset: const Offset(0, -4),
             ),
           ],
@@ -75,29 +83,29 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         child: SafeArea(
           child: NavigationBarTheme(
             data: NavigationBarThemeData(
-              indicatorColor: AppConstants.primaryGreen.withOpacity(0.12),
+              indicatorColor: colorScheme.primary.withValues(alpha: 0.14),
               labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
                 final isSelected = states.contains(WidgetState.selected);
                 return GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? AppConstants.primaryGreen : Colors.grey[500],
+                  fontSize: 11.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.55),
                 );
               }),
               iconTheme: WidgetStateProperty.resolveWith<IconThemeData>((states) {
                 final isSelected = states.contains(WidgetState.selected);
                 return IconThemeData(
-                  color: isSelected ? AppConstants.primaryGreen : Colors.grey[500],
-                  size: 24,
+                  color: isSelected ? colorScheme.primary : colorScheme.onSurface.withValues(alpha: 0.55),
+                  size: 22,
                 );
               }),
             ),
             child: NavigationBar(
               selectedIndex: _currentIndex,
               onDestinationSelected: setTab,
-              backgroundColor: Colors.white,
+              backgroundColor: colorScheme.surface,
               elevation: 0,
-              height: 65,
+              height: 62,
               destinations: const [
                 NavigationDestination(
                   icon: Icon(Icons.home_outlined),

@@ -7,15 +7,14 @@ import 'providers/hadith_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/bookmark_provider.dart';
 import 'providers/khatam_provider.dart';
+import 'providers/tasbeeh_provider.dart';
 import 'repository/quran_repository.dart';
 import 'repository/hadith_repository.dart';
 import 'services/api_service.dart';
 import 'services/hadith_api_service.dart';
 import 'services/local_storage_service.dart';
 import 'services/database_service.dart';
-
 import 'services/audio_manager_service.dart';
-
 import 'providers/translation_provider.dart';
 import 'providers/search_provider.dart';
 import 'providers/notes_provider.dart';
@@ -42,6 +41,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => HadithProvider(hadithRepository)),
         ChangeNotifierProvider(create: (_) => BookmarkProvider(storageService, databaseService: databaseService)),
         ChangeNotifierProvider(create: (_) => KhatamProvider(databaseService)),
+        ChangeNotifierProvider(create: (_) => TasbeehProvider(databaseService)),
         ChangeNotifierProvider(create: (_) => TranslationProvider(quranRepository)),
         ChangeNotifierProvider(create: (_) => SearchProvider(quranRepository)),
         ChangeNotifierProvider(create: (_) => NotesProvider(databaseService: databaseService)),
@@ -62,8 +62,14 @@ class TajweedQuranApp extends StatelessWidget {
     return MaterialApp(
       title: 'Tajweed Quran & Hadith',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.getTheme(
+        palette: settings.themePalette,
+        brightness: Brightness.light,
+      ),
+      darkTheme: AppTheme.getTheme(
+        palette: settings.themePalette,
+        brightness: Brightness.dark,
+      ),
       themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,

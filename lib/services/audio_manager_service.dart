@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import '../models/dua_model.dart';
 
 enum AudioChannel { quran, dua, name }
 
@@ -18,6 +19,7 @@ class AudioManagerService extends ChangeNotifier {
         _currentChannel = null;
         _currentAudioId = null;
         _currentAudioUrl = null;
+        _currentDuaId = null;
       } else {
         _isPlaying = state.playing;
       }
@@ -32,6 +34,7 @@ class AudioManagerService extends ChangeNotifier {
   String? _currentAudioUrl;
   String? _currentTitle;
   String? _currentSubtitle;
+  String? _currentDuaId;
   int? _currentSurahNumber;
   bool _isPlaying = false;
   bool _isLoading = false;
@@ -43,6 +46,7 @@ class AudioManagerService extends ChangeNotifier {
   String? get currentAudioUrl => _currentAudioUrl;
   String? get currentTitle => _currentTitle;
   String? get currentSubtitle => _currentSubtitle;
+  String? get currentDuaId => _currentDuaId;
   int? get currentSurahNumber => _currentSurahNumber;
   bool get isPlaying => _isPlaying;
   bool get isLoading => _isLoading;
@@ -103,6 +107,59 @@ class AudioManagerService extends ChangeNotifier {
     );
   }
 
+  /// Plays a specific Masnoon Dua strictly by its unique [duaId].
+  /// Validates mapping integrity, clears any prior audio, and ensures deterministic playback.
+  Future<void> playDua({
+    required String duaId,
+    required String audioUrl,
+    required String title,
+    required String subtitle,
+  }) async {
+    // 1. Strict Dua ID vs Audio URL validation
+    if (!DuaAudioResolver.validateDuaAudioMapping(duaId, audioUrl)) {
+      _errorMessage = 'Audio URL mismatch: The provided audio does not belong to Dua "$duaId".';
+      notifyListeners();
+      return;
+    }
+
+    final id = 'dua_$duaId';
+
+    // 2. If same Dua is tapped while active, toggle pause / resume
+    if (_currentChannel == AudioChannel.dua && _currentAudioId == id && _currentDuaId == duaId) {
+      if (_isPlaying) {
+        await pause();
+      } else {
+        await resume();
+      }
+      return;
+    }
+
+    // 3. Immediately stop previous audio & clear all playback state
+    await stop();
+
+    _currentChannel = AudioChannel.dua;
+    _currentAudioId = id;
+    _currentDuaId = duaId;
+    _currentAudioUrl = audioUrl;
+    _currentTitle = title;
+    _currentSubtitle = subtitle;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      debugPrint('[AudioManager] Playing Dua [$duaId] with URL: $audioUrl');
+      await _audioPlayer.setUrl(audioUrl);
+      await _audioPlayer.play();
+    } catch (e) {
+      debugPrint('[AudioManager] Error playing Dua [$duaId]: $e');
+      _errorMessage = 'Unable to play Dua audio: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> playItem({
     required AudioChannel channel,
     required String id,
@@ -132,6 +189,9 @@ class AudioManagerService extends ChangeNotifier {
     _currentChannel = channel;
     _currentAudioId = id;
     _currentAudioUrl = url;
+    if (channel != AudioChannel.dua) {
+      _currentDuaId = null;
+    }
     if (title != null) _currentTitle = title;
     if (subtitle != null) _currentSubtitle = subtitle;
     if (surahNumber != null) _currentSurahNumber = surahNumber;
@@ -185,6 +245,7 @@ class AudioManagerService extends ChangeNotifier {
     _currentChannel = null;
     _currentAudioId = null;
     _currentAudioUrl = null;
+    _currentDuaId = null;
     _currentTitle = null;
     _currentSubtitle = null;
     _currentSurahNumber = null;

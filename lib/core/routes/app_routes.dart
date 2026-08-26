@@ -22,9 +22,11 @@ import '../../screens/daily_ayah/daily_ayah_screen.dart';
 import '../../screens/tajweed/tajweed_rules_screen.dart';
 import '../../screens/search/quran_search_screen.dart';
 import '../../screens/bookmarks/bookmarks_notes_hub_screen.dart';
+import '../../screens/onboarding/onboarding_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
+  static const String onboarding = '/onboarding';
   static const String home = '/home';
   static const String quranHub = '/quran-hub';
   static const String surahList = '/surah-list';
@@ -49,6 +51,7 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> get routes => {
     splash: (context) => const SplashScreen(),
+    onboarding: (context) => const OnboardingScreen(),
     home: (context) => const MainNavigationShell(),
     quranHub: (context) => const QuranHubScreen(),
     surahList: (context) => const SurahListScreen(),

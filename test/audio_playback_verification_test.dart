@@ -27,8 +27,15 @@ void main() {
 
     test('Verify all Masnoon Duas audio endpoints are reachable', () async {
       for (final dua in MasnoonDua.allDuas) {
-        final res = await http.head(Uri.parse(dua.audioUrl)).timeout(const Duration(seconds: 10));
-        expect(res.statusCode, equals(200), reason: 'Dua ${dua.id} (${dua.titleEnglish}) URL ${dua.audioUrl} returned ${res.statusCode}');
+        final res = await http.get(
+          Uri.parse(dua.audioUrl),
+          headers: {'Range': 'bytes=0-100', 'User-Agent': 'TajweedQuranApp/1.0'},
+        ).timeout(const Duration(seconds: 15));
+        expect(
+          res.statusCode == 200 || res.statusCode == 206,
+          isTrue,
+          reason: 'Dua ${dua.id} (${dua.titleEnglish}) URL ${dua.audioUrl} returned ${res.statusCode}',
+        );
         expect(res.headers['content-type'], contains('audio/mpeg'), reason: 'Dua ${dua.id} is not audio/mpeg');
       }
     });

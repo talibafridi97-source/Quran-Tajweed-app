@@ -9,6 +9,7 @@ import '../models/tafsir_model.dart';
 import '../models/bookmark_folder_model.dart';
 import '../models/bookmark_item_model.dart';
 import '../models/ayah_note_model.dart';
+import '../models/tasbeeh_history_model.dart';
 import '../core/utils/arabic_text_normalizer.dart';
 
 class DatabaseService {
@@ -24,14 +25,18 @@ class DatabaseService {
     String path = join(await getDatabasesPath(), 'quran_db_v6.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await _createTablesV1(db);
         await _createTablesV2(db);
+        await _createTablesV3(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           await _createTablesV2(db);
+        }
+        if (oldVersion < 3) {
+          await _createTablesV3(db);
         }
       },
     );
@@ -200,6 +205,19 @@ class DatabaseService {
         'created_at': DateTime.now().toIso8601String(),
       });
     }
+  }
+
+  static Future<void> _createTablesV3(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS tasbeeh_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dhikr_name TEXT NOT NULL,
+        arabic_text TEXT,
+        count INTEGER NOT NULL,
+        target INTEGER NOT NULL,
+        timestamp TEXT NOT NULL
+      )
+    ''');
   }
 
   // --- Canonical Quran Methods ---
@@ -530,4 +548,35 @@ class DatabaseService {
       whereArgs: [plan.id],
     );
   }
+
+  // --- Tasbeeh History Methods ---
+  Future<int> insertTasbeehHistory(TasbeehHistoryModel session) async {
+    final db = await database;
+    return await db.insert('tasbeeh_history', session.toMap());
+  }
+
+  Future<List<TasbeehHistoryModel>> getTasbeehHistory({int limit = 100}) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'tasbeeh_history',
+      orderBy: 'timestamp DESC',
+      limit: limit,
+    );
+    return List.generate(maps.length, (i) => TasbeehHistoryModel.fromMap(maps[i]));
+  }
+
+  Future<void> clearTasbeehHistory() async {
+    final db = await database;
+    await db.delete('tasbeeh_history');
+  }
+
+  Future<int> getTotalTasbeehCount() async {
+    final db = await database;
+    final res = await db.rawQuery('SELECT SUM(count) as total FROM tasbeeh_history');
+    if (res.isNotEmpty && res.first['total'] != null) {
+      return res.first['total'] as int;
+    }
+    return 0;
+  }
 }
+
