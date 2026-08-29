@@ -25,6 +25,42 @@ void main() {
       }
     });
 
+    test('Verify EveryAyah CDN endpoints for all 5 supported reciters and Bismillah', () async {
+      final reciters = [
+        'Alafasy_128kbps',
+        'Abdul_Basit_Murattal_192kbps',
+        'Abdurrahmaan_As-Sudais_192kbps',
+        'Ghamadi_40kbps',
+        'Husary_128kbps',
+      ];
+
+      for (final folder in reciters) {
+        // Test Bismillah (001001.mp3)
+        final bismillahUrl = 'https://everyayah.com/data/$folder/001001.mp3';
+        final bismillahRes = await http.get(
+          Uri.parse(bismillahUrl),
+          headers: {'Range': 'bytes=0-100', 'User-Agent': 'TajweedQuranApp/1.0'},
+        ).timeout(const Duration(seconds: 15));
+        expect(
+          bismillahRes.statusCode == 200 || bismillahRes.statusCode == 206,
+          isTrue,
+          reason: 'Bismillah URL $bismillahUrl returned ${bismillahRes.statusCode}',
+        );
+
+        // Test Ayah 1 of Al-Baqarah (002001.mp3)
+        final ayahUrl = 'https://everyayah.com/data/$folder/002001.mp3';
+        final ayahRes = await http.get(
+          Uri.parse(ayahUrl),
+          headers: {'Range': 'bytes=0-100', 'User-Agent': 'TajweedQuranApp/1.0'},
+        ).timeout(const Duration(seconds: 15));
+        expect(
+          ayahRes.statusCode == 200 || ayahRes.statusCode == 206,
+          isTrue,
+          reason: 'Ayah URL $ayahUrl returned ${ayahRes.statusCode}',
+        );
+      }
+    });
+
     test('Verify all Masnoon Duas audio endpoints are reachable', () async {
       for (final dua in MasnoonDua.allDuas) {
         final res = await http.get(

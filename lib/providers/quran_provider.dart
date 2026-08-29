@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/surah.dart';
+import '../models/ayah.dart';
 import '../models/resume_data.dart';
 import '../repository/quran_repository.dart';
+import '../services/mushaf_16_line_layout_service.dart';
 
 class QuranProvider with ChangeNotifier {
   final QuranRepository _repository;
@@ -25,7 +27,35 @@ class QuranProvider with ChangeNotifier {
 
   Future<void> _loadInitialData() async {
     _resumeData = _repository.getResumePoint();
-    fetchSurahs();
+    await fetchSurahs();
+    _prepareMushafLayout();
+  }
+
+  Future<void> _prepareMushafLayout() async {
+    try {
+      final surahs = _surahs;
+      final allAyahs = await _repository.getAllAyahs();
+      
+      if (allAyahs.isNotEmpty) {
+        Mushaf16LineLayoutService.instance.buildAllPages(
+          surahs: surahs, 
+          allAyahs: allAyahs,
+        );
+        notifyListeners();
+      }
+
+      // Background fetch if not all 30 Juz are cached
+      if (allAyahs.length < 6236) {
+        final fullAyahs = await _repository.ensureAllAyahsLoaded();
+        Mushaf16LineLayoutService.instance.buildAllPages(
+          surahs: surahs, 
+          allAyahs: fullAyahs,
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Mushaf preparation error: $e');
+    }
   }
 
   Future<void> fetchSurahs() async {

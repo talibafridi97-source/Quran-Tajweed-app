@@ -7,6 +7,8 @@ import '../../core/constants/constants.dart';
 import '../../models/ayah.dart';
 import '../../providers/bookmark_provider.dart';
 import '../../providers/translation_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../services/audio_manager_service.dart';
 import '../tafsir/ayah_tafsir_modal.dart';
 import '../bookmarks/edit_ayah_note_dialog.dart';
 
@@ -84,6 +86,22 @@ class AyahActionSheet extends StatelessWidget {
             const Divider(height: 1),
 
             // Actions
+            ListTile(
+              leading: const Icon(Icons.play_circle_fill_rounded, color: AppConstants.primaryGreen),
+              title: const Text('Listen to Ayah', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Play verse audio recitation'),
+              onTap: () {
+                Navigator.pop(context);
+                final settings = context.read<SettingsProvider>();
+                AudioManagerService.instance.playAyah(
+                  surahNumber: sNum,
+                  ayahNumber: aNum,
+                  surahName: ayah.surahEnglishName ?? 'Surah',
+                  reciterId: settings.qariId,
+                  reciterName: settings.qariName,
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.menu_book_rounded, color: AppConstants.primaryGreen),
               title: const Text('Read Tafsir & Commentary', style: TextStyle(fontWeight: FontWeight.bold)),

@@ -5,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/constants.dart';
 
 enum AppThemePalette {
-  emerald('Default Islamic', 'Emerald & Gold', Color(0xFF0D4D4D), Color(0xFFC9A227)),
-  oledDark('OLED Dark', 'Pure Pitch Black', Color(0xFF000000), Color(0xFF00D2D3)),
+  emerald('Default Islamic', 'Deep Emerald & Gold', Color(0xFF0D3B2E), Color(0xFFD4AF37)),
+  oledDark('OLED Dark', 'Pure Pitch Black', Color(0xFF000000), Color(0xFF10B981)),
   creamPaper('Cream Paper', 'Warm Sepia Parchment', Color(0xFF556B2F), Color(0xFFD4AF37)),
   royalGreen('Royal Forest', 'Deep Evergreen Jade', Color(0xFF06281E), Color(0xFF10B981)),
   midnightBlue('Midnight Blue', 'Deep Sapphire Azure', Color(0xFF0A192F), Color(0xFF1E88E5)),
@@ -312,12 +312,18 @@ class AppTheme {
   static const LinearGradient brandGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [AppConstants.primaryGreen, Color(0xFF007A72)],
+    colors: [AppConstants.primaryGreen, Color(0xFF0F5A47)],
   );
 
   static const LinearGradient brandGradientDeep = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [AppConstants.deepGreen, AppConstants.primaryGreen],
+    colors: [AppConstants.deepEmerald, AppConstants.primaryGreen],
+  );
+
+  static const LinearGradient goldGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [AppConstants.goldLight, AppConstants.gold, AppConstants.goldMatte],
   );
 }

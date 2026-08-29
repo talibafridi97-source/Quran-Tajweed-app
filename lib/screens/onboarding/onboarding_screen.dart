@@ -33,9 +33,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const List<OnboardingSlide> _slides = [
     OnboardingSlide(
-      title: 'Authentic 15-Line Madani Mushaf',
+      title: 'Professional 16-Line Quran Mushaf',
       arabicTitle: 'المصحف الشريف',
-      description: 'Read the Holy Quran with authentic 604-page Madani layout, QCF fonts, and complete offline preservation.',
+      description: 'Read the Holy Quran with responsive 16-line layout, beautiful typography, and complete offline preservation.',
       icon: Icons.menu_book_rounded,
       accentColor: AppConstants.primaryGreen,
     ),

@@ -36,59 +36,115 @@ class _QuranHubScreenState extends State<QuranHubScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppConstants.surfaceDark : Colors.white,
         elevation: 0,
-        title: Text(
-          'Holy Quran (القرآن الكريم)',
-          style: GoogleFonts.plusJakartaSans(
-            color: AppConstants.primaryGreen,
-            fontWeight: FontWeight.w800,
-            fontSize: 20,
-          ),
+        scrolledUnderElevation: 1,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppConstants.primaryGreen.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.menu_book_rounded, color: AppConstants.primaryGreen, size: 18),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                'Holy Quran (القرآن الكريم)',
+                style: GoogleFonts.plusJakartaSans(
+                  color: isDark ? AppConstants.textPrimaryDark : AppConstants.primaryGreen,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                  letterSpacing: -0.3,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
             onPressed: () => Navigator.pushNamed(context, '/search'),
             tooltip: 'Search Quran',
             icon: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: AppConstants.primaryGreen.withOpacity(0.1),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : AppConstants.primaryGreen.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.search_rounded, size: 20, color: AppConstants.primaryGreen),
+              child: Icon(
+                Icons.search_rounded,
+                size: 19,
+                color: isDark ? AppConstants.gold : AppConstants.primaryGreen,
+              ),
             ),
           ),
           IconButton(
             onPressed: () => Navigator.pushNamed(context, '/bookmarks-notes'),
             tooltip: 'Saved & Notes',
             icon: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                color: AppConstants.primaryGreen.withOpacity(0.1),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : AppConstants.primaryGreen.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.bookmarks_rounded, size: 20, color: AppConstants.primaryGreen),
+              child: Icon(
+                Icons.bookmarks_rounded,
+                size: 19,
+                color: isDark ? AppConstants.gold : AppConstants.primaryGreen,
+              ),
             ),
           ),
           const SizedBox(width: 8),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppConstants.primaryGreen,
-          unselectedLabelColor: Colors.grey[500],
-          indicatorColor: AppConstants.primaryGreen,
-          indicatorWeight: 3,
-          labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 14),
-          unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 14),
-          tabs: const [
-            Tab(text: '114 Surahs'),
-            Tab(text: '30 Paras'),
-            Tab(text: '604 Pages'),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark ? AppConstants.surfaceVariantDark : AppConstants.surfaceVariantLight,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              indicator: BoxDecoration(
+                color: isDark ? AppConstants.primaryGreen : AppConstants.primaryGreen,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppConstants.primaryGreen.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              labelColor: Colors.white,
+              unselectedLabelColor: isDark ? AppConstants.textSecondaryDark : AppConstants.textSecondaryLight,
+              labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13),
+              unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 13),
+              tabs: const [
+                Tab(text: '114 Surahs'),
+                Tab(text: '30 Paras'),
+                Tab(text: '604 Pages'),
+              ],
+            ),
+          ),
         ),
       ),
       body: TabBarView(
@@ -142,28 +198,31 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final quranProvider = context.watch<QuranProvider>();
     final resume = quranProvider.resumeData;
     final lastReadPage = resume?.page ?? 1;
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       physics: const BouncingScrollPhysics(),
       children: [
         // Resume Mushaf Card
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [AppConstants.primaryGreen, Color(0xFF007A72)],
+              colors: [AppConstants.deepEmerald, AppConstants.primaryGreen, Color(0xFF0F5A47)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppConstants.gold.withValues(alpha: 0.3), width: 1),
             boxShadow: [
               BoxShadow(
-                color: AppConstants.primaryGreen.withOpacity(0.3),
-                blurRadius: 15,
+                color: AppConstants.deepEmerald.withValues(alpha: 0.4),
+                blurRadius: 18,
                 offset: const Offset(0, 8),
               ),
             ],
@@ -174,44 +233,55 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.auto_stories_rounded, color: AppConstants.gold, size: 22),
-                      SizedBox(width: 8),
-                      Text(
-                        '15-Line Madani Mushaf',
-                        style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-                    ],
+                  const Flexible(
+                    child: Row(
+                      children: [
+                        Icon(Icons.auto_stories_rounded, color: AppConstants.gold, size: 20),
+                        SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            '16-Line Quran Mushaf',
+                            style: TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
                     decoration: BoxDecoration(
-                      color: AppConstants.gold.withOpacity(0.25),
+                      color: AppConstants.gold.withValues(alpha: 0.25),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppConstants.gold.withValues(alpha: 0.4), width: 0.8),
                     ),
                     child: Text(
-                      'Page $lastReadPage / 604',
-                      style: const TextStyle(color: AppConstants.gold, fontWeight: FontWeight.bold, fontSize: 12),
+                      'Page $lastReadPage',
+                      style: const TextStyle(color: AppConstants.goldLight, fontWeight: FontWeight.bold, fontSize: 11.5),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
                 'Continue Mushaf Reading',
                 style: GoogleFonts.plusJakartaSans(
                   color: Colors.white,
-                  fontSize: 20,
+                  fontSize: 19,
                   fontWeight: FontWeight.w800,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               Text(
                 'Resume from Page $lastReadPage (${resume?.surahName ?? 'Surah Al-Fatihah'})',
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.push(
@@ -224,18 +294,18 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
                 icon: const Icon(Icons.menu_book_rounded, size: 18),
                 label: const Text('Open Mushaf Reader'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppConstants.primaryGreen,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  backgroundColor: AppConstants.gold,
+                  foregroundColor: Colors.black87,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
                 ),
               ),
             ],
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 18),
 
         // Quick Jump Bar
         Row(
@@ -248,11 +318,17 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
                   hintText: 'Jump to page (1 - 604)...',
                   prefixIcon: const Icon(Icons.search, size: 20),
                   filled: true,
-                  fillColor: Colors.grey[100],
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  border: OutlineInputBorder(
+                  fillColor: isDark ? AppConstants.surfaceDark : Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                  enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
+                    borderSide: BorderSide(
+                      color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey[200]!,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: AppConstants.gold, width: 1.5),
                   ),
                 ),
                 onChanged: (val) {
@@ -262,7 +338,7 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
                 },
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             ElevatedButton(
               onPressed: () {
                 final p = _searchPage.clamp(1, 604);
@@ -276,7 +352,7 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppConstants.primaryGreen,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
               child: const Text('Go', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -284,23 +360,27 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
           ],
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
 
-        const Text(
+        Text(
           'Quick Page Grid',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 15.5,
+            fontWeight: FontWeight.bold,
+            color: isDark ? AppConstants.textPrimaryDark : AppConstants.textPrimaryLight,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
-        // Grid of pages
+        // Grid of pages (Responsive)
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 5,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 1.1,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 1.15,
           ),
           itemCount: 604,
           itemBuilder: (context, index) {
@@ -317,35 +397,45 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
                   ),
                 );
               },
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               child: Container(
                 decoration: BoxDecoration(
                   color: isCurrent
                       ? AppConstants.primaryGreen
                       : isRead
-                          ? AppConstants.accentGreen.withOpacity(0.12)
-                          : Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
+                          ? AppConstants.accentGreen.withValues(alpha: isDark ? 0.2 : 0.12)
+                          : isDark
+                              ? AppConstants.surfaceDark
+                              : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: isCurrent
-                        ? AppConstants.primaryGreen
+                        ? AppConstants.gold
                         : isRead
                             ? AppConstants.accentGreen
-                            : Colors.grey[200]!,
+                            : isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.grey[200]!,
                     width: isCurrent ? 1.5 : 1,
                   ),
                 ),
                 child: Center(
-                  child: Text(
-                    '$pageNum',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: isCurrent
-                          ? Colors.white
-                          : isRead
-                              ? AppConstants.primaryGreen
-                              : Colors.black87,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Padding(
+                      padding: const EdgeInsets.all(3.0),
+                      child: Text(
+                        '$pageNum',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
+                          color: isCurrent
+                              ? AppConstants.goldLight
+                              : isRead
+                                  ? (isDark ? AppConstants.accentGreen : AppConstants.primaryGreen)
+                                  : (isDark ? Colors.white70 : Colors.black87),
+                        ),
+                      ),
                     ),
                   ),
                 ),

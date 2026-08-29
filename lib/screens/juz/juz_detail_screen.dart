@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/ayah.dart';
-import '../../models/juz_model.dart';
+import '../../models/mushaf_16_line_model.dart';
 import '../../models/resume_data.dart';
 import '../../providers/quran_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../core/constants/constants.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/tajweed_text.dart';
+import '../../core/widgets/mushaf_page_frame.dart';
+import '../../core/widgets/mushaf_16_line_view.dart';
 import '../../core/widgets/loading_error_widget.dart';
+import '../../services/mushaf_16_line_layout_service.dart';
 
 class JuzDetailScreen extends StatefulWidget {
   final int juzNumber;
@@ -19,434 +20,99 @@ class JuzDetailScreen extends StatefulWidget {
 }
 
 class _JuzDetailScreenState extends State<JuzDetailScreen> {
-  late Future<List<Ayah>> _juzFuture;
-  bool _isPageViewMode = false;
-  PageController? _pageController;
-  int _currentPageIndex = 0;
+  late PageController _pageController;
+  final _layoutService = Mushaf16LineLayoutService.instance;
+  late Future<List<Mushaf16LinePage>> _buildFuture;
+  bool _showControls = true;
 
   @override
   void initState() {
     super.initState();
-    _loadJuzData();
+    _buildFuture = _initPages();
   }
 
   @override
   void dispose() {
-    _pageController?.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  void _loadJuzData() {
-    final repository = context.read<QuranProvider>().repository;
-    _juzFuture = repository.getJuzTajweed(widget.juzNumber);
-  }
-
-  // Group ayahs by actual API page number
-  Map<int, List<Ayah>> _groupAyahsByPage(List<Ayah> ayahs) {
-    final Map<int, List<Ayah>> grouped = {};
-    for (final ayah in ayahs) {
-      grouped.putIfAbsent(ayah.page, () => []).add(ayah);
-    }
-    return grouped;
-  }
-
-  // Group ayahs within a page by Surah
-  Map<int, List<Ayah>> _groupAyahsBySurah(List<Ayah> ayahs) {
-    final Map<int, List<Ayah>> grouped = {};
-    for (final ayah in ayahs) {
-      final sNum = ayah.surahNumber ?? 1;
-      grouped.putIfAbsent(sNum, () => []).add(ayah);
-    }
-    return grouped;
+  Future<List<Mushaf16LinePage>> _initPages() async {
+    final repo = context.read<QuranProvider>().repository;
+    final surahs = await repo.getAllSurahs();
+    final List<Ayah> allAyahs = await repo.getJuzTajweed(widget.juzNumber);
+    
+    final pages = _layoutService.buildAllPages(surahs: surahs, allAyahs: allAyahs);
+    final startPage = _layoutService.getJuzStartPage(widget.juzNumber);
+    _pageController = PageController(initialPage: startPage - 1);
+    
+    return pages;
   }
 
   @override
   Widget build(BuildContext context) {
+    final quranProvider = context.watch<QuranProvider>();
     final settings = context.watch<SettingsProvider>();
-    final quranProvider = context.read<QuranProvider>();
 
-    final juzMeta = JuzModel.allJuz.firstWhere(
-      (j) => j.number == widget.juzNumber,
-      orElse: () => JuzModel(
-        number: widget.juzNumber,
-        nameArabic: 'الجزء ${widget.juzNumber}',
-        nameEnglish: 'Juz ${widget.juzNumber}',
-        startPage: 1,
-      ),
-    );
-
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text('Para ${widget.juzNumber} - ${juzMeta.nameEnglish}'),
-        backgroundColor: AppConstants.primaryGreen,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: Icon(_isPageViewMode ? Icons.view_headline : Icons.auto_stories),
-            tooltip: _isPageViewMode ? 'Continuous Scroll' : 'Page-by-Page View',
-            onPressed: () {
-              setState(() {
-                _isPageViewMode = !_isPageViewMode;
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.bookmark_add_outlined),
-            tooltip: 'Bookmark Position',
-            onPressed: () {
-              quranProvider.saveResume(ResumeData(
-                surahName: juzMeta.nameEnglish,
-                surahNumber: 1,
-                ayahNumber: 1,
-                page: juzMeta.startPage,
-                juz: widget.juzNumber,
-                lastRead: DateTime.now(),
-              ));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Saved Para ${widget.juzNumber} as last read position')),
-              );
-            },
-          ),
-        ],
-      ),
-      body: FutureBuilder<List<Ayah>>(
-        future: _juzFuture,
-        builder: (context, snapshot) {
-          final isLoading = snapshot.connectionState == ConnectionState.waiting;
-          final hasError = snapshot.hasError;
-          final ayahs = snapshot.data ?? [];
-          final isEmpty = !isLoading && !hasError && ayahs.isEmpty;
-
-          if (isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.menu_book_rounded, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No Quran content found for Para ${widget.juzNumber}.',
-                    style: const TextStyle(color: Colors.grey, fontSize: 16),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => setState(() => _loadJuzData()),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Reload Para Data'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppConstants.primaryGreen,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (isLoading || hasError) {
-            return LoadingErrorWidget(
-              isLoading: isLoading,
-              errorMessage: hasError ? snapshot.error.toString() : null,
-              onRetry: () => setState(() => _loadJuzData()),
+    return FutureBuilder<List<Mushaf16LinePage>>(
+      future: _buildFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: LoadingErrorWidget(isLoading: true, child: SizedBox.shrink()));
+        }
+        
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return Scaffold(
+            appBar: AppBar(title: Text('Para ${widget.juzNumber}')),
+            body: LoadingErrorWidget(
+              isLoading: false,
+              errorMessage: snapshot.error?.toString() ?? 'No data found',
+              onRetry: () => setState(() { _buildFuture = _initPages(); }),
               child: const SizedBox.shrink(),
-            );
-          }
-
-          final pageMap = _groupAyahsByPage(ayahs);
-          final pageNumbers = pageMap.keys.toList()..sort();
-
-          if (_isPageViewMode) {
-            _pageController ??= PageController(initialPage: _currentPageIndex);
-            return Column(
-              children: [
-                // Top Page Indicator & Navigation Bar
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: AppConstants.primaryGreen.withOpacity(0.08),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Page ${pageNumbers[_currentPageIndex]} of ${pageNumbers.last}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppConstants.primaryGreen),
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back_ios, size: 18),
-                            onPressed: _currentPageIndex > 0
-                                ? () {
-                                    _pageController?.previousPage(
-                                      duration: const Duration(milliseconds: 300),
-                                      curve: Curves.easeInOut,
-                                    );
-                                  }
-                                : null,
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.arrow_forward_ios, size: 18),
-                            onPressed: _currentPageIndex < pageNumbers.length - 1
-                                ? () {
-                                    _pageController?.nextPage(
-                                      duration: const Duration(milliseconds: 300),
-                                      curve: Curves.easeInOut,
-                                    );
-                                  }
-                                : null,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // PageView for Mushaf Pages
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: pageNumbers.length,
-                    onPageChanged: (idx) {
-                      setState(() {
-                        _currentPageIndex = idx;
-                      });
-                    },
-                    itemBuilder: (context, idx) {
-                      final pageNum = pageNumbers[idx];
-                      final pageAyahs = pageMap[pageNum] ?? [];
-                      return _buildPageCard(context, settings, pageNum, pageAyahs, juzMeta);
-                    },
-                  ),
-                ),
-              ],
-            );
-          }
-
-          // Continuous Vertical Scroll Mode
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            itemCount: pageNumbers.length + 1,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _buildJuzHeader(juzMeta, ayahs.length, pageNumbers.length);
-              }
-
-              final pageNum = pageNumbers[index - 1];
-              final pageAyahs = pageMap[pageNum] ?? [];
-              return _buildPageCard(context, settings, pageNum, pageAyahs, juzMeta);
-            },
+            ),
           );
-        },
-      ),
-    );
-  }
+        }
 
-  Widget _buildJuzHeader(JuzModel juz, int totalAyahs, int totalPages) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: AppTheme.brandGradient,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppConstants.primaryGreen.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            juz.nameArabic,
-            style: const TextStyle(
-              fontFamily: AppConstants.uthmaniFont,
-              fontSize: 36,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Para ${juz.number} • ${juz.nameEnglish} • $totalAyahs Ayahs • $totalPages Mushaf Pages',
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
+        final pages = snapshot.data!;
 
-  Widget _buildPageCard(
-    BuildContext context,
-    SettingsProvider settings,
-    int pageNum,
-    List<Ayah> pageAyahs,
-    JuzModel juzMeta,
-  ) {
-    final surahGroups = _groupAyahsBySurah(pageAyahs);
+        return PageView.builder(
+          controller: _pageController,
+          itemCount: pages.length,
+          reverse: true,
+          onPageChanged: (idx) {
+            final page = pages[idx];
+            quranProvider.saveResume(ResumeData(
+              surahName: page.surahName,
+              surahNumber: page.surahNumber,
+              ayahNumber: 1,
+              page: page.pageNumber,
+              juz: page.juzNumber,
+              lastRead: DateTime.now(),
+            ));
+          },
+          itemBuilder: (context, index) {
+            final page = pages[index];
+            final isRead = quranProvider.getPageReadStatus(page.pageNumber);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFCFAF5), // Authentic Warm Ivory Parchment
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF2C7A9E), width: 3),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Container(
-        margin: const EdgeInsets.all(2),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFC9A227), width: 1.5),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Page Header Indicator
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF7F1E5),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xFF2C7A9E), width: 1),
+            return MushafPageFrame(
+              pageNumber: page.pageNumber,
+              totalPages: 604, // Standard Quran total pages
+              surahNameArabic: page.surahName,
+              juzNameArabic: 'الجزء ${page.juzNumber}',
+              isRead: isRead,
+              showControls: _showControls,
+              onTap: () => setState(() => _showControls = !_showControls),
+              onReadChanged: (val) => quranProvider.togglePageReadStatus(page.pageNumber),
+              child: Mushaf16LineView(
+                page: page,
+                fontSize: settings.arabicFontSize,
+                fontFamily: settings.arabicFontFamily,
+                showTajweed: settings.showTajweed,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'صفحہ $pageNum',
-                    style: const TextStyle(
-                      fontFamily: AppConstants.uthmaniFont,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Color(0xFF144747),
-                    ),
-                  ),
-                  Text(
-                    'الجزء ${juzMeta.number}',
-                    style: const TextStyle(
-                      fontFamily: AppConstants.uthmaniFont,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Color(0xFFC9A227),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 14),
-
-          // Render Ayahs grouped by Surah within this Mushaf Page
-          ...surahGroups.entries.map((entry) {
-            final sNum = entry.key;
-            final sAyahs = entry.value;
-            final firstAyah = sAyahs.first;
-            final surahName = firstAyah.surahName ?? 'سورة';
-            final surahEngName = firstAyah.surahEnglishName ?? '';
-
-            return Column(
-              children: [
-                // Surah Banner if this page includes Ayah 1 or starts a Surah
-                if (firstAyah.numberInSurah == 1) ...[
-                  Container(
-                    margin: const EdgeInsets.symmetric(vertical: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppConstants.primaryGreen,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          surahEngName.isNotEmpty ? surahEngName : 'Surah $sNum',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          surahName,
-                          style: const TextStyle(
-                            fontFamily: AppConstants.uthmaniFont,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (sNum != 1 && sNum != 9) ...[
-                    const SizedBox(height: 8),
-                    const Text(
-                      'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
-                      style: TextStyle(
-                        fontFamily: AppConstants.uthmaniFont,
-                        fontSize: 24,
-                        color: AppConstants.primaryGreen,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                ],
-
-                // Ayahs Text
-                Builder(
-                  builder: (context) {
-                    List<Ayah> processedSAyahs = sAyahs;
-                    if (sNum != 1 && sAyahs.isNotEmpty && sAyahs.first.numberInSurah == 1) {
-                      final first = sAyahs.first;
-                      if (first.text.startsWith('بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ')) {
-                        final cleanText = first.text.replaceFirst(RegExp(r'^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*'), '');
-                        if (cleanText.isNotEmpty) {
-                          processedSAyahs = [
-                            Ayah(
-                              number: first.number,
-                              text: cleanText,
-                              numberInSurah: first.numberInSurah,
-                              juz: first.juz,
-                              manzil: first.manzil,
-                              page: first.page,
-                              ruku: first.ruku,
-                              hizbQuarter: first.hizbQuarter,
-                              sajda: first.sajda,
-                              surahNumber: first.surahNumber,
-                              surahName: first.surahName,
-                              surahEnglishName: first.surahEnglishName,
-                            ),
-                            ...sAyahs.skip(1),
-                          ];
-                        }
-                      }
-                    }
-                    return TajweedText(
-                      ayahs: processedSAyahs,
-                      fontSize: settings.arabicFontSize,
-                      fontFamily: AppConstants.uthmaniFont,
-                      showTajweed: settings.showTajweed,
-                      textAlign: TextAlign.justify,
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-              ],
             );
-          }),
-        ],
-      ),
-    ),
-  );
-}
+          },
+        );
+      },
+    );
+  }
 }

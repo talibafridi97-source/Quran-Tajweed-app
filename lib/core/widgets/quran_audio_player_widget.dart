@@ -64,10 +64,8 @@ class _QuranAudioPlayerWidgetState extends State<QuranAudioPlayerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final isBuffering = _isLoading ||
-        (_isThisSurahActive &&
-            (_audioManager.processingState == ProcessingState.loading ||
-                _audioManager.processingState == ProcessingState.buffering));
+    final isBuffering = _isThisSurahActive && _audioManager.isLoading;
+    final reciterName = (_isThisSurahActive ? _audioManager.currentReciterName : null) ?? 'Mishary Rashid Alafasy';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -91,9 +89,9 @@ class _QuranAudioPlayerWidgetState extends State<QuranAudioPlayerWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Reciter: Mishary Rashid Alafasy',
-                  style: TextStyle(color: Colors.white70, fontSize: 11),
+                Text(
+                  'Reciter: $reciterName',
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
                 ),
                 Text(
                   'Surah ${widget.surahName}',

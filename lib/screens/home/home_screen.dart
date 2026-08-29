@@ -283,6 +283,8 @@ class HomeScreen extends StatelessWidget {
                         color: Colors.white,
                         letterSpacing: -0.3,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -292,6 +294,8 @@ class HomeScreen extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                         color: Colors.white.withValues(alpha: 0.85),
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 14),
                     Row(

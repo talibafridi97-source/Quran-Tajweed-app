@@ -57,9 +57,7 @@ class _FullScreenAudioPlayerModalState extends State<FullScreenAudioPlayerModal>
     final title = _audioManager.currentTitle ?? 'Holy Quran Recitation';
     final subtitle = _audioManager.currentSubtitle ?? 'Mishary Rashid Alafasy';
     final isPlaying = _audioManager.isPlaying;
-    final isLoading = _audioManager.isLoading ||
-        _audioManager.processingState == ProcessingState.loading ||
-        _audioManager.processingState == ProcessingState.buffering;
+    final isLoading = _audioManager.isLoading;
     final isQuran = _audioManager.currentChannel == AudioChannel.quran;
     final surahNum = _audioManager.currentSurahNumber;
 

@@ -465,7 +465,7 @@ class SettingsScreen extends StatelessWidget {
             SizedBox(height: 8),
             Text('Developer: Talib Afridi'),
             SizedBox(height: 8),
-            Text('Features: 6 Multi-Palette Themes, Interactive Tajweed Rules, 15-Line Madani Mushaf, Smart Digital Tasbeeh with SQLite History, Multi-Translation, Ibn Kathir Tafsir, FTS5 Search & Bookmarks.'),
+            Text('Features: 6 Multi-Palette Themes, Interactive Tajweed Rules, 16-Line Quran Mushaf, Smart Digital Tasbeeh with SQLite History, Multi-Translation, Ibn Kathir Tafsir, FTS5 Search & Bookmarks.'),
           ],
         ),
         actions: [

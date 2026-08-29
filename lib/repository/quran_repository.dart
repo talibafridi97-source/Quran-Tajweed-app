@@ -51,6 +51,25 @@ class QuranRepository {
     return [];
   }
 
+  Future<List<Ayah>> getAllAyahs() async {
+    return await _databaseService.getAllAyahs();
+  }
+
+  Future<List<Ayah>> ensureAllAyahsLoaded() async {
+    final localAyahs = await _databaseService.getAllAyahs();
+    if (localAyahs.length >= 6236) {
+      return localAyahs;
+    }
+
+    // Fetch remaining Juz in parallel chunks for maximum responsiveness
+    final List<Future<List<Ayah>>> futures = [];
+    for (int j = 1; j <= 30; j++) {
+      futures.add(getJuzTajweed(j));
+    }
+    await Future.wait(futures);
+    return await _databaseService.getAllAyahs();
+  }
+
   Future<List<Ayah>> getPageTajweed(int pageNumber) => 
       _apiService.getPageTajweed(pageNumber);
 

@@ -301,6 +301,15 @@ class DatabaseService {
     return List.generate(maps.length, (i) => Ayah.fromJson(maps[i]));
   }
 
+  Future<List<Ayah>> getAllAyahs() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'ayahs',
+      orderBy: 'number ASC',
+    );
+    return List.generate(maps.length, (i) => Ayah.fromJson(maps[i]));
+  }
+
   Future<void> saveQcfWords(List<QuranWord> words) async {
     final db = await database;
     Batch batch = db.batch();
