@@ -3,18 +3,14 @@ import '../constants/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Professional Traditional Indo-Pak Illuminated Mushaf Page Frame
-/// Features high-fidelity floral borders, page-specific illuminated arches (Page 1-3),
-/// and authentic 16-line pagination containers with classical Pakistani calligraphy aesthetics.
 class MushafPageFrame extends StatelessWidget {
   final int pageNumber;
   final int totalPages;
-  final String title;
   final String surahNameArabic;
   final String? juzNameArabic;
   final int manzilNumber;
   final bool isRead;
   final ValueChanged<bool?>? onReadChanged;
-  final VoidCallback? onBookmarkPressed;
   final VoidCallback? onTap;
   final bool showControls;
   final List<Widget>? actions;
@@ -24,13 +20,11 @@ class MushafPageFrame extends StatelessWidget {
     super.key,
     required this.pageNumber,
     this.totalPages = 549,
-    this.title = 'قرآن مجید',
     required this.surahNameArabic,
     this.juzNameArabic,
     this.manzilNumber = 1,
     this.isRead = false,
     this.onReadChanged,
-    this.onBookmarkPressed,
     this.onTap,
     this.showControls = true,
     this.actions,
@@ -49,7 +43,7 @@ class MushafPageFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final pageStr = _toArabicDigits(pageNumber);
     final totalPagesStr = _toArabicDigits(totalPages);
-    final bool isIlluminated = pageNumber >= 2 && pageNumber <= 3; // Fatihah and Baqarah opening
+    final bool isIlluminated = pageNumber >= 2 && pageNumber <= 3;
 
     return Scaffold(
       backgroundColor: const Color(0xFF07241C), 
@@ -77,249 +71,173 @@ class MushafPageFrame extends StatelessWidget {
           child: Container(
             width: double.infinity,
             height: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+            color: const Color(0xFF07241C),
+            padding: const EdgeInsets.all(4),
             child: Center(
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 500),
-                child: Stack(
-                  children: [
-                    // 1. High-Resolution Ornamental Mushaf Border
-                    CustomPaint(
-                      painter: MushafOrnamentalBorderPainter(
-                        isIlluminated: isIlluminated,
+              child: AspectRatio(
+                aspectRatio: 0.68, 
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFCFAF5), 
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.8),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
                       ),
-                      size: Size.infinite,
-                    ),
-
-                    // 2. Mushaf Content Area
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        isIlluminated ? 24 : 14,
-                        isIlluminated ? 28 : 12,
-                        isIlluminated ? 24 : 14,
-                        isIlluminated ? 28 : 12,
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // 1. High-Fidelity Floral Border Painter
+                      CustomPaint(
+                        painter: HighFidelityIndoPakBorderPainter(
+                          isIlluminated: isIlluminated,
+                        ),
+                        size: Size.infinite,
                       ),
-                      child: Column(
-                        children: [
-                          // Top Traditional Header (Only on standard pages)
-                          if (!isIlluminated && pageNumber > 1) _buildTraditionalTopBar(pageStr),
 
-                          // 16-Line Text Content
-                          Expanded(
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 2),
-                              child: child,
-                            ),
-                          ),
-
-                          // Bottom Traditional Footer (Only on standard pages)
-                          if (!isIlluminated && pageNumber > 1) _buildTraditionalFooter(pageStr),
-                        ],
+                      // 2. Mushaf Content
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          isIlluminated ? 22 : 18,
+                          isIlluminated ? 26 : 14,
+                          isIlluminated ? 22 : 18,
+                          isIlluminated ? 26 : 14,
+                        ),
+                        child: Column(
+                          children: [
+                            if (!isIlluminated) _buildHeader(pageStr),
+                            Expanded(child: child),
+                            if (!isIlluminated) _buildFooter(pageStr),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
-      bottomNavigationBar: showControls ? _buildProfessionalBottomBar(context) : null,
+      bottomNavigationBar: showControls ? _buildReadButton(context) : null,
     );
   }
 
-  Widget _buildTraditionalTopBar(String pageStr) {
+  Widget _buildHeader(String pageStr) {
     return Container(
-      height: 28,
+      height: 32,
       margin: const EdgeInsets.only(bottom: 2),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFF2C7A9E), width: 1.2)),
+        border: Border(bottom: BorderSide(color: Color(0xFF2C7A9E), width: 1.8)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _headerBox('سُورَةُ $surahNameArabic'),
-          _pageMedallion(pageStr),
-          _headerBox(juzNameArabic ?? 'الجزء'),
+          _badge('سورة $surahNameArabic'),
+          _medallion(pageStr),
+          _badge(juzNameArabic ?? 'الجزء'),
         ],
       ),
     );
   }
 
-  Widget _headerBox(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEADBCE),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFFD4AF37), width: 0.8),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontFamily: AppConstants.uthmaniFont,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF0D3B2E),
-        ),
-      ),
-    );
-  }
+  Widget _badge(String t) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+    decoration: BoxDecoration(color: const Color(0xFFEADBCE), borderRadius: BorderRadius.circular(4), border: Border.all(color: const Color(0xFFD4AF37), width: 1.2)),
+    child: Text(t, style: const TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0D3B2E))),
+  );
 
-  Widget _pageMedallion(String pageStr) {
-    return Container(
-      width: 26,
-      height: 26,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 2)],
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        pageStr,
-        style: const TextStyle(
-          fontFamily: AppConstants.uthmaniFont,
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF0D3B2E),
-        ),
-      ),
-    );
-  }
+  Widget _medallion(String t) => Container(
+    width: 28, height: 28,
+    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white, border: Border.all(color: const Color(0xFFD4AF37), width: 2)),
+    alignment: Alignment.center,
+    child: Text(t, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0D3B2E))),
+  );
 
-  Widget _buildTraditionalFooter(String pageStr) {
+  Widget _buildFooter(String pageStr) {
     return Container(
       height: 26,
       margin: const EdgeInsets.only(top: 2),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFF2C7A9E), width: 1.2)),
+        border: Border(top: BorderSide(color: Color(0xFF2C7A9E), width: 1.8)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'مَنزِل ${_toArabicDigits(manzilNumber)}',
-            style: GoogleFonts.notoNastaliqUrdu(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF7A6538)),
-          ),
+          Text('مَنزِل ${_toArabicDigits(manzilNumber)}', style: GoogleFonts.notoNastaliqUrdu(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF7A6538))),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
             decoration: BoxDecoration(color: const Color(0xFF1E6B5C), borderRadius: BorderRadius.circular(4)),
-            child: Text(
-              'صفحہ $pageStr',
-              style: const TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
-            ),
+            child: Text('صفحہ $pageStr', style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
           ),
-          Text(
-            'رکوع',
-            style: GoogleFonts.notoNastaliqUrdu(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF7A6538)),
-          ),
+          Text('رکوع', style: GoogleFonts.notoNastaliqUrdu(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF7A6538))),
         ],
       ),
     );
   }
 
-  Widget _buildProfessionalBottomBar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0D3B2E),
-        border: Border(top: BorderSide(color: Color(0xFF174D3E), width: 1)),
+  Widget _buildReadButton(BuildContext context) => Container(
+    padding: const EdgeInsets.all(12),
+    color: const Color(0xFF0D3B2E),
+    child: SafeArea(child: InkWell(
+      onTap: () => onReadChanged?.call(!isRead),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(color: isRead ? const Color(0xFFD4AF37) : const Color(0xFF144738), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFD4AF37), width: 1.5)),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(isRead ? Icons.check_circle : Icons.radio_button_unchecked, color: isRead ? Colors.black87 : Colors.white),
+          const SizedBox(width: 12),
+          Text(isRead ? 'یہ صفحہ پڑھ لیا ہے' : 'میں نے یہ پڑھ لیا', style: GoogleFonts.notoNastaliqUrdu(color: isRead ? Colors.black87 : Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+        ]),
       ),
-      child: SafeArea(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            InkWell(
-              onTap: () => onReadChanged?.call(!isRead),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isRead ? const Color(0xFFD4AF37) : const Color(0xFF144738),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFD4AF37), width: 1),
-                ),
-                child: Row(
-                  children: [
-                    Icon(isRead ? Icons.check_circle : Icons.radio_button_unchecked, color: isRead ? Colors.black87 : Colors.white, size: 16),
-                    const SizedBox(width: 8),
-                    Text(
-                      isRead ? 'یہ صفحہ پڑھ لیا ہے' : 'میں نے یہ پڑھ لیا',
-                      style: GoogleFonts.notoNastaliqUrdu(color: isRead ? Colors.black87 : Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    )),
+  );
 }
 
-class MushafOrnamentalBorderPainter extends CustomPainter {
+class HighFidelityIndoPakBorderPainter extends CustomPainter {
   final bool isIlluminated;
-
-  MushafOrnamentalBorderPainter({required this.isIlluminated});
+  HighFidelityIndoPakBorderPainter({required this.isIlluminated});
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    final bgPaint = Paint()..color = const Color(0xFFFCFAF5);
-    canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(4)), bgPaint);
+    final Paint gold = Paint()..color = const Color(0xFFD4AF37)..style = PaintingStyle.stroke..strokeWidth = 3.5;
+    final Paint emerald = Paint()..color = const Color(0xFF1E6B5C)..style = PaintingStyle.stroke..strokeWidth = 2.5;
+    final Paint blue = Paint()..color = const Color(0xFF2C7A9E)..style = PaintingStyle.stroke..strokeWidth = 1.5;
 
-    final goldPaint = Paint()
-      ..color = const Color(0xFFD4AF37)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    final bluePaint = Paint()
-      ..color = const Color(0xFF2C7A9E)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    canvas.drawRect(rect.deflate(2), goldPaint);
-    canvas.drawRect(rect.deflate(6), bluePaint);
+    canvas.drawRect(rect.deflate(2), gold);
+    canvas.drawRect(rect.deflate(8), emerald);
+    canvas.drawRect(rect.deflate(14), blue);
 
     if (isIlluminated) {
-      _paintIlluminatedFloral(canvas, size);
+      _drawFloralPatterns(canvas, size, true);
     } else {
-      _paintStandardIndoPak(canvas, size);
+      _drawFloralPatterns(canvas, size, false);
     }
   }
 
-  void _paintIlluminatedFloral(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = const Color(0xFF2C7A9E).withValues(alpha: 0.8)
-      ..style = PaintingStyle.fill;
+  void _drawFloralPatterns(Canvas canvas, Size size, bool full) {
+    final p = Paint()..color = const Color(0xFF2C7A9E).withValues(alpha: 0.6)..style = PaintingStyle.fill;
+    final gp = Paint()..color = const Color(0xFFD4AF37).withValues(alpha: 0.8)..style = PaintingStyle.fill;
 
-    // Corner Ornaments
-    double s = 60;
-    canvas.drawRect(Rect.fromLTWH(8, 8, s, 10), p);
-    canvas.drawRect(Rect.fromLTWH(8, 8, 10, s), p);
-    
-    canvas.drawRect(Rect.fromLTWH(size.width - 8 - s, 8, s, 10), p);
-    canvas.drawRect(Rect.fromLTWH(size.width - 18, 8, 10, s), p);
-
-    canvas.drawRect(Rect.fromLTWH(8, size.height - 18, s, 10), p);
-    canvas.drawRect(Rect.fromLTWH(8, size.height - 8 - s, 10, s), p);
-
-    canvas.drawRect(Rect.fromLTWH(size.width - 8 - s, size.height - 18, s, 10), p);
-    canvas.drawRect(Rect.fromLTWH(size.width - 18, size.height - 8 - s, 10, s), p);
-  }
-
-  void _paintStandardIndoPak(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = const Color(0xFFD4AF37).withValues(alpha: 0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
-
-    for (double i = 20; i < size.height - 20; i += 40) {
-      canvas.drawCircle(Offset(4, i), 1.0, p);
-      canvas.drawCircle(Offset(size.width - 4, i), 1.0, p);
+    if (full) {
+      // Draw simulated floral arch
+      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, 40), p);
+      canvas.drawRect(Rect.fromLTWH(0, size.height - 40, size.width, 40), p);
+      
+      for(double i=0; i<size.width; i+=40) {
+        canvas.drawCircle(Offset(i+20, 20), 12, gp);
+        canvas.drawCircle(Offset(i+20, size.height-20), 12, gp);
+      }
+    } else {
+      // Draw side ornaments
+      for(double i=40; i<size.height-40; i+=60) {
+        canvas.drawCircle(Offset(8, i), 3, gp);
+        canvas.drawCircle(Offset(size.width-8, i), 3, gp);
+      }
     }
   }
 

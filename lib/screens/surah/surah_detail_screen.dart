@@ -46,9 +46,11 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     if (!mounted || !_isControllerInitialized) return;
     final audioPage = _audioManager.currentPageNumber;
     if (audioPage != null) {
-      if (_pageController.hasClients && _pageController.page?.round() != (audioPage - 1)) {
+      final startPage = _layoutService.getSurahStartPage(widget.surah.number);
+      final targetIndex = audioPage - 1; // PageView index is 0-based absolute
+      if (_pageController.hasClients && _pageController.page?.round() != targetIndex) {
          _pageController.animateToPage(
-            audioPage - 1,
+            targetIndex,
             duration: const Duration(milliseconds: 600),
             curve: Curves.easeInOutCubic,
           );
@@ -59,15 +61,13 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   Future<List<Mushaf16LinePage>> _initPages() async {
     final repo = context.read<QuranProvider>().repository;
     
-    if (!_layoutService.isReady) {
-      final surahs = await repo.getAllSurahs();
-      final allAyahs = await repo.ensureAllAyahsLoaded();
-      _layoutService.buildAllPages(surahs: surahs, allAyahs: allAyahs);
-    }
+    // Ensure all 30 Paras are loaded for consistent pagination
+    final surahs = await repo.getAllSurahs();
+    final allAyahs = await repo.ensureAllAyahsLoaded();
     
-    final pages = _layoutService.buildAllPages(surahs: [], allAyahs: []);
+    final pages = _layoutService.buildAllPages(surahs: surahs, allAyahs: allAyahs);
+    
     final startPage = _layoutService.getSurahStartPage(widget.surah.number);
-    
     _pageController = PageController(initialPage: (startPage - 1).clamp(0, pages.length - 1));
     _isControllerInitialized = true;
     
@@ -92,15 +92,16 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         final pages = snapshot.data ?? [];
         if (pages.isEmpty) {
           return Scaffold(
-            appBar: AppBar(title: Text(widget.surah.englishName)),
-            body: const Center(child: Text('Unable to load Mushaf pages')),
+            backgroundColor: const Color(0xFF07241C),
+            appBar: AppBar(backgroundColor: const Color(0xFF0D3B2E), title: Text(widget.surah.englishName)),
+            body: const Center(child: Text('Unable to load Mushaf pages', style: TextStyle(color: Colors.white))),
           );
         }
 
         return PageView.builder(
           controller: _pageController,
           itemCount: pages.length,
-          reverse: true,
+          reverse: true, // Professional R-to-L navigation
           allowImplicitScrolling: true,
           onPageChanged: (idx) {
             final page = pages[idx];

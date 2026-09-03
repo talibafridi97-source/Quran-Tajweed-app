@@ -58,9 +58,12 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
   Future<List<Mushaf16LinePage>> _initPages() async {
     final repo = context.read<QuranProvider>().repository;
     
-    // Ensure all 30 Paras are loaded for consistent pagination
+    // FORCE CACHE CLEAR to apply new 16-line Pakistani layout logic
+    _layoutService.clearCache();
+
     final surahs = await repo.getAllSurahs();
     final allAyahs = await repo.ensureAllAyahsLoaded();
+    
     final pages = _layoutService.buildAllPages(surahs: surahs, allAyahs: allAyahs);
     
     final startPage = _layoutService.getJuzStartPage(widget.juzNumber);
@@ -88,15 +91,16 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
         final pages = snapshot.data ?? [];
         if (pages.isEmpty) {
           return Scaffold(
-            appBar: AppBar(title: Text('Para ${widget.juzNumber}')),
-            body: const Center(child: Text('Unable to load Mushaf pages')),
+            backgroundColor: const Color(0xFF07241C),
+            appBar: AppBar(backgroundColor: const Color(0xFF0D3B2E), title: Text('Para ${widget.juzNumber}')),
+            body: const Center(child: Text('Unable to load Mushaf pages', style: TextStyle(color: Colors.white))),
           );
         }
 
         return PageView.builder(
           controller: _pageController,
           itemCount: pages.length,
-          reverse: true, // Professional R-to-L navigation
+          reverse: true, // Professional Indo-Pak R-to-L navigation
           allowImplicitScrolling: true,
           onPageChanged: (idx) {
             final page = pages[idx];
