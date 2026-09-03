@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Professional Traditional Indo-Pak Illuminated Mushaf Page Frame.
+/// Professional Traditional Indo-Pak Illuminated Mushaf Page Frame
 /// Features high-fidelity floral borders, page-specific illuminated arches (Page 1-3),
 /// and authentic 16-line pagination containers with classical Pakistani calligraphy aesthetics.
 class MushafPageFrame extends StatelessWidget {
@@ -38,7 +38,7 @@ class MushafPageFrame extends StatelessWidget {
   });
 
   String _toArabicDigits(int number) {
-    const arabicDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '٩'];
+    const arabicDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     return number.toString().split('').map((digit) {
       final idx = int.tryParse(digit);
       return idx != null ? arabicDigits[idx] : digit;
@@ -134,7 +134,7 @@ class MushafPageFrame extends StatelessWidget {
       height: 28,
       margin: const EdgeInsets.only(bottom: 2),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFD4AF37), width: 1.2)),
+        border: Border(bottom: BorderSide(color: Color(0xFF2C7A9E), width: 1.2)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -149,20 +149,19 @@ class MushafPageFrame extends StatelessWidget {
 
   Widget _headerBox(String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F2E6),
+        color: const Color(0xFFEADBCE),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFFD4AF37), width: 1.0),
+        border: Border.all(color: const Color(0xFFD4AF37), width: 0.8),
       ),
       child: Text(
         text,
         style: const TextStyle(
-          fontFamily: 'Urdu',
-          fontSize: 10,
+          fontFamily: AppConstants.uthmaniFont,
+          fontSize: 11,
           fontWeight: FontWeight.bold,
           color: Color(0xFF0D3B2E),
-          height: 1.0,
         ),
       ),
     );
@@ -170,36 +169,22 @@ class MushafPageFrame extends StatelessWidget {
 
   Widget _pageMedallion(String pageStr) {
     return Container(
-      width: 28,
-      height: 28,
+      width: 26,
+      height: 26,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFFFCFAF5),
+        color: Colors.white,
         border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 2,
-            offset: const Offset(0, 1),
-          )
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 2)],
       ),
-      padding: const EdgeInsets.all(1.5),
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFF0D3B2E), width: 0.8),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          pageStr,
-          style: const TextStyle(
-            fontFamily: AppConstants.uthmaniFont,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF0D3B2E),
-            height: 1.0,
-          ),
+      alignment: Alignment.center,
+      child: Text(
+        pageStr,
+        style: const TextStyle(
+          fontFamily: AppConstants.uthmaniFont,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF0D3B2E),
         ),
       ),
     );
@@ -207,62 +192,29 @@ class MushafPageFrame extends StatelessWidget {
 
   Widget _buildTraditionalFooter(String pageStr) {
     return Container(
-      height: 28,
+      height: 26,
       margin: const EdgeInsets.only(top: 2),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFD4AF37), width: 1.2)),
+        border: Border(top: BorderSide(color: Color(0xFF2C7A9E), width: 1.2)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Left: Page number
+          Text(
+            'مَنزِل ${_toArabicDigits(manzilNumber)}',
+            style: GoogleFonts.notoNastaliqUrdu(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF7A6538)),
+          ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E6B5C),
-              borderRadius: BorderRadius.circular(4),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+            decoration: BoxDecoration(color: const Color(0xFF1E6B5C), borderRadius: BorderRadius.circular(4)),
             child: Text(
               'صفحہ $pageStr',
-              style: const TextStyle(
-                fontFamily: AppConstants.uthmaniFont,
-                fontSize: 9,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                height: 1.0,
-              ),
+              style: const TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
-
-          // Center: Manzil Marker
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F2E6),
-              border: Border.all(color: const Color(0xFFD4AF37), width: 1.0),
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: Text(
-              'مَنزِل ${_toArabicDigits(manzilNumber)}',
-              style: const TextStyle(
-                fontFamily: 'Urdu',
-                fontSize: 9,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF7A6538),
-                height: 1.0,
-              ),
-            ),
-          ),
-
-          // Right: "رکوع" marker
-          const Text(
+          Text(
             'رکوع',
-            style: TextStyle(
-              fontFamily: 'Urdu',
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF7A6538),
-            ),
+            style: GoogleFonts.notoNastaliqUrdu(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF7A6538)),
           ),
         ],
       ),
@@ -319,26 +271,18 @@ class MushafOrnamentalBorderPainter extends CustomPainter {
     final bgPaint = Paint()..color = const Color(0xFFFCFAF5);
     canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(4)), bgPaint);
 
-    final goldPaintHeavy = Paint()
+    final goldPaint = Paint()
       ..color = const Color(0xFFD4AF37)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
+      ..strokeWidth = 2.0;
 
-    final goldPaintThin = Paint()
-      ..color = const Color(0xFFD4AF37)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    final greenPaint = Paint()
-      ..color = const Color(0xFF0D3B2E)
+    final bluePaint = Paint()
+      ..color = const Color(0xFF2C7A9E)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    // Draw multi-layered traditional borders
-    canvas.drawRect(rect.deflate(2), goldPaintHeavy);
-    canvas.drawRect(rect.deflate(5), goldPaintThin);
-    canvas.drawRect(rect.deflate(7.5), greenPaint);
-    canvas.drawRect(rect.deflate(9), goldPaintThin);
+    canvas.drawRect(rect.deflate(2), goldPaint);
+    canvas.drawRect(rect.deflate(6), bluePaint);
 
     if (isIlluminated) {
       _paintIlluminatedFloral(canvas, size);
@@ -369,14 +313,13 @@ class MushafOrnamentalBorderPainter extends CustomPainter {
 
   void _paintStandardIndoPak(Canvas canvas, Size size) {
     final p = Paint()
-      ..color = const Color(0xFFD4AF37).withValues(alpha: 0.4)
+      ..color = const Color(0xFFD4AF37).withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
+      ..strokeWidth = 0.5;
 
-    // Draw small traditional dot patterns along the left and right outer border
-    for (double i = 24; i < size.height - 24; i += 24) {
-      canvas.drawCircle(Offset(4, i), 1.2, p);
-      canvas.drawCircle(Offset(size.width - 4, i), 1.2, p);
+    for (double i = 20; i < size.height - 20; i += 40) {
+      canvas.drawCircle(Offset(4, i), 1.0, p);
+      canvas.drawCircle(Offset(size.width - 4, i), 1.0, p);
     }
   }
 

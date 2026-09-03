@@ -68,7 +68,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     final pages = _layoutService.buildAllPages(surahs: [], allAyahs: []);
     final startPage = _layoutService.getSurahStartPage(widget.surah.number);
     
-    _pageController = PageController(initialPage: startPage - 1);
+    _pageController = PageController(initialPage: (startPage - 1).clamp(0, pages.length - 1));
     _isControllerInitialized = true;
     
     return pages;
@@ -83,19 +83,17 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
       future: _buildFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: LoadingErrorWidget(isLoading: true, child: SizedBox.shrink()));
+          return const Scaffold(
+            backgroundColor: Color(0xFF07241C),
+            body: Center(child: LoadingErrorWidget(isLoading: true, child: SizedBox.shrink())),
+          );
         }
         
         final pages = snapshot.data ?? [];
         if (pages.isEmpty) {
           return Scaffold(
             appBar: AppBar(title: Text(widget.surah.englishName)),
-            body: LoadingErrorWidget(
-              isLoading: false,
-              errorMessage: 'Unable to load Mushaf pages',
-              onRetry: () => setState(() { _buildFuture = _initPages(); }),
-              child: const SizedBox.shrink(),
-            ),
+            body: const Center(child: Text('Unable to load Mushaf pages')),
           );
         }
 
@@ -121,7 +119,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
 
             return MushafPageFrame(
               pageNumber: page.pageNumber,
-              totalPages: 604,
+              totalPages: 549,
               surahNameArabic: page.surahName,
               juzNameArabic: 'الجزء ${page.juzNumber}',
               isRead: isRead,
