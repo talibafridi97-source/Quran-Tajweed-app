@@ -50,6 +50,15 @@ class Mushaf16Line {
   final String surahName;
   final List<MushafLineSegment> segments;
   final List<int> ayahNumbers;
+  final bool isParaStart;
+  final int? juzNumber;
+  final bool isRukuEnd;
+  final int? rukuSurahNumber;
+  final int? rukuAyahCount;
+  final int? rukuJuzNumber;
+  final bool isSajda;
+  final int manzilNumber;
+  final bool isManzilStart;
 
   const Mushaf16Line({
     required this.lineNumber,
@@ -58,6 +67,15 @@ class Mushaf16Line {
     required this.surahName,
     this.segments = const [],
     this.ayahNumbers = const [],
+    this.isParaStart = false,
+    this.juzNumber,
+    this.isRukuEnd = false,
+    this.rukuSurahNumber,
+    this.rukuAyahCount,
+    this.rukuJuzNumber,
+    this.isSajda = false,
+    this.manzilNumber = 1,
+    this.isManzilStart = false,
   });
 
   bool get isSurahHeader => type == MushafLineType.surahHeader;
@@ -74,6 +92,15 @@ class Mushaf16Line {
     'surahName': surahName,
     'segments': segments.map((s) => s.toJson()).toList(),
     'ayahNumbers': ayahNumbers,
+    'isParaStart': isParaStart,
+    'juzNumber': juzNumber,
+    'isRukuEnd': isRukuEnd,
+    'rukuSurahNumber': rukuSurahNumber,
+    'rukuAyahCount': rukuAyahCount,
+    'rukuJuzNumber': rukuJuzNumber,
+    'isSajda': isSajda,
+    'manzilNumber': manzilNumber,
+    'isManzilStart': isManzilStart,
   };
 
   factory Mushaf16Line.fromJson(Map<String, dynamic> json) {
@@ -89,6 +116,15 @@ class Mushaf16Line {
           .map((s) => MushafLineSegment.fromJson(s as Map<String, dynamic>))
           .toList(),
       ayahNumbers: (json['ayahNumbers'] as List? ?? []).cast<int>(),
+      isParaStart: json['isParaStart'] as bool? ?? false,
+      juzNumber: json['juzNumber'] as int?,
+      isRukuEnd: json['isRukuEnd'] as bool? ?? false,
+      rukuSurahNumber: json['rukuSurahNumber'] as int?,
+      rukuAyahCount: json['rukuAyahCount'] as int?,
+      rukuJuzNumber: json['rukuJuzNumber'] as int?,
+      isSajda: json['isSajda'] as bool? ?? false,
+      manzilNumber: json['manzilNumber'] as int? ?? 1,
+      isManzilStart: json['isManzilStart'] as bool? ?? false,
     );
   }
 }

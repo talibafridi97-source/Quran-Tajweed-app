@@ -33,8 +33,12 @@ class QuranProvider with ChangeNotifier {
 
   Future<void> _prepareMushafLayout() async {
     try {
-      final surahs = _surahs;
-      final allAyahs = await _repository.getAllAyahs();
+      final repo = _repository;
+      final surahs = await repo.getAllSurahs();
+      _surahs = surahs;
+      
+      // Load all cached ayahs from database to build deterministic global layout
+      final allAyahs = await repo.databaseService.getAllAyahs();
       
       if (allAyahs.isNotEmpty) {
         Mushaf16LineLayoutService.instance.buildAllPages(
@@ -44,9 +48,9 @@ class QuranProvider with ChangeNotifier {
         notifyListeners();
       }
 
-      // Background fetch if not all 30 Juz are cached
+      // Background ensure all loaded if cache is partial
       if (allAyahs.length < 6236) {
-        final fullAyahs = await _repository.ensureAllAyahsLoaded();
+        final fullAyahs = await repo.ensureAllAyahsLoaded();
         Mushaf16LineLayoutService.instance.buildAllPages(
           surahs: surahs, 
           allAyahs: fullAyahs,

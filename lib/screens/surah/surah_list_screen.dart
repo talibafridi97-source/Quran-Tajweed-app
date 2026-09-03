@@ -4,6 +4,7 @@ import '../../core/constants/constants.dart';
 import '../../providers/quran_provider.dart';
 import '../../core/widgets/loading_error_widget.dart';
 import '../../core/widgets/surah_card_tile.dart';
+import 'package:tajweed_quran/services/audio_manager_service.dart';
 import 'surah_detail_screen.dart';
 
 class SurahListScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ class _SurahListScreenState extends State<SurahListScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final quranProvider = context.watch<QuranProvider>();
+    final audioManager = context.watch<AudioManagerService>();
     final filteredSurahs = quranProvider.surahs.where((s) {
       final q = _searchQuery.toLowerCase();
       return s.englishName.toLowerCase().contains(q) ||
@@ -55,8 +57,13 @@ class _SurahListScreenState extends State<SurahListScreen> {
                 itemCount: filteredSurahs.length,
                 itemBuilder: (context, index) {
                   final surah = filteredSurahs[index];
+                  final isPlaying = audioManager.currentChannel == AudioChannel.quran &&
+                      audioManager.currentSurahNumber == surah.number &&
+                      audioManager.isPlaying;
+
                   return SurahCardTile(
                     surah: surah,
+                    isPlaying: isPlaying,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -64,6 +71,17 @@ class _SurahListScreenState extends State<SurahListScreen> {
                           builder: (context) => SurahDetailScreen(surah: surah),
                         ),
                       );
+                    },
+                    onPlayTap: () {
+                      if (isPlaying) {
+                        audioManager.pause();
+                      } else {
+                        audioManager.playSurah(
+                          surahNumber: surah.number,
+                          surahName: surah.englishName,
+                          totalAyahs: surah.numberOfAyahs,
+                        );
+                      }
                     },
                   );
                 },

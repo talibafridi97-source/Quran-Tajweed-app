@@ -10,6 +10,7 @@ import '../../core/widgets/mushaf_page_frame.dart';
 import '../../core/widgets/mushaf_16_line_view.dart';
 import '../../core/widgets/loading_error_widget.dart';
 import '../../services/mushaf_16_line_layout_service.dart';
+import '../../services/audio_manager_service.dart';
 
 class QuranPageScreen extends StatefulWidget {
   final int initialPage;
@@ -25,19 +26,37 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
   bool _showControls = true;
   final _layoutService = Mushaf16LineLayoutService.instance;
   late Future<List<Mushaf16LinePage>> _buildFuture;
+  late final AudioManagerService _audioManager;
+  bool _isControllerInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _currentPage = widget.initialPage.clamp(1, 811);
-    _pageController = PageController(initialPage: _currentPage - 1);
+    _audioManager = AudioManagerService.instance;
+    _currentPage = widget.initialPage.clamp(1, 604);
     _buildFuture = _initPages();
+    _audioManager.addListener(_onAudioStateChanged);
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _audioManager.removeListener(_onAudioStateChanged);
+    if (_isControllerInitialized) _pageController.dispose();
     super.dispose();
+  }
+
+  void _onAudioStateChanged() {
+    if (!mounted || !_isControllerInitialized) return;
+    final audioPage = _audioManager.currentPageNumber;
+    if (audioPage != null && audioPage != _currentPage) {
+      if (_pageController.hasClients && _pageController.page?.round() != (audioPage - 1)) {
+        _pageController.animateToPage(
+          audioPage - 1,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOutCubic,
+        );
+      }
+    }
   }
 
   void _toggleControls() {
@@ -47,18 +66,19 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
   }
 
   Future<List<Mushaf16LinePage>> _initPages() async {
-    if (_layoutService.isReady) {
-      final cachedPages = _layoutService.buildAllPages(surahs: [], allAyahs: []);
-      if (cachedPages.isNotEmpty) {
-        return cachedPages;
-      }
+    final repo = context.read<QuranProvider>().repository;
+    
+    if (!_layoutService.isReady) {
+      final surahs = await repo.getAllSurahs();
+      final allAyahs = await repo.ensureAllAyahsLoaded();
+      _layoutService.buildAllPages(surahs: surahs, allAyahs: allAyahs);
     }
 
-    final repo = context.read<QuranProvider>().repository;
-    final surahs = await repo.getAllSurahs();
-    final allAyahs = await repo.ensureAllAyahsLoaded();
-
-    return _layoutService.buildAllPages(surahs: surahs, allAyahs: allAyahs);
+    final pages = _layoutService.buildAllPages(surahs: [], allAyahs: []);
+    _pageController = PageController(initialPage: _currentPage - 1);
+    _isControllerInitialized = true;
+    
+    return pages;
   }
 
   void _onPageChanged(int index) {
@@ -69,19 +89,10 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
 
     final page = _layoutService.getPage(newPageNumber);
     if (page != null) {
-      final firstAyahNum = page.lines
-              .firstWhere(
-                (l) => l.ayahNumbers.isNotEmpty,
-                orElse: () => page.lines.first,
-              )
-              .ayahNumbers
-              .firstOrNull ??
-          1;
-
       context.read<QuranProvider>().saveResume(ResumeData(
             surahName: page.surahName,
             surahNumber: page.surahNumber,
-            ayahNumber: firstAyahNum,
+            ayahNumber: 1,
             page: page.pageNumber,
             juz: page.juzNumber,
             lastRead: DateTime.now(),
@@ -120,11 +131,11 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {
-              final page = int.tryParse(textController.text);
-              if (page != null && page >= 1 && page <= totalPages) {
+              final pageNum = int.tryParse(textController.text);
+              if (pageNum != null && pageNum >= 1 && pageNum <= totalPages) {
                 _pageController.animateToPage(
-                  page - 1,
-                  duration: const Duration(milliseconds: 250),
+                  pageNum - 1,
+                  duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOutCubic,
                 );
                 Navigator.pop(context);
@@ -149,13 +160,6 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, -4),
-                ),
-              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -216,67 +220,10 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Font Family Selector
-                const Text('Arabic Font Style', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Noto Naskh (Default)'),
-                      selected: settings.arabicFontFamily == 'NotoNaskhArabic' || settings.arabicFontFamily.isEmpty,
-                      selectedColor: AppConstants.primaryGreen,
-                      labelStyle: TextStyle(
-                        color: (settings.arabicFontFamily == 'NotoNaskhArabic' || settings.arabicFontFamily.isEmpty)
-                            ? Colors.white
-                            : null,
-                      ),
-                      onSelected: (sel) {
-                        if (sel) {
-                          settings.setArabicFontFamily('NotoNaskhArabic');
-                          setModalState(() {});
-                        }
-                      },
-                    ),
-                    ChoiceChip(
-                      label: const Text('Amiri Quran'),
-                      selected: settings.arabicFontFamily == 'Amiri' || settings.arabicFontFamily == 'QuranAmiri',
-                      selectedColor: AppConstants.primaryGreen,
-                      labelStyle: TextStyle(
-                        color: (settings.arabicFontFamily == 'Amiri' || settings.arabicFontFamily == 'QuranAmiri')
-                            ? Colors.white
-                            : null,
-                      ),
-                      onSelected: (sel) {
-                        if (sel) {
-                          settings.setArabicFontFamily('Amiri');
-                          setModalState(() {});
-                        }
-                      },
-                    ),
-                    ChoiceChip(
-                      label: const Text('Uthmani Classic'),
-                      selected: settings.arabicFontFamily == 'Uthmani',
-                      selectedColor: AppConstants.primaryGreen,
-                      labelStyle: TextStyle(
-                        color: settings.arabicFontFamily == 'Uthmani' ? Colors.white : null,
-                      ),
-                      onSelected: (sel) {
-                        if (sel) {
-                          settings.setArabicFontFamily('Uthmani');
-                          setModalState(() {});
-                        }
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
                 // Tajweed Toggle
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: const Text('Interactive Tajweed Coloring', style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Color-coded rules for Qalqalah, Ghunnah, Idgham, Madd, etc.'),
+                  title: const Text('Tajweed Coloring', style: TextStyle(fontWeight: FontWeight.bold)),
                   value: settings.showTajweed,
                   activeTrackColor: AppConstants.primaryGreen,
                   onChanged: (val) {
@@ -300,29 +247,15 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
     return FutureBuilder<List<Mushaf16LinePage>>(
       future: _buildFuture,
       builder: (context, snapshot) {
-        final isLoading = snapshot.connectionState == ConnectionState.waiting;
-        final hasError = snapshot.hasError;
-        final pages = snapshot.data ?? [];
-        final totalPages = pages.isNotEmpty ? pages.length : _layoutService.totalPages;
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: LoadingErrorWidget(isLoading: true, child: SizedBox.shrink()));
+        }
 
-        if (isLoading || hasError || pages.isEmpty) {
+        final pages = snapshot.data ?? [];
+        if (pages.isEmpty) {
           return Scaffold(
-            backgroundColor: AppConstants.deepEmerald,
-            appBar: AppBar(
-              backgroundColor: AppConstants.primaryGreen,
-              leading: const BackButton(color: Colors.white),
-              title: const Text('16-Line Quran Mushaf', style: TextStyle(color: Colors.white)),
-            ),
-            body: LoadingErrorWidget(
-              isLoading: isLoading,
-              errorMessage: hasError ? snapshot.error.toString() : null,
-              onRetry: () {
-                setState(() {
-                  _buildFuture = _initPages();
-                });
-              },
-              child: const SizedBox.shrink(),
-            ),
+            appBar: AppBar(title: const Text('16-Line Mushaf')),
+            body: const Center(child: Text('Unable to load Mushaf pages.')),
           );
         }
 
@@ -330,15 +263,16 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
           controller: _pageController,
           onPageChanged: _onPageChanged,
           physics: const BouncingScrollPhysics(),
-          reverse: true, // Authentic Right-to-Left page flipping
+          reverse: true, // Authentic R-to-L flipping
           itemCount: pages.length,
+          allowImplicitScrolling: true,
           itemBuilder: (context, index) {
             final page = pages[index];
             final isRead = quranProvider.getPageReadStatus(page.pageNumber);
 
             return MushafPageFrame(
               pageNumber: page.pageNumber,
-              totalPages: totalPages,
+              totalPages: 604,
               surahNameArabic: page.surahName,
               juzNameArabic: 'الجزء ${page.juzNumber}',
               isRead: isRead,
@@ -347,11 +281,10 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
               onReadChanged: (val) {
                 quranProvider.togglePageReadStatus(page.pageNumber);
               },
-              onBookmarkPressed: () => _showJumpToPageDialog(totalPages),
+              onBookmarkPressed: () => _showJumpToPageDialog(604),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.tune_rounded, color: Colors.white),
-                  tooltip: 'Reading Controls',
                   onPressed: () => _showReadingControlsModal(context, settings),
                 ),
                 IconButton(
@@ -359,8 +292,7 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
                     isRead ? Icons.bookmark_added : Icons.bookmark_border_rounded,
                     color: isRead ? AppConstants.gold : Colors.white,
                   ),
-                  onPressed: () => _showJumpToPageDialog(totalPages),
-                  tooltip: 'Jump to Page / Bookmark',
+                  onPressed: () => _showJumpToPageDialog(604),
                 ),
               ],
               child: Mushaf16LineView(

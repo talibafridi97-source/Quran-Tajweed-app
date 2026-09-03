@@ -182,7 +182,19 @@ class SurahCardTile extends StatelessWidget {
 
                       const SizedBox(width: 8),
 
-                      // 3. Authentic Arabic Name Calligraphy (Scales safely down)
+                      // 3. Play Button & Status
+                      IconButton(
+                        onPressed: onPlayTap,
+                        icon: Icon(
+                          isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
+                          color: isPlaying ? AppConstants.gold : AppConstants.primaryGreen.withValues(alpha: 0.6),
+                          size: 32,
+                        ),
+                      ),
+
+                      const SizedBox(width: 8),
+
+                      // 4. Authentic Arabic Name Calligraphy (Scales safely down)
                       Flexible(
                         flex: 0,
                         child: ConstrainedBox(

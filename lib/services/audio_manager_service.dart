@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/dua_model.dart';
+import 'mushaf_16_line_layout_service.dart';
 
 enum AudioChannel { quran, dua, name }
 
@@ -41,6 +42,7 @@ class AudioManagerService extends ChangeNotifier {
   String? _currentDuaId;
   int? _currentSurahNumber;
   int? _currentAyahNumber;
+  int? _currentPageNumber;
   int? _totalAyahsInSurah;
   String? _currentSurahName;
   String? _currentReciterId;
@@ -89,6 +91,16 @@ class AudioManagerService extends ChangeNotifier {
         _currentAudioId = tag.isBismillah
             ? 'bismillah_${tag.surahNumber}'
             : 'ayah_${tag.surahNumber}_${tag.ayahNumber}';
+
+        // Update current page number for auto-navigation
+        final layout = Mushaf16LineLayoutService.instance;
+        if (layout.isReady) {
+          final pageNum = layout.getPageForAyah(_currentSurahNumber!, _currentAyahNumber!);
+          if (pageNum != null && pageNum != _currentPageNumber) {
+            _currentPageNumber = pageNum;
+          }
+        }
+
         notifyListeners();
       }
     });
@@ -102,6 +114,7 @@ class AudioManagerService extends ChangeNotifier {
   String? get currentDuaId => _currentDuaId;
   int? get currentSurahNumber => _currentSurahNumber;
   int? get currentAyahNumber => _currentAyahNumber;
+  int? get currentPageNumber => _currentPageNumber;
   int? get currentSurah => _currentSurahNumber;
   int? get currentAyah => _currentAyahNumber;
   bool get isBismillah => _isBismillah;

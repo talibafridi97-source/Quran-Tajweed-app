@@ -17,6 +17,7 @@ class Mushaf16LineLayoutService {
   final Map<int, Mushaf16LinePage> _pageCache = {};
   final Map<int, int> _surahStartPageMap = {};
   final Map<int, int> _juzStartPageMap = {};
+  final Map<String, int> _ayahToPageMap = {};
   List<Mushaf16LinePage>? _allPagesCache;
   bool _isBuilt = false;
 
@@ -61,16 +62,72 @@ class Mushaf16LineLayoutService {
     _pageCache.clear();
     _surahStartPageMap.clear();
     _juzStartPageMap.clear();
+    _ayahToPageMap.clear();
 
     final List<Mushaf16LinePage> pages = [];
     final Map<int, List<Ayah>> ayahsBySurah = {};
+    final Map<String, Ayah> ayahMap = {};
     for (final ayah in allAyahs) {
       final sNum = ayah.surahNumber ?? 1;
       ayahsBySurah.putIfAbsent(sNum, () => []).add(ayah);
+      ayahMap['$sNum:${ayah.numberInSurah}'] = ayah;
     }
 
     for (final sNum in ayahsBySurah.keys) {
       ayahsBySurah[sNum]!.sort((a, b) => a.numberInSurah.compareTo(b.numberInSurah));
+    }
+
+    // Precalculate Ruku metadata for margin markers
+    final Map<String, _RukuMetadata> rukuEndMap = {};
+    if (allAyahs.isNotEmpty) {
+      final sortedAyahs = List<Ayah>.from(allAyahs)
+        ..sort((a, b) {
+          final sComp = (a.surahNumber ?? 1).compareTo(b.surahNumber ?? 1);
+          if (sComp != 0) return sComp;
+          return a.numberInSurah.compareTo(b.numberInSurah);
+        });
+
+      final Map<String, int> rukuAyahCounts = {};
+      for (final a in sortedAyahs) {
+        final sNum = a.surahNumber ?? 1;
+        final rukuKey = '${sNum}_${a.ruku}';
+        rukuAyahCounts[rukuKey] = (rukuAyahCounts[rukuKey] ?? 0) + 1;
+      }
+
+      int currentJuz = -1;
+      int rukuCountInJuz = 0;
+      int lastRukuVal = -1;
+      int lastSurahVal = -1;
+
+      for (int i = 0; i < sortedAyahs.length; i++) {
+        final a = sortedAyahs[i];
+        final sNum = a.surahNumber ?? 1;
+        final nextA = (i < sortedAyahs.length - 1) ? sortedAyahs[i + 1] : null;
+        final nextSNum = nextA?.surahNumber ?? -1;
+
+        if (a.juz != currentJuz) {
+          currentJuz = a.juz;
+          rukuCountInJuz = 0;
+          lastRukuVal = -1;
+          lastSurahVal = -1;
+        }
+
+        if (a.ruku != lastRukuVal || sNum != lastSurahVal) {
+          lastRukuVal = a.ruku;
+          lastSurahVal = sNum;
+          rukuCountInJuz++;
+        }
+
+        final isRukuEnd = (nextA == null || nextA.ruku != a.ruku || nextSNum != sNum);
+        if (isRukuEnd) {
+          final rukuKey = '${sNum}_${a.ruku}';
+          rukuEndMap['$sNum:${a.numberInSurah}'] = _RukuMetadata(
+            surahRukuNumber: a.ruku,
+            ayahCountInRuku: rukuAyahCounts[rukuKey] ?? 1,
+            juzRukuNumber: rukuCountInJuz,
+          );
+        }
+      }
     }
 
     // -------------------------------------------------------------
@@ -280,9 +337,87 @@ class Mushaf16LineLayoutService {
       ));
     }
 
+    // Post-process all pages to inject Ruku, Sajdah, and Manzil metadata
+    int lastManzilVal = 0;
+    for (int pIdx = 0; pIdx < pages.length; pIdx++) {
+      final page = pages[pIdx];
+      final List<Mushaf16Line> updatedLines = [];
+      for (final line in page.lines) {
+        if (!line.isText) {
+          updatedLines.add(line);
+          continue;
+        }
+
+        bool lineIsRukuEnd = false;
+        int? rSurahNum;
+        int? rAyahCount;
+        int? rJuzNum;
+        bool lineIsSajda = false;
+        int lineManzil = 1;
+
+        for (final seg in line.segments) {
+          final key = '${seg.surahNumber}:${seg.ayahNumberInSurah}';
+          final originalAyah = ayahMap[key];
+          if (originalAyah != null) {
+            lineManzil = originalAyah.manzil;
+            if (originalAyah.sajda) {
+              lineIsSajda = true;
+            }
+          }
+
+          if (seg.isAyahEnd) {
+            final rukuMeta = rukuEndMap[key];
+            if (rukuMeta != null) {
+              lineIsRukuEnd = true;
+              rSurahNum = rukuMeta.surahRukuNumber;
+              rAyahCount = rukuMeta.ayahCountInRuku;
+              rJuzNum = rukuMeta.juzRukuNumber;
+            }
+          }
+        }
+
+        bool lineIsManzilStart = false;
+        if (lineManzil != lastManzilVal) {
+          lineIsManzilStart = true;
+          lastManzilVal = lineManzil;
+        }
+
+        updatedLines.add(Mushaf16Line(
+          lineNumber: line.lineNumber,
+          type: line.type,
+          surahNumber: line.surahNumber,
+          surahName: line.surahName,
+          segments: line.segments,
+          ayahNumbers: line.ayahNumbers,
+          isParaStart: line.isParaStart,
+          juzNumber: line.juzNumber,
+          isRukuEnd: lineIsRukuEnd,
+          rukuSurahNumber: rSurahNum,
+          rukuAyahCount: rAyahCount,
+          rukuJuzNumber: rJuzNum,
+          isSajda: lineIsSajda,
+          manzilNumber: lineManzil,
+          isManzilStart: lineIsManzilStart,
+        ));
+      }
+
+      pages[pIdx] = Mushaf16LinePage(
+        pageNumber: page.pageNumber,
+        juzNumber: page.juzNumber,
+        surahNumber: page.surahNumber,
+        surahName: page.surahName,
+        lines: updatedLines,
+      );
+    }
+
     _allPagesCache = pages;
     for (var p in pages) {
       _pageCache[p.pageNumber] = p;
+      for (var l in p.lines) {
+        for (var aNum in l.ayahNumbers) {
+          _ayahToPageMap['${l.surahNumber}:$aNum'] = p.pageNumber;
+        }
+      }
     }
     _isBuilt = true;
     return pages;
@@ -291,11 +426,25 @@ class Mushaf16LineLayoutService {
   int getSurahStartPage(int sNum) => _surahStartPageMap[sNum] ?? 1;
   int getJuzStartPage(int jNum) => _juzStartPageMap[jNum] ?? 1;
   Mushaf16LinePage? getPage(int pNum) => _pageCache[pNum];
+  int? getPageForAyah(int s, int a) => _ayahToPageMap['$s:$a'];
+
   void clearCache() {
     _pageCache.clear();
     _surahStartPageMap.clear();
     _juzStartPageMap.clear();
+    _ayahToPageMap.clear();
     _allPagesCache = null;
     _isBuilt = false;
   }
+}
+
+class _RukuMetadata {
+  final int surahRukuNumber;
+  final int ayahCountInRuku;
+  final int juzRukuNumber;
+  _RukuMetadata({
+    required this.surahRukuNumber,
+    required this.ayahCountInRuku,
+    required this.juzRukuNumber,
+  });
 }
