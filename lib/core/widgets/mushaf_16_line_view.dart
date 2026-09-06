@@ -5,7 +5,7 @@ import '../../core/utils/tajweed_parser.dart';
 import '../../services/audio_manager_service.dart';
 
 /// Professional Indo-Pak 16-Line Mushaf Page View.
-/// Redesigned with precise Para-start highlighting (Sirf start line).
+/// Redesigned with precise Para-start highlighting (Sirf Line 1).
 class Mushaf16LineView extends StatelessWidget {
   final Mushaf16LinePage page;
   final double fontSize;
@@ -46,7 +46,7 @@ class Mushaf16LineView extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  // VIBRANT Solid Gold background for ONLY the start line
+                  // VIBRANT Solid Gold background for ONLY the start line (Line 1 of Para)
                   color: isParaStart ? const Color(0xFFFFD700) : null,
                   border: Border(
                     bottom: BorderSide(
@@ -77,9 +77,9 @@ class Mushaf16LineView extends StatelessWidget {
   Widget _buildJustifiedRow(BuildContext context, Mushaf16Line line, String? activeKey) {
     final audioManager = AudioManagerService.instance;
     
-    // Para Start styling: Force ULTRA bold and SOLID RED color for the text
+    // Para Start styling: Force ULTRA bold and SOLID RED color for the starting line
     final bool isParaStart = line.isParaStart;
-    final Color textColor = isParaStart ? const Color(0xFFB71C1C) : const Color(0xFF14171A);
+    final Color textColor = isParaStart ? const Color(0xFFD32F2F) : const Color(0xFF14171A);
     final FontWeight weight = isParaStart ? FontWeight.w900 : FontWeight.w800;
 
     return Container(
@@ -89,7 +89,7 @@ class Mushaf16LineView extends StatelessWidget {
         fit: BoxFit.scaleDown,
         alignment: Alignment.center,
         child: SizedBox(
-          width: 480, // High logical width for better stretch
+          width: 480, 
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween, 
             textDirection: TextDirection.rtl,
@@ -101,8 +101,8 @@ class Mushaf16LineView extends StatelessWidget {
                 w = Text(
                   seg.text, 
                   style: TextStyle(
-                    color: isParaStart ? const Color(0xFFB71C1C) : AppConstants.gold, 
-                    fontSize: fontSize * 0.9, 
+                    color: isParaStart ? const Color(0xFFD32F2F) : AppConstants.gold, 
+                    fontSize: fontSize * (isParaStart ? 1.0 : 0.9), 
                     fontWeight: FontWeight.bold, 
                     fontFamily: fontFamily, 
                     backgroundColor: active ? const Color(0x44D4AF37) : null
@@ -111,7 +111,7 @@ class Mushaf16LineView extends StatelessWidget {
               } else {
                 final spans = TajweedParser.parse(
                   seg.text, 
-                  fontSize: fontSize, 
+                  fontSize: isParaStart ? fontSize * 1.1 : fontSize, 
                   fontFamily: fontFamily, 
                   defaultColor: textColor, 
                   showTajweed: showTajweed
@@ -167,7 +167,7 @@ class Mushaf16LineView extends StatelessWidget {
     );
   }
 
-  Widget _meta(String l, String v) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFFF7F2E6), borderRadius: BorderRadius.circular(4), border: Border.all(color: const Color(0xFFD4AF37), width: 0.8)), child: Column(mainAxisSize: MainAxisSize.min, children: [
+  Widget _meta(String l, String v) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFFF7F2E6), borderRadius: BorderRadius.circular(4), border: Border.all(color: const Color(0xFFFFD700), width: 0.8)), child: Column(mainAxisSize: MainAxisSize.min, children: [
     Text(l, style: const TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: Color(0xFF1E6B5C))),
     Text(v, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
   ]));

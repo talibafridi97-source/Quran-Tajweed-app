@@ -4,6 +4,7 @@ import '../models/mushaf_16_line_model.dart';
 
 /// Service responsible for building deterministic 30-Para 16-line Quran Mushaf pages.
 /// Strictly follows standard Pakistani/Indo-Pak Mushaf pagination (549 Pages).
+/// Forces every new Para (Juz) to start exactly at the top (Line 1) of a new page.
 class Mushaf16LineLayoutService {
   static final Mushaf16LineLayoutService _instance = Mushaf16LineLayoutService._internal();
   factory Mushaf16LineLayoutService() => _instance;
@@ -54,7 +55,7 @@ class Mushaf16LineLayoutService {
     // Page 1: Empty Title Page
     pages.add(Mushaf16LinePage(pageNumber: 1, juzNumber: 1, surahNumber: 1, surahName: 'Quran', lines: List.generate(16, (i) => Mushaf16Line(lineNumber: i+1, surahNumber: 1, surahName: 'Quran', type: MushafLineType.empty))));
 
-    // Page 2: Surah Al-Fatihah (Para 1 Start)
+    // Page 2: Surah Al-Fatihah
     _surahStartPageMap[1] = 2; _juzStartPageMap[1] = 2;
     final fAyahs = ayahsBySurah[1] ?? [];
     final List<Mushaf16Line> p2Lines = [
@@ -106,12 +107,30 @@ class Mushaf16LineLayoutService {
     List<MushafLineSegment> curSegs = [];
     Set<int> curAyahs = {};
     int curLen = 0;
-    const int capacity = 32; // Safer capacity for bold scripts
+    const int capacity = 32; 
+    bool pendingParaStartHighlight = false;
+
+    void finalizeCurrentPage(int sNum, String sName) {
+      if (curLines.isEmpty && curSegs.isEmpty) return;
+      if (curSegs.isNotEmpty) {
+        curLines.add(Mushaf16Line(lineNumber: curLines.length + 1, type: MushafLineType.text, surahNumber: sNum, surahName: sName, segments: List.from(curSegs), ayahNumbers: curAyahs.toList()..sort(), isParaStart: pendingParaStartHighlight, juzNumber: curJuzNum));
+        pendingParaStartHighlight = false; curSegs.clear(); curAyahs.clear(); curLen = 0;
+      }
+      while (curLines.length < 16) curLines.add(Mushaf16Line(lineNumber: curLines.length + 1, type: MushafLineType.empty, surahNumber: sNum, surahName: sName, juzNumber: curJuzNum));
+      pages.add(Mushaf16LinePage(pageNumber: curPageNum++, juzNumber: curJuzNum, surahNumber: sNum, surahName: sName, lines: List.from(curLines)));
+      curLines.clear();
+    }
 
     void flush(int sNum, String sName, {bool forceParaStart = false}) {
       if (curSegs.isEmpty) return;
-      curLines.add(Mushaf16Line(lineNumber: curLines.length + 1, type: MushafLineType.text, surahNumber: sNum, surahName: sName, segments: List.from(curSegs), ayahNumbers: curAyahs.toList()..sort(), isParaStart: forceParaStart, juzNumber: curJuzNum));
+      // If forceParaStart is passed or if this was marked as next Juz start
+      final bool isHighlightLine = forceParaStart || pendingParaStartHighlight;
+      
+      curLines.add(Mushaf16Line(lineNumber: curLines.length + 1, type: MushafLineType.text, surahNumber: sNum, surahName: sName, segments: List.from(curSegs), ayahNumbers: curAyahs.toList()..sort(), isParaStart: isHighlightLine, juzNumber: curJuzNum));
+      
       curSegs.clear(); curAyahs.clear(); curLen = 0;
+      pendingParaStartHighlight = false;
+
       if (curLines.length == 16) {
         pages.add(Mushaf16LinePage(pageNumber: curPageNum++, juzNumber: curJuzNum, surahNumber: sNum, surahName: sName, lines: List.from(curLines)));
         curLines.clear();
@@ -143,27 +162,11 @@ class Mushaf16LineLayoutService {
       }
 
       for (var a in list) {
-        // Detect Para Start Transitions (2 to 30)
         if (a.juz > lastAddedJuzInList) {
-          flush(s.number, s.englishName); 
-          lastAddedJuzInList = a.juz;
-          curJuzNum = a.juz;
+          finalizeCurrentPage(s.number, s.englishName);
+          lastAddedJuzInList = a.juz; curJuzNum = a.juz;
           _juzStartPageMap[curJuzNum] = curPageNum;
-          
-          var words = a.text.replaceAll('\uFEFF', '').trim().split(RegExp(r'\s+'));
-          for (var w in words) {
-            if (w.isEmpty) continue;
-            int l = _getVisualLength(w);
-            if (curSegs.isNotEmpty && (curLen + l + 1 > capacity)) flush(s.number, s.englishName);
-            curSegs.add(MushafLineSegment(text: w, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: '${s.number}:${a.numberInSurah}'));
-            curAyahs.add(a.numberInSurah);
-            curLen += l + 1;
-          }
-          var m = ' ﴿${toArabicDigits(a.numberInSurah)}﴾ ';
-          curSegs.add(MushafLineSegment(text: m, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: '${s.number}:${a.numberInSurah}', isAyahEnd: true, ayahNumber: a.numberInSurah));
-          curAyahs.add(a.numberInSurah);
-          flush(s.number, s.englishName, forceParaStart: true); // This is the ONLY line that gets isParaStart=true
-          continue;
+          pendingParaStartHighlight = true; // Mark that the VERY NEXT line flushed must be highlighted
         }
 
         curJuzNum = a.juz;
@@ -173,6 +176,7 @@ class Mushaf16LineLayoutService {
         for (var w in words) {
           if (w.isEmpty) continue;
           int l = _getVisualLength(w);
+          // If we need to flush because of width, and this is the start of a Juz, the ParaStart flag will pass to this new line
           if (curSegs.isNotEmpty && (curLen + l + 1 > capacity)) flush(s.number, s.englishName);
           curSegs.add(MushafLineSegment(text: w, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: '${s.number}:${a.numberInSurah}'));
           curAyahs.add(a.numberInSurah);
@@ -185,11 +189,7 @@ class Mushaf16LineLayoutService {
         curLen += _getVisualLength(m);
       }
     }
-    flush(114, 'An-Nas');
-    if (curLines.isNotEmpty) {
-      while(curLines.length < 16) curLines.add(Mushaf16Line(lineNumber: curLines.length+1, type: MushafLineType.empty, surahNumber: 114, surahName: 'An-Nas', juzNumber: 30));
-      pages.add(Mushaf16LinePage(pageNumber: curPageNum, juzNumber: 30, surahNumber: 114, surahName: 'An-Nas', lines: curLines));
-    }
+    finalizeCurrentPage(114, 'An-Nas');
 
     _allPagesCache = pages;
     for (var p in pages) { _pageCache[p.pageNumber] = p; for (var l in p.lines) { for (var an in l.ayahNumbers) _ayahToPageMap['${l.surahNumber}:$an'] = p.pageNumber; } }
