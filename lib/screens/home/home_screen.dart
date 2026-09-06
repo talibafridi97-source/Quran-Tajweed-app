@@ -6,6 +6,7 @@ import '../../core/routes/app_routes.dart';
 import '../../core/constants/constants.dart';
 import '../../providers/quran_provider.dart';
 import '../../providers/khatam_provider.dart';
+import '../../services/mushaf_16_line_layout_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -16,6 +17,7 @@ class HomeScreen extends StatelessWidget {
     final khatamProvider = context.watch<KhatamProvider>();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final totalPages = Mushaf16LineLayoutService.instance.totalPages;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -33,7 +35,7 @@ class HomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // 1. Last Read Hero Card (Quran First)
-                    _buildLastReadHeroCard(context, quranProvider, colorScheme),
+                    _buildLastReadHeroCard(context, quranProvider, colorScheme, totalPages),
 
                     const SizedBox(height: 24),
 
@@ -45,12 +47,12 @@ class HomeScreen extends StatelessWidget {
                       icon: Icons.menu_book_rounded,
                     ),
                     const SizedBox(height: 12),
-                    _buildQuranNavigationGrid(context, colorScheme),
+                    _buildQuranNavigationGrid(context, colorScheme, totalPages),
 
                     const SizedBox(height: 24),
 
                     // 3. Daily Quran Progress
-                    _buildProgressSection(context, quranProvider, khatamProvider, colorScheme),
+                    _buildProgressSection(context, quranProvider, khatamProvider, colorScheme, totalPages),
 
                     const SizedBox(height: 24),
 
@@ -197,7 +199,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   // --- 2. Last Read Hero Card ---
-  Widget _buildLastReadHeroCard(BuildContext context, QuranProvider provider, ColorScheme colorScheme) {
+  Widget _buildLastReadHeroCard(BuildContext context, QuranProvider provider, ColorScheme colorScheme, int totalPages) {
     final resume = provider.resumeData;
     final hasResume = resume != null;
 
@@ -345,8 +347,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // --- 3. Quran Navigation Grid (114 Surahs, 30 Paras, 604 Pages, Khatam Plan) ---
-  Widget _buildQuranNavigationGrid(BuildContext context, ColorScheme colorScheme) {
+  // --- 3. Quran Navigation Grid (114 Surahs, 30 Paras, 549 Pages, Khatam Plan) ---
+  Widget _buildQuranNavigationGrid(BuildContext context, ColorScheme colorScheme, int totalPages) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -376,7 +378,7 @@ class HomeScreen extends StatelessWidget {
         _buildQuranNavCard(
           context,
           colorScheme: colorScheme,
-          badge: '604',
+          badge: '$totalPages',
           title: 'Pages',
           subtitle: 'Madani Mushaf',
           icon: Icons.chrome_reader_mode_rounded,
@@ -493,12 +495,13 @@ class HomeScreen extends StatelessWidget {
     QuranProvider quranProvider,
     KhatamProvider khatamProvider,
     ColorScheme colorScheme,
+    int totalPages,
   ) {
     final resume = quranProvider.resumeData;
     final activePlan = khatamProvider.plans.isNotEmpty ? khatamProvider.plans.first : null;
 
     final int currentPage = resume?.page ?? 1;
-    final double pageProgress = (currentPage / 604.0).clamp(0.0, 1.0);
+    final double pageProgress = (currentPage / totalPages.toDouble()).clamp(0.0, 1.0);
     final int percentInt = (pageProgress * 100).round();
 
     return Container(
@@ -575,7 +578,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Page $currentPage of 604 • Juz ${resume?.juz ?? 1} of 30',
+                  'Page $currentPage of $totalPages • Juz ${resume?.juz ?? 1} of 30',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w500,

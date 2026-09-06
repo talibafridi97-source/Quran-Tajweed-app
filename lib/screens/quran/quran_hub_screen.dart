@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/constants.dart';
 import '../../providers/quran_provider.dart';
+import '../../services/mushaf_16_line_layout_service.dart';
 import '../surah/surah_list_screen.dart';
 import '../juz/juz_list_screen.dart';
 import '../page/quran_page_screen.dart';
@@ -38,6 +39,7 @@ class _QuranHubScreenState extends State<QuranHubScreen>
     super.build(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final totalPages = Mushaf16LineLayoutService.instance.totalPages;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -124,7 +126,7 @@ class _QuranHubScreenState extends State<QuranHubScreen>
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: Colors.transparent,
               indicator: BoxDecoration(
-                color: isDark ? AppConstants.primaryGreen : AppConstants.primaryGreen,
+                color: AppConstants.primaryGreen,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -138,10 +140,10 @@ class _QuranHubScreenState extends State<QuranHubScreen>
               unselectedLabelColor: isDark ? AppConstants.textSecondaryDark : AppConstants.textSecondaryLight,
               labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13),
               unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, fontSize: 13),
-              tabs: const [
-                Tab(text: '114 Surahs'),
-                Tab(text: '30 Paras'),
-                Tab(text: '604 Pages'),
+              tabs: [
+                const Tab(text: '114 Surahs'),
+                const Tab(text: '30 Paras'),
+                Tab(text: '$totalPages Pages'),
               ],
             ),
           ),
@@ -203,6 +205,7 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
     final quranProvider = context.watch<QuranProvider>();
     final resume = quranProvider.resumeData;
     final lastReadPage = resume?.page ?? 1;
+    final totalPages = Mushaf16LineLayoutService.instance.totalPages;
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -315,7 +318,7 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
                 controller: _searchController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  hintText: 'Jump to page (1 - 604)...',
+                  hintText: 'Jump to page (1 - $totalPages)...',
                   prefixIcon: const Icon(Icons.search, size: 20),
                   filled: true,
                   fillColor: isDark ? AppConstants.surfaceDark : Colors.white,
@@ -341,8 +344,8 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
             const SizedBox(width: 10),
             ElevatedButton(
               onPressed: () {
-                final p = _searchPage.clamp(1, 604);
-                if (p >= 1 && p <= 604) {
+                final p = _searchPage.clamp(1, totalPages);
+                if (p >= 1 && p <= totalPages) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => QuranPageScreen(initialPage: p)),
@@ -372,7 +375,6 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
         ),
         const SizedBox(height: 10),
 
-        // Grid of pages (Responsive)
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -382,7 +384,7 @@ class _MushafPagesOverviewTabState extends State<_MushafPagesOverviewTab> {
             mainAxisSpacing: 8,
             childAspectRatio: 1.15,
           ),
-          itemCount: 604,
+          itemCount: totalPages,
           itemBuilder: (context, index) {
             final pageNum = index + 1;
             final isRead = quranProvider.getPageReadStatus(pageNum);

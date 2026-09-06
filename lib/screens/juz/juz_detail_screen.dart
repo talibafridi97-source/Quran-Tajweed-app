@@ -7,8 +7,8 @@ import '../../providers/settings_provider.dart';
 import '../../core/widgets/mushaf_page_frame.dart';
 import '../../core/widgets/mushaf_16_line_view.dart';
 import '../../core/widgets/loading_error_widget.dart';
-import 'package:tajweed_quran/services/mushaf_16_line_layout_service.dart';
-import 'package:tajweed_quran/services/audio_manager_service.dart';
+import '../../services/mushaf_16_line_layout_service.dart';
+import '../../services/audio_manager_service.dart';
 
 class JuzDetailScreen extends StatefulWidget {
   final int juzNumber;
@@ -45,12 +45,15 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
     if (!mounted || !_isControllerInitialized) return;
     final audioPage = _audioManager.currentPageNumber;
     if (audioPage != null) {
-      if (_pageController.hasClients && _pageController.page?.round() != (audioPage - 1)) {
-         _pageController.animateToPage(
-            audioPage - 1,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeInOutCubic,
-          );
+      if (_pageController.hasClients) {
+        final target = audioPage - 1;
+        if (target >= 0) {
+           _pageController.animateToPage(
+              target,
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeInOutCubic,
+            );
+        }
       }
     }
   }
@@ -58,14 +61,14 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
   Future<List<Mushaf16LinePage>> _initPages() async {
     final repo = context.read<QuranProvider>().repository;
     
-    // FORCE CACHE CLEAR to apply new 16-line Pakistani layout logic
-    _layoutService.clearCache();
-
+    // Ensure all 30 Paras are loaded for consistent pagination
     final surahs = await repo.getAllSurahs();
     final allAyahs = await repo.ensureAllAyahsLoaded();
     
     final pages = _layoutService.buildAllPages(surahs: surahs, allAyahs: allAyahs);
     
+    if (pages.isEmpty) return [];
+
     final startPage = _layoutService.getJuzStartPage(widget.juzNumber);
     _pageController = PageController(initialPage: (startPage - 1).clamp(0, pages.length - 1));
     _isControllerInitialized = true;

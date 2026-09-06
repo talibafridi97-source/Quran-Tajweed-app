@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../constants/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:math' as math;
 
 /// Professional Traditional Indo-Pak Illuminated Mushaf Page Frame
+/// Features high-fidelity floral borders and responsive 16-line container.
 class MushafPageFrame extends StatelessWidget {
   final int pageNumber;
   final int totalPages;
@@ -50,16 +52,12 @@ class MushafPageFrame extends StatelessWidget {
       appBar: showControls
           ? AppBar(
               backgroundColor: const Color(0xFF0D3B2E),
-              elevation: 4,
+              elevation: 0,
               centerTitle: true,
               leading: const BackButton(color: Colors.white),
               title: Text(
                 'صفحہ $pageNumber از $totalPagesStr',
-                style: GoogleFonts.notoNastaliqUrdu(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: GoogleFonts.notoNastaliqUrdu(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
               ),
               actions: actions,
             )
@@ -68,57 +66,54 @@ class MushafPageFrame extends StatelessWidget {
         child: GestureDetector(
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
-          child: Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: const Color(0xFF07241C),
-            padding: const EdgeInsets.all(4),
-            child: Center(
-              child: AspectRatio(
-                aspectRatio: 0.68, 
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFCFAF5), 
-                    borderRadius: BorderRadius.circular(4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.8),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Stack(
-                    children: [
-                      // 1. High-Fidelity Floral Border Painter
-                      CustomPaint(
-                        painter: HighFidelityIndoPakBorderPainter(
-                          isIlluminated: isIlluminated,
-                        ),
-                        size: Size.infinite,
-                      ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // High-precision responsive scaling with safety math
+              double availableHeight = math.max(100.0, constraints.maxHeight - 8);
+              double calculatedWidth = math.min(constraints.maxWidth - 8, availableHeight * 0.64);
 
-                      // 2. Mushaf Content
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          isIlluminated ? 22 : 18,
-                          isIlluminated ? 26 : 14,
-                          isIlluminated ? 22 : 18,
-                          isIlluminated ? 26 : 14,
+              return Center(
+                child: SizedBox(
+                  width: calculatedWidth,
+                  height: availableHeight,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFCFAF5), 
+                      borderRadius: BorderRadius.circular(2),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.7), blurRadius: 20, offset: const Offset(0, 8)),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        // 1. High-Fidelity Floral Border Painter
+                        CustomPaint(
+                          painter: HighFidelityIndoPakBorderPainter(isIlluminated: isIlluminated),
+                          size: Size.infinite,
                         ),
-                        child: Column(
-                          children: [
-                            if (!isIlluminated) _buildHeader(pageStr),
-                            Expanded(child: child),
-                            if (!isIlluminated) _buildFooter(pageStr),
-                          ],
+
+                        // 2. Mushaf Content Area
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            isIlluminated ? calculatedWidth * 0.12 : calculatedWidth * 0.1,
+                            isIlluminated ? availableHeight * 0.12 : availableHeight * 0.05,
+                            isIlluminated ? calculatedWidth * 0.12 : calculatedWidth * 0.1,
+                            isIlluminated ? availableHeight * 0.12 : availableHeight * 0.05,
+                          ),
+                          child: Column(
+                            children: [
+                              if (!isIlluminated) _buildHeader(pageStr),
+                              Expanded(child: ClipRect(child: child)), 
+                              if (!isIlluminated) _buildFooter(pageStr),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
       ),
@@ -128,11 +123,9 @@ class MushafPageFrame extends StatelessWidget {
 
   Widget _buildHeader(String pageStr) {
     return Container(
-      height: 32,
+      height: 30,
       margin: const EdgeInsets.only(bottom: 2),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFF2C7A9E), width: 1.8)),
-      ),
+      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFF2C7A9E), width: 1.5))),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -145,35 +138,33 @@ class MushafPageFrame extends StatelessWidget {
   }
 
   Widget _badge(String t) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-    decoration: BoxDecoration(color: const Color(0xFFEADBCE), borderRadius: BorderRadius.circular(4), border: Border.all(color: const Color(0xFFD4AF37), width: 1.2)),
-    child: Text(t, style: const TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0D3B2E))),
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    decoration: BoxDecoration(color: const Color(0xFFEADBCE), borderRadius: BorderRadius.circular(4), border: Border.all(color: const Color(0xFFD4AF37), width: 0.8)),
+    child: FittedBox(child: Text(t, style: const TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0D3B2E)))),
   );
 
   Widget _medallion(String t) => Container(
-    width: 28, height: 28,
-    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white, border: Border.all(color: const Color(0xFFD4AF37), width: 2)),
+    width: 26, height: 26,
+    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white, border: Border.all(color: const Color(0xFFD4AF37), width: 1.5)),
     alignment: Alignment.center,
-    child: Text(t, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0D3B2E))),
+    child: Text(t, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0D3B2E))),
   );
 
   Widget _buildFooter(String pageStr) {
     return Container(
-      height: 26,
+      height: 24,
       margin: const EdgeInsets.only(top: 2),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFF2C7A9E), width: 1.8)),
-      ),
+      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFF2C7A9E), width: 1.5))),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('مَنزِل ${_toArabicDigits(manzilNumber)}', style: GoogleFonts.notoNastaliqUrdu(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF7A6538))),
+          Text('مَنزِل ${_toArabicDigits(manzilNumber)}', style: GoogleFonts.notoNastaliqUrdu(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF7A6538))),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
             decoration: BoxDecoration(color: const Color(0xFF1E6B5C), borderRadius: BorderRadius.circular(4)),
-            child: Text('صفحہ $pageStr', style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text('صفحہ $pageStr', style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold)),
           ),
-          Text('رکوع', style: GoogleFonts.notoNastaliqUrdu(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF7A6538))),
+          Text('رکوع', style: GoogleFonts.notoNastaliqUrdu(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF7A6538))),
         ],
       ),
     );
@@ -185,12 +176,12 @@ class MushafPageFrame extends StatelessWidget {
     child: SafeArea(child: InkWell(
       onTap: () => onReadChanged?.call(!isRead),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(color: isRead ? const Color(0xFFD4AF37) : const Color(0xFF144738), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFD4AF37), width: 1.5)),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(color: isRead ? const Color(0xFFD4AF37) : const Color(0xFF144738), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFD4AF37), width: 1.2)),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(isRead ? Icons.check_circle : Icons.radio_button_unchecked, color: isRead ? Colors.black87 : Colors.white),
-          const SizedBox(width: 12),
-          Text(isRead ? 'یہ صفحہ پڑھ لیا ہے' : 'میں نے یہ پڑھ لیا', style: GoogleFonts.notoNastaliqUrdu(color: isRead ? Colors.black87 : Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+          Icon(isRead ? Icons.check_circle : Icons.radio_button_unchecked, color: isRead ? Colors.black87 : Colors.white, size: 18),
+          const SizedBox(width: 10),
+          Text(isRead ? 'یہ صفحہ پڑھ لیا ہے' : 'میں نے یہ پڑھ لیا', style: GoogleFonts.notoNastaliqUrdu(color: isRead ? Colors.black87 : Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
         ]),
       ),
     )),
@@ -204,40 +195,35 @@ class HighFidelityIndoPakBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    final Paint gold = Paint()..color = const Color(0xFFD4AF37)..style = PaintingStyle.stroke..strokeWidth = 3.5;
-    final Paint emerald = Paint()..color = const Color(0xFF1E6B5C)..style = PaintingStyle.stroke..strokeWidth = 2.5;
-    final Paint blue = Paint()..color = const Color(0xFF2C7A9E)..style = PaintingStyle.stroke..strokeWidth = 1.5;
+    final Paint gold = Paint()..color = const Color(0xFFD4AF37)..style = PaintingStyle.stroke..strokeWidth = 3.0;
+    final Paint emerald = Paint()..color = const Color(0xFF1E6B5C)..style = PaintingStyle.stroke..strokeWidth = 2.0;
+    final Paint blue = Paint()..color = const Color(0xFF2C7A9E)..style = PaintingStyle.stroke..strokeWidth = 1.0;
 
     canvas.drawRect(rect.deflate(2), gold);
-    canvas.drawRect(rect.deflate(8), emerald);
-    canvas.drawRect(rect.deflate(14), blue);
+    canvas.drawRect(rect.deflate(7), emerald);
+    canvas.drawRect(rect.deflate(12), blue);
 
     if (isIlluminated) {
-      _drawFloralPatterns(canvas, size, true);
+      _drawFloralCorners(canvas, size);
     } else {
-      _drawFloralPatterns(canvas, size, false);
+      _drawStandardVines(canvas, size);
     }
   }
 
-  void _drawFloralPatterns(Canvas canvas, Size size, bool full) {
-    final p = Paint()..color = const Color(0xFF2C7A9E).withValues(alpha: 0.6)..style = PaintingStyle.fill;
-    final gp = Paint()..color = const Color(0xFFD4AF37).withValues(alpha: 0.8)..style = PaintingStyle.fill;
+  void _drawFloralCorners(Canvas canvas, Size size) {
+    final p = Paint()..color = const Color(0xFF2C7A9E).withValues(alpha: 0.6);
+    double s = size.width * 0.15;
+    canvas.drawRect(Rect.fromLTWH(0, 0, s, 15), p);
+    canvas.drawRect(Rect.fromLTWH(0, 0, 15, s), p);
+    canvas.drawRect(Rect.fromLTWH(size.width - s, 0, s, 15), p);
+    canvas.drawRect(Rect.fromLTWH(size.width - 15, 0, 20, s), p);
+  }
 
-    if (full) {
-      // Draw simulated floral arch
-      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, 40), p);
-      canvas.drawRect(Rect.fromLTWH(0, size.height - 40, size.width, 40), p);
-      
-      for(double i=0; i<size.width; i+=40) {
-        canvas.drawCircle(Offset(i+20, 20), 12, gp);
-        canvas.drawCircle(Offset(i+20, size.height-20), 12, gp);
-      }
-    } else {
-      // Draw side ornaments
-      for(double i=40; i<size.height-40; i+=60) {
-        canvas.drawCircle(Offset(8, i), 3, gp);
-        canvas.drawCircle(Offset(size.width-8, i), 3, gp);
-      }
+  void _drawStandardVines(Canvas canvas, Size size) {
+    final p = Paint()..color = const Color(0xFFD4AF37).withValues(alpha: 0.2)..style = PaintingStyle.stroke..strokeWidth = 0.5;
+    for (double i = 40; i < size.height - 40; i += 50) {
+      canvas.drawCircle(Offset(4, i), 1.5, p);
+      canvas.drawCircle(Offset(size.width - 4, i), 1.5, p);
     }
   }
 

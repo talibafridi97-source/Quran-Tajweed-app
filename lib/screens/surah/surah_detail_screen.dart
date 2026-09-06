@@ -8,8 +8,8 @@ import '../../providers/settings_provider.dart';
 import '../../core/widgets/mushaf_page_frame.dart';
 import '../../core/widgets/mushaf_16_line_view.dart';
 import '../../core/widgets/loading_error_widget.dart';
-import 'package:tajweed_quran/services/mushaf_16_line_layout_service.dart';
-import 'package:tajweed_quran/services/audio_manager_service.dart';
+import '../../services/mushaf_16_line_layout_service.dart';
+import '../../services/audio_manager_service.dart';
 
 class SurahDetailScreen extends StatefulWidget {
   final Surah surah;
@@ -46,14 +46,15 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     if (!mounted || !_isControllerInitialized) return;
     final audioPage = _audioManager.currentPageNumber;
     if (audioPage != null) {
-      final startPage = _layoutService.getSurahStartPage(widget.surah.number);
-      final targetIndex = audioPage - 1; // PageView index is 0-based absolute
-      if (_pageController.hasClients && _pageController.page?.round() != targetIndex) {
-         _pageController.animateToPage(
-            targetIndex,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeInOutCubic,
-          );
+      if (_pageController.hasClients) {
+        final target = audioPage - 1;
+        if (target >= 0) {
+           _pageController.animateToPage(
+              target,
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.easeInOutCubic,
+            );
+        }
       }
     }
   }
@@ -67,6 +68,8 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     
     final pages = _layoutService.buildAllPages(surahs: surahs, allAyahs: allAyahs);
     
+    if (pages.isEmpty) return [];
+
     final startPage = _layoutService.getSurahStartPage(widget.surah.number);
     _pageController = PageController(initialPage: (startPage - 1).clamp(0, pages.length - 1));
     _isControllerInitialized = true;

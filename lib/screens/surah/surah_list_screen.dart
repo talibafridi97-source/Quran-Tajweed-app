@@ -4,7 +4,7 @@ import '../../core/constants/constants.dart';
 import '../../providers/quran_provider.dart';
 import '../../core/widgets/loading_error_widget.dart';
 import '../../core/widgets/surah_card_tile.dart';
-import 'package:tajweed_quran/services/audio_manager_service.dart';
+import '../../services/audio_manager_service.dart';
 import 'surah_detail_screen.dart';
 
 class SurahListScreen extends StatefulWidget {

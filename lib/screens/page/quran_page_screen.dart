@@ -5,12 +5,11 @@ import '../../models/mushaf_16_line_model.dart';
 import '../../models/resume_data.dart';
 import '../../providers/quran_provider.dart';
 import '../../providers/settings_provider.dart';
-import '../../core/constants/constants.dart';
 import '../../core/widgets/mushaf_page_frame.dart';
 import '../../core/widgets/mushaf_16_line_view.dart';
 import '../../core/widgets/loading_error_widget.dart';
-import 'package:tajweed_quran/services/mushaf_16_line_layout_service.dart';
-import 'package:tajweed_quran/services/audio_manager_service.dart';
+import '../../services/mushaf_16_line_layout_service.dart';
+import '../../services/audio_manager_service.dart';
 
 class QuranPageScreen extends StatefulWidget {
   final int initialPage;
@@ -49,12 +48,15 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
     if (!mounted || !_isControllerInitialized) return;
     final audioPage = _audioManager.currentPageNumber;
     if (audioPage != null && audioPage != _currentPage) {
-      if (_pageController.hasClients && _pageController.page?.round() != (audioPage - 1)) {
-        _pageController.animateToPage(
-          audioPage - 1,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOutCubic,
-        );
+      if (_pageController.hasClients) {
+        final target = audioPage - 1;
+        if (_pageController.page?.round() != target) {
+          _pageController.animateToPage(
+            target,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOutCubic,
+          );
+        }
       }
     }
   }
@@ -68,15 +70,13 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
   Future<List<Mushaf16LinePage>> _initPages() async {
     final repo = context.read<QuranProvider>().repository;
     
-    // Ensure all 30 Paras are loaded for consistent pagination
-    if (!_layoutService.isReady) {
-      final surahs = await repo.getAllSurahs();
-      final allAyahs = await repo.ensureAllAyahsLoaded();
-      _layoutService.buildAllPages(surahs: surahs, allAyahs: allAyahs);
-    }
+    final surahs = await repo.getAllSurahs();
+    final allAyahs = await repo.ensureAllAyahsLoaded();
+    final pages = _layoutService.buildAllPages(surahs: surahs, allAyahs: allAyahs);
+    
+    if (pages.isEmpty) return [];
 
-    final pages = _layoutService.buildAllPages(surahs: [], allAyahs: []);
-    _pageController = PageController(initialPage: _currentPage - 1);
+    _pageController = PageController(initialPage: (_currentPage - 1).clamp(0, pages.length - 1));
     _isControllerInitialized = true;
     
     return pages;
