@@ -5,8 +5,7 @@ import '../../core/utils/tajweed_parser.dart';
 import '../../services/audio_manager_service.dart';
 
 /// Professional Indo-Pak 16-Line Mushaf Page View.
-/// Redesigned with horizontal separators, full width justification, 
-/// and special Para (Juz) start highlighting.
+/// Redesigned with precise Para-start highlighting (Sirf start line).
 class Mushaf16LineView extends StatelessWidget {
   final Mushaf16LinePage page;
   final double fontSize;
@@ -40,17 +39,21 @@ class Mushaf16LineView extends StatelessWidget {
         return Column(
           children: List.generate(16, (index) {
             final line = index < page.lines.length ? page.lines[index] : null;
-            
+            final bool isParaStart = line?.isParaStart ?? false;
+
             return Expanded(
               flex: (line?.isSurahHeader == true && isSpecialPage) ? 3 : 1,
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  // Highlight background for the first line of a new Para
-                  color: line?.isParaStart == true 
-                      ? const Color(0xFFD4AF37).withValues(alpha: 0.15) 
-                      : null,
-                  border: const Border(bottom: BorderSide(color: Color(0x12000000), width: 0.4)),
+                  // VIBRANT Solid Gold background for ONLY the start line
+                  color: isParaStart ? const Color(0xFFFFD700) : null,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isParaStart ? const Color(0xFFFFD700) : const Color(0x15000000), 
+                      width: isParaStart ? 1.0 : 0.5,
+                    ),
+                  ),
                 ),
                 child: line != null 
                     ? _buildLineSlot(context, line, activeVerseKey, isSpecialPage)
@@ -74,19 +77,19 @@ class Mushaf16LineView extends StatelessWidget {
   Widget _buildJustifiedRow(BuildContext context, Mushaf16Line line, String? activeKey) {
     final audioManager = AudioManagerService.instance;
     
-    // Para Start styling: Force extra bold and specific color for the entire line
+    // Para Start styling: Force ULTRA bold and SOLID RED color for the text
     final bool isParaStart = line.isParaStart;
-    final Color textColor = isParaStart ? const Color(0xFF0D3B2E) : const Color(0xFF14171A);
+    final Color textColor = isParaStart ? const Color(0xFFB71C1C) : const Color(0xFF14171A);
     final FontWeight weight = isParaStart ? FontWeight.w900 : FontWeight.w800;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: FittedBox(
-        fit: BoxFit.contain, // Robust against overflows
+        fit: BoxFit.scaleDown,
         alignment: Alignment.center,
         child: SizedBox(
-          width: 440, // Consistent logical width
+          width: 480, // High logical width for better stretch
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween, 
             textDirection: TextDirection.rtl,
@@ -98,7 +101,7 @@ class Mushaf16LineView extends StatelessWidget {
                 w = Text(
                   seg.text, 
                   style: TextStyle(
-                    color: isParaStart ? const Color(0xFF1E6B5C) : AppConstants.gold, 
+                    color: isParaStart ? const Color(0xFFB71C1C) : AppConstants.gold, 
                     fontSize: fontSize * 0.9, 
                     fontWeight: FontWeight.bold, 
                     fontFamily: fontFamily, 
@@ -150,26 +153,26 @@ class Mushaf16LineView extends StatelessWidget {
   Widget _buildHeader(BuildContext context, String name, int sNum, {bool isLarge = false}) {
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.symmetric(vertical: 2, horizontal: isLarge ? 20 : 10),
+      margin: EdgeInsets.symmetric(vertical: 4, horizontal: isLarge ? 20 : 10),
       height: isLarge ? 80 : 45,
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4), border: Border.all(color: const Color(0xFF1E6B5C), width: isLarge ? 2.5 : 1.5), boxShadow: [BoxShadow(color: const Color(0xFFD4AF37).withValues(alpha: 0.15), blurRadius: 4)]),
-      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: const Color(0xFF1E6B5C), width: isLarge ? 2.5 : 1.5), boxShadow: [BoxShadow(color: const Color(0xFFD4AF37).withValues(alpha: 0.2), blurRadius: 4)]),
+      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         _meta('آياتُها', sNum == 1 ? '۷' : (sNum == 2 ? '۲۸۶' : '---')),
         Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('سُورَةُ', style: TextStyle(fontFamily: fontFamily, fontSize: isLarge ? 10 : 8, color: const Color(0xFF1E6B5C), fontWeight: FontWeight.bold)),
-          Text(name, style: TextStyle(fontFamily: fontFamily, fontSize: isLarge ? 26 : 16, fontWeight: FontWeight.w900, color: const Color(0xFF0D3B2E))),
+          Text('سُورَةُ', style: TextStyle(fontFamily: fontFamily, fontSize: isLarge ? 12 : 9, color: const Color(0xFF1E6B5C), fontWeight: FontWeight.bold)),
+          Text(name, style: TextStyle(fontFamily: fontFamily, fontSize: isLarge ? 28 : 18, fontWeight: FontWeight.bold, color: const Color(0xFF0D3B2E))),
         ])),
         _meta('رُكوعاتها', sNum == 1 ? '۱' : (sNum == 2 ? '۴۰' : '---')),
       ])),
     );
   }
 
-  Widget _meta(String l, String v) => Container(padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1), decoration: BoxDecoration(color: const Color(0xFFF7F2E6), borderRadius: BorderRadius.circular(2), border: Border.all(color: const Color(0xFFD4AF37), width: 0.6)), child: Column(mainAxisSize: MainAxisSize.min, children: [
-    Text(l, style: const TextStyle(fontSize: 6, fontWeight: FontWeight.bold, color: Color(0xFF1E6B5C))),
-    Text(v, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900)),
+  Widget _meta(String l, String v) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: const Color(0xFFF7F2E6), borderRadius: BorderRadius.circular(4), border: Border.all(color: const Color(0xFFD4AF37), width: 0.8)), child: Column(mainAxisSize: MainAxisSize.min, children: [
+    Text(l, style: const TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: Color(0xFF1E6B5C))),
+    Text(v, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
   ]));
 
   Widget _buildBismillah(BuildContext context, {bool isActive = false, bool isLarge = false}) {
-    return Container(margin: EdgeInsets.symmetric(vertical: 2, horizontal: isLarge ? 30 : 0), decoration: BoxDecoration(color: isActive ? const Color(0x22D4AF37) : const Color(0xFFFCFAF5), border: const Border.symmetric(horizontal: BorderSide(color: Color(0xFFD4AF37), width: 1.0))), child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: Text('بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيمِ', style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0D3B2E))))));
+    return Container(margin: EdgeInsets.symmetric(vertical: 4, horizontal: isLarge ? 30 : 0), decoration: BoxDecoration(color: isActive ? const Color(0x22D4AF37) : const Color(0xFFFCFAF5), border: const Border.symmetric(horizontal: BorderSide(color: Color(0xFFD4AF37), width: 1.2))), child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: Text('بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيمِ', style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0D3B2E))))));
   }
 }
