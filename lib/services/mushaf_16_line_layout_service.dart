@@ -19,7 +19,7 @@ class Mushaf16LineLayoutService {
   bool _isBuilt = false;
 
   bool get isReady => _isBuilt && _allPagesCache != null && _allPagesCache!.isNotEmpty;
-  int get totalPages => 549; // Standard Pakistani 16-line Mushaf
+  int get totalPages => 549; 
 
   static String toArabicDigits(int number) {
     const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -41,11 +41,9 @@ class Mushaf16LineLayoutService {
   }
 
   List<Mushaf16LinePage> buildAllPages({required List<Surah> surahs, required List<Ayah> allAyahs}) {
-    // If cache is ready and input is empty, return cache
     if (_isBuilt && _allPagesCache != null && allAyahs.isEmpty) return _allPagesCache!;
     if (allAyahs.isEmpty) return _allPagesCache ?? [];
 
-    // Otherwise rebuild
     _pageCache.clear(); _surahStartPageMap.clear(); _juzStartPageMap.clear(); _ayahToPageMap.clear();
 
     final List<Mushaf16LinePage> pages = [];
@@ -78,7 +76,7 @@ class Mushaf16LineLayoutService {
     while (p2Lines.length < 16) p2Lines.add(Mushaf16Line(lineNumber: p2Lines.length + 1, type: MushafLineType.empty, surahNumber: 1, surahName: 'Al-Fatihah', juzNumber: 1));
     pages.add(Mushaf16LinePage(pageNumber: 2, juzNumber: 1, surahNumber: 1, surahName: 'Al-Fatihah', lines: p2Lines));
 
-    // Page 3: Surah Al-Baqarah 1-4 (Fixed Duplicate Ayah 5)
+    // Page 3: Surah Al-Baqarah 1-4
     _surahStartPageMap[2] = 3;
     final bStartAyahs = (ayahsBySurah[2] ?? []).where((a) => a.numberInSurah <= 4).toList();
     final List<Mushaf16Line> p3Lines = [
@@ -100,64 +98,115 @@ class Mushaf16LineLayoutService {
     while (p3Lines.length < 16) p3Lines.add(Mushaf16Line(lineNumber: p3Lines.length + 1, type: MushafLineType.empty, surahNumber: 2, surahName: 'Al-Baqarah', juzNumber: 1));
     pages.add(Mushaf16LinePage(pageNumber: 3, juzNumber: 1, surahNumber: 2, surahName: 'Al-Baqarah', lines: p3Lines));
 
-    // Page 4: Surah Al-Baqarah 5-17 (Precise Mapping)
-    final List<Ayah> p4Ayahs = (ayahsBySurah[2] ?? []).where((a) => a.numberInSurah >= 5 && a.numberInSurah <= 17).toList();
-    final List<MushafLineSegment> p4Segs = [];
-    for (var a in p4Ayahs) {
-      var words = a.text.replaceAll('\uFEFF', '').trim().split(RegExp(r'\s+'));
-      for (var w in words) { if (w.isNotEmpty) p4Segs.add(MushafLineSegment(text: w, surahNumber: 2, ayahNumberInSurah: a.numberInSurah, verseKey: '2:${a.numberInSurah}')); }
-      p4Segs.add(MushafLineSegment(text: ' ﴿${toArabicDigits(a.numberInSurah)}﴾ ', surahNumber: 2, ayahNumberInSurah: a.numberInSurah, verseKey: '2:${a.numberInSurah}', isAyahEnd: true, ayahNumber: a.numberInSurah));
-    }
-    final List<Mushaf16Line> p4Lines = [];
-    int p4Ptr = 0;
-    for (int i = 1; i <= 16; i++) {
-      int count = (p4Segs.length / 16).ceil();
-      p4Lines.add(Mushaf16Line(lineNumber: i, type: MushafLineType.text, surahNumber: 2, surahName: 'Al-Baqarah', segments: p4Segs.sublist(p4Ptr, (p4Ptr + count).clamp(0, p4Segs.length)), ayahNumbers: p4Ayahs.map((a)=>a.numberInSurah).toSet().toList(), juzNumber: 1));
-      p4Ptr += count;
-    }
-    pages.add(Mushaf16LinePage(pageNumber: 4, juzNumber: 1, surahNumber: 2, surahName: 'Al-Baqarah', lines: p4Lines));
+    // Continuous Flow Logic with Para Start Detection
+    int curPageNum = 4;
+    int curJuzNum = 1;
+    int lastAddedJuzInList = 1;
+    List<Mushaf16Line> curLines = [];
+    List<MushafLineSegment> curSegs = [];
+    Set<int> curAyahs = {};
+    int curLen = 0;
+    const int capacity = 34; // Safer capacity to prevent overflow
 
-    // Page 5 onwards...
-    int curPageNum = 5; int curJuzNum = 1; int lastJuz = 0;
-    List<Mushaf16Line> curLines = []; List<MushafLineSegment> curSegs = []; Set<int> curAyahs = {}; int curLen = 0; const int capacity = 36;
-
-    void flush(int sNum, String sName) {
+    void flush(int sNum, String sName, {bool forceParaStart = false}) {
       if (curSegs.isEmpty) return;
-      final isStart = (lastJuz < curJuzNum); if (isStart) lastJuz = curJuzNum;
-      curLines.add(Mushaf16Line(lineNumber: curLines.length+1, type: MushafLineType.text, surahNumber: sNum, surahName: sName, segments: List.from(curSegs), ayahNumbers: curAyahs.toList()..sort(), isParaStart: isStart, juzNumber: curJuzNum));
-      curSegs.clear(); curAyahs.clear(); curLen = 0;
-      if (curLines.length == 16) { pages.add(Mushaf16LinePage(pageNumber: curPageNum++, juzNumber: curJuzNum, surahNumber: sNum, surahName: sName, lines: List.from(curLines))); curLines.clear(); }
+      
+      final isParaBeginning = forceParaStart;
+
+      curLines.add(Mushaf16Line(
+        lineNumber: curLines.length + 1,
+        type: MushafLineType.text,
+        surahNumber: sNum,
+        surahName: sName,
+        segments: List.from(curSegs),
+        ayahNumbers: curAyahs.toList()..sort(),
+        isParaStart: isParaBeginning,
+        juzNumber: curJuzNum,
+      ));
+      
+      curSegs.clear(); 
+      curAyahs.clear(); 
+      curLen = 0;
+
+      if (curLines.length == 16) {
+        pages.add(Mushaf16LinePage(pageNumber: curPageNum++, juzNumber: curJuzNum, surahNumber: sNum, surahName: sName, lines: List.from(curLines)));
+        curLines.clear();
+      }
+    }
+
+    void special(MushafLineType t, int sNum, String sName) {
+      flush(sNum, sName);
+      if (curLines.length >= 15) {
+        while(curLines.length < 16) curLines.add(Mushaf16Line(lineNumber: curLines.length+1, type: MushafLineType.empty, surahNumber: sNum, surahName: sName, juzNumber: curJuzNum));
+        pages.add(Mushaf16LinePage(pageNumber: curPageNum++, juzNumber: curJuzNum, surahNumber: sNum, surahName: sName, lines: List.from(curLines)));
+        curLines.clear();
+      }
+      curLines.add(Mushaf16Line(lineNumber: curLines.length+1, type: t, surahNumber: sNum, surahName: sName, juzNumber: curJuzNum));
+      if (curLines.length == 16) {
+        pages.add(Mushaf16LinePage(pageNumber: curPageNum++, juzNumber: curJuzNum, surahNumber: sNum, surahName: sName, lines: List.from(curLines)));
+        curLines.clear();
+      }
     }
 
     for (var s in surahs) {
       if (s.number == 1) continue;
       var list = ayahsBySurah[s.number] ?? [];
-      if (s.number == 2) list = list.where((a) => a.numberInSurah > 17).toList();
+      if (s.number == 2) list = list.where((a) => a.numberInSurah > 4).toList();
       else {
-        flush(s.number, s.englishName);
-        if (curLines.length >= 15) { while(curLines.length<16) curLines.add(Mushaf16Line(lineNumber: curLines.length+1, type: MushafLineType.empty, surahNumber: s.number, surahName: s.englishName, juzNumber: curJuzNum)); pages.add(Mushaf16LinePage(pageNumber: curPageNum++, juzNumber: curJuzNum, surahNumber: s.number, surahName: s.englishName, lines: List.from(curLines))); curLines.clear(); }
-        curLines.add(Mushaf16Line(lineNumber: curLines.length+1, type: MushafLineType.surahHeader, surahNumber: s.number, surahName: s.englishName, juzNumber: curJuzNum));
-        if (s.number != 9) curLines.add(Mushaf16Line(lineNumber: curLines.length+1, type: MushafLineType.bismillah, surahNumber: s.number, surahName: s.englishName, juzNumber: curJuzNum));
+        special(MushafLineType.surahHeader, s.number, s.englishName);
+        _surahStartPageMap[s.number] = curPageNum;
+        if (s.number != 9) special(MushafLineType.bismillah, s.number, s.englishName);
       }
+
       for (var a in list) {
-        if (a.juz > 0 && !_juzStartPageMap.containsKey(a.juz)) _juzStartPageMap[a.juz] = curPageNum;
+        // Detect Para Start
+        if (a.juz > lastAddedJuzInList) {
+          flush(s.number, s.englishName); // End current line before starting new Para
+          lastAddedJuzInList = a.juz;
+          curJuzNum = a.juz;
+          _juzStartPageMap[curJuzNum] = curPageNum;
+          
+          // Force a line break for Para start and set the flag
+          var words = a.text.replaceAll('\uFEFF', '').trim().split(RegExp(r'\s+'));
+          for (var w in words) {
+            if (w.isEmpty) continue;
+            int l = _getVisualLength(w);
+            if (curSegs.isNotEmpty && (curLen + l + 1 > capacity)) flush(s.number, s.englishName);
+            curSegs.add(MushafLineSegment(text: w, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: '${s.number}:${a.numberInSurah}'));
+            curAyahs.add(a.numberInSurah);
+            curLen += l + 1;
+          }
+          var m = ' ﴿${toArabicDigits(a.numberInSurah)}﴾ ';
+          curSegs.add(MushafLineSegment(text: m, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: '${s.number}:${a.numberInSurah}', isAyahEnd: true, ayahNumber: a.numberInSurah));
+          curAyahs.add(a.numberInSurah);
+          flush(s.number, s.englishName, forceParaStart: true); // Start Para line immediately
+          continue;
+        }
+
         curJuzNum = a.juz;
+        if (!_juzStartPageMap.containsKey(curJuzNum)) _juzStartPageMap[curJuzNum] = curPageNum;
+
         var words = a.text.replaceAll('\uFEFF', '').trim().split(RegExp(r'\s+'));
         for (var w in words) {
           if (w.isEmpty) continue;
           int l = _getVisualLength(w);
           if (curSegs.isNotEmpty && (curLen + l + 1 > capacity)) flush(s.number, s.englishName);
           curSegs.add(MushafLineSegment(text: w, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: '${s.number}:${a.numberInSurah}'));
-          curAyahs.add(a.numberInSurah); curLen += l + 1;
+          curAyahs.add(a.numberInSurah);
+          curLen += l + 1;
         }
         var m = ' ﴿${toArabicDigits(a.numberInSurah)}﴾ ';
         if (curSegs.isNotEmpty && (curLen + _getVisualLength(m) > capacity + 4)) flush(s.number, s.englishName);
         curSegs.add(MushafLineSegment(text: m, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: '${s.number}:${a.numberInSurah}', isAyahEnd: true, ayahNumber: a.numberInSurah));
-        curAyahs.add(a.numberInSurah); curLen += _getVisualLength(m);
+        curAyahs.add(a.numberInSurah);
+        curLen += _getVisualLength(m);
       }
     }
     flush(114, 'An-Nas');
-    if (curLines.isNotEmpty) { while(curLines.length<16) curLines.add(Mushaf16Line(lineNumber: curLines.length+1, type: MushafLineType.empty, surahNumber: 114, surahName: 'An-Nas', juzNumber: 30)); pages.add(Mushaf16LinePage(pageNumber: curPageNum, juzNumber: 30, surahNumber: 114, surahName: 'An-Nas', lines: curLines)); }
+    if (curLines.isNotEmpty) {
+      while(curLines.length < 16) curLines.add(Mushaf16Line(lineNumber: curLines.length+1, type: MushafLineType.empty, surahNumber: 114, surahName: 'An-Nas', juzNumber: 30));
+      pages.add(Mushaf16LinePage(pageNumber: curPageNum, juzNumber: 30, surahNumber: 114, surahName: 'An-Nas', lines: curLines));
+    }
 
     _allPagesCache = pages;
     for (var p in pages) { _pageCache[p.pageNumber] = p; for (var l in p.lines) { for (var an in l.ayahNumbers) _ayahToPageMap['${l.surahNumber}:$an'] = p.pageNumber; } }
