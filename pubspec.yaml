@@ -60,6 +60,11 @@ flutter:
     - assets/images/
 
   fonts:
+    - family: Scheherazade New
+      fonts:
+        - asset: assets/fonts/ScheherazadeNew-Regular.ttf
+        - asset: assets/fonts/ScheherazadeNew-Bold.ttf
+          weight: 700
     - family: Uthmani
       fonts:
         - asset: assets/fonts/QuranFont.ttf

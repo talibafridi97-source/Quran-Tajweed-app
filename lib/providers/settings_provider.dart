@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/theme/app_theme.dart';
+import '../core/constants/constants.dart';
 
 class SettingsProvider with ChangeNotifier {
   double _arabicFontSize = 24.0;
@@ -8,7 +9,7 @@ class SettingsProvider with ChangeNotifier {
   double _lineSpacing = 2.0;
   bool _isDarkMode = false;
   AppThemePalette _themePalette = AppThemePalette.emerald;
-  String _arabicFontFamily = 'Uthmani';
+  String _arabicFontFamily = AppConstants.indoPakFont;
   bool _showTranslation = true;
   bool _showTajweed = true;
   bool _enableAutoScroll = false;
@@ -58,7 +59,7 @@ class SettingsProvider with ChangeNotifier {
       orElse: () => AppThemePalette.emerald,
     );
 
-    _arabicFontFamily = prefs.getString('arabic_font_family') ?? 'Uthmani';
+    _arabicFontFamily = prefs.getString('arabic_font_family') ?? AppConstants.indoPakFont;
     _showTranslation = prefs.getBool('show_translation') ?? true;
     _showTajweed = prefs.getBool('show_tajweed') ?? true;
     _enableAutoScroll = prefs.getBool('enable_auto_scroll') ?? false;

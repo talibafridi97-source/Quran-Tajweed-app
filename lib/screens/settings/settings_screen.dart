@@ -17,6 +17,7 @@ class SettingsScreen extends StatelessWidget {
   ];
 
   static const List<Map<String, String>> arabicFonts = [
+    {'family': AppConstants.indoPakFont, 'name': 'Indo-Pak Tajweed (شیخ المشائخ)'},
     {'family': 'Uthmani', 'name': 'Uthmani Classic (عثماني)'},
     {'family': 'QuranAmiri', 'name': 'Amiri Naskh (أميري)'},
     {'family': 'Urdu', 'name': 'Nastaliq Script (نستعلیق)'},

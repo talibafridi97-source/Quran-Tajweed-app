@@ -129,6 +129,16 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               isRead: isRead,
               showControls: _showControls,
               onTap: () => setState(() => _showControls = !_showControls),
+              onNextPage: () {
+                if (_pageController.hasClients) {
+                  _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                }
+              },
+              onPreviousPage: () {
+                if (_pageController.hasClients) {
+                  _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                }
+              },
               onReadChanged: (val) => quranProvider.togglePageReadStatus(page.pageNumber),
               child: Mushaf16LineView(
                 page: page,

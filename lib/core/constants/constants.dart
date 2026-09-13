@@ -60,6 +60,7 @@ class AppConstants {
   static const String bookmarksKey = 'bookmarks';
   // Fonts
   static const String uthmaniFont = 'Uthmani';
+  static const String indoPakFont = 'Scheherazade New'; // Authentic Indo-Pak style
   static const String urduFont = 'Urdu';
   static const String kitabFont = 'Kitab';
 }
