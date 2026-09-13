@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:provider/provider.dart';
 import '../../models/mushaf_16_line_model.dart';
 import '../../models/resume_data.dart';
@@ -138,6 +138,16 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
               isRead: isRead,
               showControls: _showControls,
               onTap: _toggleControls,
+              onNextPage: () {
+                if (_pageController.hasClients) {
+                  _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                }
+              },
+              onPreviousPage: () {
+                if (_pageController.hasClients) {
+                  _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                }
+              },
               onReadChanged: (val) {
                 quranProvider.togglePageReadStatus(page.pageNumber);
               },

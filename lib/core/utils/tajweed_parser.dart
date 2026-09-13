@@ -8,39 +8,37 @@ class _SpanToken {
 }
 
 class TajweedParser {
-  // Vibrant, high-contrast colors calibrated for Pakistani Tajweed Mushafs
+  // Vibrant, high-contrast colors calibrated for Pakistani Tajweed Mushafs (Taj Company Style)
   static const Map<String, Color> _tajweedColors = {
-    // Silent & Wasl (Muted Dark Gray)
-    'h': Color(0xFF757575), // Hamzatul Wasl
-    's': Color(0xFF757575), // Silent letter
-    'l': Color(0xFF757575), // Lam Shamsiyyah
+    // Silent & Wasl (Grey)
+    'h': Color(0xFF9E9E9E), // Hamzatul Wasl
+    's': Color(0xFF9E9E9E), // Silent letter
+    'l': Color(0xFF9E9E9E), // Lam Shamsiyyah
     
-    // Ghunnah (Vibrant Neon Orange/Amber)
-    'n': Color(0xFFFF9100), // Ghunnah
-    'g': Color(0xFFFF9100), 
+    // Ghunnah & Ikhfa / Nasalization rules (Green)
+    'n': Color(0xFF00C853), // Ghunnah
+    'g': Color(0xFF00C853), 
+    'i': Color(0xFF00C853), // Ikhfa
+    'p': Color(0xFF00C853), 
+    'c': Color(0xFF00C853), 
 
-    // Idgham (Vibrant Forest Green)
-    'm': Color(0xFF00C853), // Idgham
-    'u': Color(0xFF00C853), 
-    'a': Color(0xFF00C853), 
-    'r': Color(0xFF00C853), 
+    // Idgham / Assimilation rules (Blue / Grey)
+    'm': Color(0xFF1976D2), // Idgham (Blue)
+    'u': Color(0xFF1976D2), 
+    'a': Color(0xFF1976D2), 
+    'r': Color(0xFF1976D2), 
 
-    // Iqlab (Vibrant Sky Blue)
-    'b': Color(0xFF00B0FF), 
-    'd': Color(0xFF00B0FF), 
+    // Iqlab (Blue)
+    'b': Color(0xFF1976D2), 
+    'd': Color(0xFF1976D2), 
 
-    // Ikhfa (Royal Magenta/Magenta Pink)
-    'i': Color(0xFFFF00FF), 
-    'p': Color(0xFFFF00FF), 
-    'c': Color(0xFFFF00FF), 
+    // Qalqalah (Orange / Amber)
+    'q': Color(0xFFFF9100), 
 
-    // Qalqalah (Electric Blue)
-    'q': Color(0xFF2979FF), 
-
-    // Madds (Pure Vibrant Red - Surkh)
-    'w': Color(0xFFFF1744), // Madd 6 (Long Surkh)
-    'o': Color(0xFFFF1744), // Madd 4-5
-    'j': Color(0xFFFF5252), // Madd 2
+    // Madd-e-Muttasil & Mad-e-Munfasil (Pink / Magenta)
+    'w': Color(0xFFE91E63), // Madd 6
+    'o': Color(0xFFE91E63), // Madd 4-5
+    'j': Color(0xFFE91E63), // Madd 2
   };
 
   static bool isArabicCombiningMark(int cu) {
@@ -121,13 +119,13 @@ class TajweedParser {
 
   static List<InlineSpan> parse(String text, {double? fontSize, Color? defaultColor, String? fontFamily, bool showTajweed = true}) {
     final selectedFont = (fontFamily != null && fontFamily.isNotEmpty) ? fontFamily : AppConstants.uthmaniFont;
-    final resolvedColor = defaultColor ?? Colors.black; // Pure black for better contrast
+    final resolvedColor = defaultColor ?? Colors.black;
 
     TextStyle getStyle(Color col) => TextStyle(
       color: col,
       fontSize: fontSize ?? 24,
       fontFamily: selectedFont,
-      fontWeight: FontWeight.w900, // Thickest possible weight
+      fontWeight: FontWeight.w900, // Thickest possible weight for Pakistani look
       height: 1.15,
       letterSpacing: -0.4,
     );

@@ -4,11 +4,8 @@ import '../../core/constants/constants.dart';
 import '../../core/utils/tajweed_parser.dart';
 import '../../services/audio_manager_service.dart';
 
-/// Professional Indo-Pak 16-Line Mushaf Page View.
-/// Redesigned for maximum "Pakistani Tajweed Quran" fidelity:
-/// - Extra thick (mota) script.
-/// - Vibrant Tajweed coloring.
-/// - Perfect vertical centering.
+/// High-Fidelity Reproduction of the 16-Line Tajweed Quran Standard.
+/// Strictly follows Pakistani Indo-Pak calligraphy aesthetics (Taj Company Standard).
 class Mushaf16LineView extends StatelessWidget {
   final Mushaf16LinePage page;
   final double fontSize;
@@ -19,7 +16,7 @@ class Mushaf16LineView extends StatelessWidget {
   const Mushaf16LineView({
     super.key,
     required this.page,
-    this.fontSize = 36.0, // Increased default for thicker look
+    this.fontSize = 32.0, 
     this.fontFamily = AppConstants.uthmaniFont,
     this.showTajweed = true,
     this.onAyahTap,
@@ -28,7 +25,7 @@ class Mushaf16LineView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final audioManager = AudioManagerService.instance;
-    final bool isSpecialHeaderPage = page.pageNumber >= 2 && page.pageNumber <= 3;
+    final bool isSpecialPage = page.pageNumber == 2 || page.pageNumber == 3;
 
     return AnimatedBuilder(
       animation: audioManager,
@@ -42,11 +39,10 @@ class Mushaf16LineView extends StatelessWidget {
         return Column(
           children: List.generate(16, (index) {
             final line = index < page.lines.length ? page.lines[index] : null;
-            final bool isStart = line?.isParaStart ?? false;
-
-            // Flex distribution for vertical balance
+            
+            // Flex distribution: Headers and Bismillah get more breathing space
             int flexVal = 1;
-            if (line?.isSurahHeader == true) flexVal = isSpecialHeaderPage ? 3 : 2;
+            if (line?.isSurahHeader == true) flexVal = isSpecialPage ? 4 : 3;
             else if (line?.isBismillah == true) flexVal = 2;
 
             return Expanded(
@@ -54,12 +50,12 @@ class Mushaf16LineView extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isStart ? const Color(0xFFFFD700).withValues(alpha: 0.1) : null,
-                  border: const Border(bottom: BorderSide(color: Color(0x0F000000), width: 0.5)),
+                decoration: const BoxDecoration(
+                  // Horizontal row separators like in the Pakistani printed Mushaf
+                  border: Border(bottom: BorderSide(color: Color(0x1A000000), width: 0.6)),
                 ),
                 child: line != null 
-                    ? _buildLineSlot(context, line, activeVerseKey, isSpecialHeaderPage)
+                    ? _buildLineSlot(context, line, activeVerseKey, isSpecialPage)
                     : const SizedBox.shrink(),
               ),
             );
@@ -70,18 +66,17 @@ class Mushaf16LineView extends StatelessWidget {
   }
 
   Widget _buildLineSlot(BuildContext context, Mushaf16Line line, String? activeKey, bool isSpecial) {
-    if (line.isSurahHeader) return _buildHeader(context, line.surahName, line.surahNumber, isLarge: isSpecial);
-    if (line.isBismillah) return _buildBismillah(context, isActive: activeKey == '${line.surahNumber}:0');
+    if (line.isSurahHeader) return _buildAuthenticHeader(context, line.surahName, line.surahNumber, isLarge: isSpecial);
+    if (line.isBismillah) return _buildAuthenticBismillah(context, isActive: activeKey == '${line.surahNumber}:0');
     if (line.isEmpty) return const SizedBox.shrink();
 
-    return _buildProfessionalJustifiedLine(context, line, activeKey);
+    return _buildJustifiedIndoPakLine(context, line, activeKey);
   }
 
-  Widget _buildProfessionalJustifiedLine(BuildContext context, Mushaf16Line line, String? activeKey) {
+  Widget _buildJustifiedIndoPakLine(BuildContext context, Mushaf16Line line, String? activeKey) {
     final audioManager = AudioManagerService.instance;
-    final bool isStart = line.isParaStart;
-    final Color textColor = isStart ? const Color(0xFF1B5E20) : const Color(0xFF000000); // Black for high contrast
-    
+    const Color textColor = Colors.black;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -89,7 +84,7 @@ class Mushaf16LineView extends StatelessWidget {
         fit: BoxFit.contain,
         alignment: Alignment.center,
         child: SizedBox(
-          width: 700, // Wide logical width for smooth bold rendering
+          width: 800, // Forces Edge-to-Edge Justification
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween, 
             textDirection: TextDirection.rtl,
@@ -122,9 +117,7 @@ class Mushaf16LineView extends StatelessWidget {
                     return TextSpan(
                       text: s.text, 
                       style: s.style?.copyWith(
-                        fontWeight: FontWeight.w900, // Forced Extra Bold for Indo-Pak look
-                        height: 1.0, 
-                        leadingDistribution: TextLeadingDistribution.even,
+                        fontWeight: FontWeight.w900, // Extra Mota (Bold) script
                         backgroundColor: active ? const Color(0x44D4AF37) : null,
                       )
                     );
@@ -152,41 +145,36 @@ class Mushaf16LineView extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, String name, int sNum, {bool isLarge = false}) {
+  Widget _buildAuthenticHeader(BuildContext context, String name, int sNum, {bool isLarge = false}) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 12),
+      margin: EdgeInsets.symmetric(vertical: 2, horizontal: isLarge ? 12 : 8),
       decoration: BoxDecoration(
-        color: Colors.white, borderRadius: BorderRadius.circular(6), 
+        color: Colors.white, 
+        borderRadius: BorderRadius.circular(4), 
         border: Border.all(color: const Color(0xFF1E6B5C), width: isLarge ? 2.5 : 1.5), 
         boxShadow: [BoxShadow(color: const Color(0xFFD4AF37).withValues(alpha: 0.15), blurRadius: 4)]
       ),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween, 
-            children: [
-              _meta('آياتُها', sNum == 1 ? '۷' : (sNum == 2 ? '۲۸۶' : '---')),
-              const SizedBox(width: 30),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center, 
-                children: [
-                  Text('سُورَةُ', style: TextStyle(fontFamily: fontFamily, fontSize: 11, color: const Color(0xFF1E6B5C), fontWeight: FontWeight.bold)),
-                  Text(name, style: TextStyle(fontFamily: fontFamily, fontSize: 26, fontWeight: FontWeight.w900, color: const Color(0xFF0D3B2E))),
-                ]
-              ),
-              const SizedBox(width: 30),
-              _meta('رُكوعاتها', sNum == 1 ? '۱' : (sNum == 2 ? '۴۰' : '---')),
-            ]
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+        children: [
+          _metaBox('آياتُها', sNum == 1 ? '۷' : (sNum == 2 ? '۲۸۶' : '---')),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center, 
+              children: [
+                Text('سُورَةُ', style: TextStyle(fontFamily: fontFamily, fontSize: isLarge ? 11 : 8, color: const Color(0xFF1E6B5C), fontWeight: FontWeight.bold)),
+                Text(name, style: TextStyle(fontFamily: fontFamily, fontSize: isLarge ? 28 : 20, fontWeight: FontWeight.w900, color: const Color(0xFF0D3B2E))),
+              ]
+            )
           ),
-        ),
+          _metaBox('رُكوعاتها', sNum == 1 ? '۱' : (sNum == 2 ? '۴۰' : '---')),
+        ]
       ),
     );
   }
 
-  Widget _meta(String l, String v) => Container(
+  Widget _metaBox(String l, String v) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), 
     decoration: BoxDecoration(color: const Color(0xFFF7F2E6), borderRadius: BorderRadius.circular(4), border: Border.all(color: const Color(0xFFD4AF37), width: 0.8)), 
     child: Column(
@@ -198,10 +186,10 @@ class Mushaf16LineView extends StatelessWidget {
     )
   );
 
-  Widget _buildBismillah(BuildContext context, {bool isActive = false}) {
+  Widget _buildAuthenticBismillah(BuildContext context, {bool isActive = false}) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 30), 
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 24), 
       decoration: BoxDecoration(
         color: isActive ? const Color(0x22D4AF37) : const Color(0xFFFCFAF5), 
         border: const Border.symmetric(horizontal: BorderSide(color: Color(0xFFD4AF37), width: 1.0))
@@ -211,7 +199,7 @@ class Mushaf16LineView extends StatelessWidget {
           fit: BoxFit.scaleDown,
           child: Text(
             'بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيمِ', 
-            style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 26, fontWeight: FontWeight.w900, color: const Color(0xFF0D3B2E)),
+            style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 24, fontWeight: FontWeight.w900, color: const Color(0xFF0D3B2E)),
             textAlign: TextAlign.center,
           ),
         )

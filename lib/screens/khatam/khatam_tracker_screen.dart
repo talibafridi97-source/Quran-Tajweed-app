@@ -91,7 +91,7 @@ class KhatamTrackerScreen extends StatelessWidget {
   }
 
   Widget _buildPlanCard(BuildContext context, KhatamProvider provider, KhatamPlan plan) {
-    const totalPages = 604;
+    const totalPages = 549;
     final dailyTargetPages = (totalPages / plan.totalDays).ceil();
     final daysElapsed = DateTime.now().difference(plan.startDate).inDays + 1;
     final expectedPages = (daysElapsed * dailyTargetPages).clamp(0, totalPages);
@@ -202,7 +202,7 @@ class KhatamTrackerScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _statTile('Daily Target', '$dailyTargetPages pgs'),
-              _statTile('Completed', '$completedPages / 604 pgs'),
+              _statTile('Completed', '$completedPages / 549 pgs'),
               _statTile('Remaining', '$remainingPages pgs'),
             ],
           ),

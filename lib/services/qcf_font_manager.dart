@@ -13,7 +13,7 @@ class QcfFontManager {
   static bool isFontLoaded(int pageNumber) => _loadedFonts.contains(pageNumber);
 
   static Future<void> loadPageFont(int pageNumber) async {
-    if (pageNumber < 1 || pageNumber > 604) return;
+    if (pageNumber < 1 || pageNumber > 549) return;
     if (_loadedFonts.contains(pageNumber)) return;
 
     if (_inFlightLoads.containsKey(pageNumber)) {
@@ -91,7 +91,7 @@ class QcfFontManager {
     if (currentPage > 1) {
       loadPageFont(currentPage - 1);
     }
-    if (currentPage < 604) {
+    if (currentPage < 549) {
       loadPageFont(currentPage + 1);
     }
   }
