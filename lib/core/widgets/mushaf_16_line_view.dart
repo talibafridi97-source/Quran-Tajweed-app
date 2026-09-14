@@ -76,10 +76,16 @@ class Mushaf16LineView extends StatelessWidget {
   Widget _buildJustifiedIndoPakLine(BuildContext context, Mushaf16Line line, String? activeKey) {
     final audioManager = AudioManagerService.instance;
     const Color textColor = Colors.black;
+    final isParaStart = line.isParaStart;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: isParaStart ? BoxDecoration(
+        color: AppConstants.gold.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppConstants.gold.withValues(alpha: 0.5), width: 1.0),
+      ) : null,
       child: FittedBox(
         fit: BoxFit.contain,
         alignment: Alignment.center,
@@ -130,7 +136,7 @@ class Mushaf16LineView extends StatelessWidget {
                   textDirection: TextDirection.rtl, 
                   textAlign: TextAlign.center, 
                   maxLines: 1,
-                  strutStyle: const StrutStyle(forceStrutHeight: true, height: 1.1, leading: 0),
+                  strutStyle: const StrutStyle(forceStrutHeight: true, height: 1.5, leading: 0.2),
                 );
               }
 

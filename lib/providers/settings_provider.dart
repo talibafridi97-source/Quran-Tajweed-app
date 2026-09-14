@@ -4,7 +4,7 @@ import '../core/theme/app_theme.dart';
 import '../core/constants/constants.dart';
 
 class SettingsProvider with ChangeNotifier {
-  double _arabicFontSize = 24.0;
+  double _arabicFontSize = 38.0;
   double _translationFontSize = 16.0;
   double _lineSpacing = 2.0;
   bool _isDarkMode = false;
@@ -48,7 +48,7 @@ class SettingsProvider with ChangeNotifier {
 
   Future<void> _loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    _arabicFontSize = prefs.getDouble('arabic_font_size') ?? 24.0;
+    _arabicFontSize = prefs.getDouble('arabic_font_size') ?? 38.0;
     _translationFontSize = prefs.getDouble('translation_font_size') ?? 16.0;
     _lineSpacing = prefs.getDouble('line_spacing') ?? 2.0;
     _isDarkMode = prefs.getBool('is_dark_mode') ?? false;

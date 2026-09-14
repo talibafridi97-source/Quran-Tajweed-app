@@ -122,7 +122,7 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
 
             return MushafPageFrame(
               pageNumber: page.pageNumber,
-              totalPages: 549,
+              totalPages: pages.length,
               surahNameArabic: page.surahName,
               juzNameArabic: 'الجزء ${page.juzNumber}',
               isRead: isRead,

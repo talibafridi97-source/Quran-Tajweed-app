@@ -115,13 +115,15 @@ class Mushaf16LineLayoutService {
     int curLineLen = 0;
     const int lineCapacity = 22; // Ultra-safe capacity for Extra Bold script
 
+    bool isNextLineParaStart = true; // First Juz starts immediately
     void flush(int sNum, String sName, {bool isStart = false}) {
       if (curLineSegs.isEmpty) return;
       curPageLines.add(Mushaf16Line(
         lineNumber: curPageLines.length + 1, type: MushafLineType.text,
         surahNumber: sNum, surahName: sName, segments: List.from(curLineSegs),
-        ayahNumbers: curLineAyahs.toList()..sort(), isParaStart: isStart, juzNumber: curJuzNum,
+        ayahNumbers: curLineAyahs.toList()..sort(), isParaStart: isStart || isNextLineParaStart, juzNumber: curJuzNum,
       ));
+      if (isNextLineParaStart) isNextLineParaStart = false;
       curLineSegs.clear(); curLineAyahs.clear(); curLineLen = 0;
       if (curPageLines.length == 16) {
         pages.add(Mushaf16LinePage(pageNumber: curPageNum++, juzNumber: curJuzNum, surahNumber: sNum, surahName: sName, lines: List.from(curPageLines)));
@@ -138,7 +140,7 @@ class Mushaf16LineLayoutService {
         list = list.where((a) => a.numberInSurah > 4).toList();
       } else {
         if (curLineSegs.isNotEmpty) flush(s.number, s.englishName);
-        if (curPageLines.length >= 15) {
+        if (curPageLines.isNotEmpty) {
           while (curPageLines.length < 16) {
             curPageLines.add(Mushaf16Line(lineNumber: curPageLines.length + 1, type: MushafLineType.empty, surahNumber: s.number, surahName: s.englishName, juzNumber: curJuzNum));
           }
@@ -159,6 +161,9 @@ class Mushaf16LineLayoutService {
         if (a.juz != curJuzNum || !_juzStartPageMap.containsKey(a.juz)) {
            curJuzNum = a.juz;
            _juzStartPageMap.putIfAbsent(a.juz, () => curPageNum);
+           isNextLineParaStart = true;
+           // If we're mid-line, force a new line for the Para start
+           if (curLineSegs.isNotEmpty) flush(s.number, s.englishName);
         }
         
         var words = a.text.replaceAll('\uFEFF', '').trim().split(RegExp(r'\s+'));

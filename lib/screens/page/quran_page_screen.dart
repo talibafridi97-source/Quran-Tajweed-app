@@ -32,7 +32,7 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
   void initState() {
     super.initState();
     _audioManager = AudioManagerService.instance;
-    _currentPage = widget.initialPage.clamp(1, 549);
+    _currentPage = widget.initialPage;
     _buildFuture = _initPages();
     _audioManager.addListener(_onAudioStateChanged);
   }
@@ -132,7 +132,7 @@ class _QuranPageScreenState extends State<QuranPageScreen> {
 
             return MushafPageFrame(
               pageNumber: page.pageNumber,
-              totalPages: 549,
+              totalPages: pages.length,
               surahNameArabic: page.surahName,
               juzNameArabic: 'الجزء ${page.juzNumber}',
               isRead: isRead,

@@ -177,9 +177,9 @@ class SettingsScreen extends StatelessWidget {
                   width: 140,
                   child: Slider(
                     value: settings.arabicFontSize,
-                    min: 18,
-                    max: 36,
-                    divisions: 9,
+                    min: 24,
+                    max: 48,
+                    divisions: 12,
                     activeColor: scheme.primary,
                     onChanged: (val) => settings.setArabicFontSize(val),
                   ),
