@@ -12,6 +12,7 @@ class MushafLineSegment {
   final String verseKey;
   final bool isAyahEnd;
   final int? ayahNumber;
+  final String? translation; // New: For Word-by-Word translation
 
   const MushafLineSegment({
     required this.text,
@@ -20,6 +21,7 @@ class MushafLineSegment {
     required this.verseKey,
     this.isAyahEnd = false,
     this.ayahNumber,
+    this.translation,
   });
 
   Map<String, dynamic> toJson() => {
@@ -29,6 +31,7 @@ class MushafLineSegment {
     'verseKey': verseKey,
     'isAyahEnd': isAyahEnd,
     'ayahNumber': ayahNumber,
+    'translation': translation,
   };
 
   factory MushafLineSegment.fromJson(Map<String, dynamic> json) {
@@ -39,6 +42,7 @@ class MushafLineSegment {
       verseKey: json['verseKey'] as String? ?? '1:1',
       isAyahEnd: json['isAyahEnd'] as bool? ?? false,
       ayahNumber: json['ayahNumber'] as int?,
+      translation: json['translation'] as String?,
     );
   }
 }
@@ -53,7 +57,7 @@ class Mushaf16Line {
   final bool isParaStart;
   final int? juzNumber;
   final bool isRukuEnd;
-  final int? rukuSurahNumber;
+  final int? rukuNumber; // New: Ruku number in Surah
   final int? rukuAyahCount;
   final int? rukuJuzNumber;
   final bool isSajda;
@@ -70,7 +74,7 @@ class Mushaf16Line {
     this.isParaStart = false,
     this.juzNumber,
     this.isRukuEnd = false,
-    this.rukuSurahNumber,
+    this.rukuNumber,
     this.rukuAyahCount,
     this.rukuJuzNumber,
     this.isSajda = false,
@@ -95,7 +99,7 @@ class Mushaf16Line {
     'isParaStart': isParaStart,
     'juzNumber': juzNumber,
     'isRukuEnd': isRukuEnd,
-    'rukuSurahNumber': rukuSurahNumber,
+    'rukuNumber': rukuNumber,
     'rukuAyahCount': rukuAyahCount,
     'rukuJuzNumber': rukuJuzNumber,
     'isSajda': isSajda,
@@ -119,7 +123,7 @@ class Mushaf16Line {
       isParaStart: json['isParaStart'] as bool? ?? false,
       juzNumber: json['juzNumber'] as int?,
       isRukuEnd: json['isRukuEnd'] as bool? ?? false,
-      rukuSurahNumber: json['rukuSurahNumber'] as int?,
+      rukuNumber: json['rukuNumber'] as int?,
       rukuAyahCount: json['rukuAyahCount'] as int?,
       rukuJuzNumber: json['rukuJuzNumber'] as int?,
       isSajda: json['isSajda'] as bool? ?? false,
