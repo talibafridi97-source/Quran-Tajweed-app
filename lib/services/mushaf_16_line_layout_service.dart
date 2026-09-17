@@ -20,7 +20,7 @@ class Mushaf16LineLayoutService {
   bool _isBuilt = false;
 
   bool get isReady => _isBuilt && _allPagesCache != null && _allPagesCache!.isNotEmpty;
-  int get totalPages => 549;
+  int get totalPages => 549; 
 
   static String toArabicDigits(int number) {
     const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -92,10 +92,8 @@ class Mushaf16LineLayoutService {
     }
 
     void finishPage(int sNum, String sName) {
-      if (curLineSegs.isNotEmpty) {
-        pushLine(sNum, sName, paraStart: isNextTextLineParaStart);
-        isNextTextLineParaStart = false;
-      }
+      if (curLineSegs.isNotEmpty) pushLine(sNum, sName, paraStart: isNextTextLineParaStart);
+      isNextTextLineParaStart = false;
       if (curPageLines.isEmpty) return;
       while (curPageLines.length < 16) {
         curPageLines.add(Mushaf16Line(lineNumber: curPageLines.length + 1, type: MushafLineType.empty, surahNumber: sNum, surahName: sName, juzNumber: curJuzNum));
@@ -105,10 +103,8 @@ class Mushaf16LineLayoutService {
     }
 
     void addSpecial(MushafLineType t, int sNum, String sName) {
-      if (curLineSegs.isNotEmpty) {
-        pushLine(sNum, sName, paraStart: isNextTextLineParaStart);
-        isNextTextLineParaStart = false;
-      }
+      if (curLineSegs.isNotEmpty) pushLine(sNum, sName, paraStart: isNextTextLineParaStart);
+      isNextTextLineParaStart = false;
       if (curPageLines.length >= 15) finishPage(sNum, sName);
       curPageLines.add(Mushaf16Line(lineNumber: curPageLines.length + 1, type: t, surahNumber: sNum, surahName: sName, juzNumber: curJuzNum, manzilNumber: currentManzil));
       if (curPageLines.length == 16) finishPage(sNum, sName);
@@ -141,47 +137,48 @@ class Mushaf16LineLayoutService {
           if (s.number != 9) addSpecial(MushafLineType.bismillah, s.number, s.englishName);
         }
 
-        // Map words with translation (Lafzi Tarjuma)
-        for (var w in a.words) {
-          final text = w.textUthmani ?? '';
-          if (text.isEmpty) continue;
-          int visLen = _getVisualLength(text);
-          
-          if (curLineSegs.isNotEmpty && (curLineLen + visLen + 1 > lineCapacity)) {
-             pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart);
-             isNextTextLineParaStart = false;
+        // Map words or full text
+        if (a.words.isNotEmpty) {
+          for (var w in a.words) {
+            final text = w.textUthmani ?? '';
+            if (text.isEmpty) continue;
+            int visLen = _getVisualLength(text);
+            if (curLineSegs.isNotEmpty && (curLineLen + visLen + 1 > lineCapacity)) {
+               pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart);
+               isNextTextLineParaStart = false;
+            }
+            curLineSegs.add(MushafLineSegment(text: text, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: verseKey, translation: w.translation));
+            curLineAyahs.add(a.numberInSurah); curLineLen += visLen + 1;
           }
-          
-          curLineSegs.add(MushafLineSegment(
-            text: text, 
-            surahNumber: s.number, 
-            ayahNumberInSurah: a.numberInSurah, 
-            verseKey: verseKey,
-            translation: w.translation, 
-          ));
-          curLineAyahs.add(a.numberInSurah); 
-          curLineLen += visLen + 1;
+        } else {
+          // Fallback if words are missing
+          var words = a.text.replaceAll('\uFEFF', '').trim().split(RegExp(r'\s+'));
+          for (var w in words) {
+            if (w.isEmpty) continue;
+            int visLen = _getVisualLength(w);
+            if (curLineSegs.isNotEmpty && (curLineLen + visLen + 1 > lineCapacity)) {
+               pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart);
+               isNextTextLineParaStart = false;
+            }
+            curLineSegs.add(MushafLineSegment(text: w, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: verseKey));
+            curLineAyahs.add(a.numberInSurah); curLineLen += visLen + 1;
+          }
         }
 
         var marker = ' ﴿${toArabicDigits(a.numberInSurah)}﴾ ';
         int mVis = _getVisualLength(marker);
-        
-        bool isRukuEnd = false;
-        int nextAyahIdx = list.indexOf(a) + 1;
-        if (nextAyahIdx < list.length) {
-          if (list[nextAyahIdx].ruku > a.ruku) isRukuEnd = true;
-        } else {
-          isRukuEnd = true;
-        }
-
         if (curLineSegs.isNotEmpty && (curLineLen + mVis > lineCapacity + 4)) {
            pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart);
            isNextTextLineParaStart = false;
         }
-        
         curLineSegs.add(MushafLineSegment(text: marker, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: verseKey, isAyahEnd: true, ayahNumber: a.numberInSurah));
-        curLineAyahs.add(a.numberInSurah);
-        curLineLen += mVis;
+        curLineAyahs.add(a.numberInSurah); curLineLen += mVis;
+
+        bool isRukuEnd = false;
+        int nextAyahIdx = list.indexOf(a) + 1;
+        if (nextAyahIdx < list.length) {
+          if (list[nextAyahIdx].ruku > a.ruku) isRukuEnd = true;
+        } else { isRukuEnd = true; }
 
         if (isRukuEnd) {
           pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart, rukuNum: a.ruku, rukuEnd: true);
