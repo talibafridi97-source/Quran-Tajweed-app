@@ -71,7 +71,7 @@ class Mushaf16LineLayoutService {
     List<MushafLineSegment> curLineSegs = [];
     Set<int> curLineAyahs = {};
     int curLineLen = 0;
-    const int lineCapacity = 24; 
+    const int lineCapacity = 20; // DECREASED TO 20 FOR ULTIMATE OVERFLOW PROTECTION
     bool isNextTextLineParaStart = true; 
     int currentManzil = 1;
 
@@ -137,7 +137,7 @@ class Mushaf16LineLayoutService {
           if (s.number != 9) addSpecial(MushafLineType.bismillah, s.number, s.englishName);
         }
 
-        // Map words or full text
+        // Map words with translation (Lafzi Tarjuma)
         if (a.words.isNotEmpty) {
           for (var w in a.words) {
             final text = w.textUthmani ?? '';
@@ -151,7 +151,6 @@ class Mushaf16LineLayoutService {
             curLineAyahs.add(a.numberInSurah); curLineLen += visLen + 1;
           }
         } else {
-          // Fallback if words are missing
           var words = a.text.replaceAll('\uFEFF', '').trim().split(RegExp(r'\s+'));
           for (var w in words) {
             if (w.isEmpty) continue;
@@ -167,20 +166,23 @@ class Mushaf16LineLayoutService {
 
         var marker = ' ﴿${toArabicDigits(a.numberInSurah)}﴾ ';
         int mVis = _getVisualLength(marker);
+        
+        bool rukuEnd = false;
+        int nextIdx = list.indexOf(a) + 1;
+        if (nextIdx < list.length) {
+          if (list[nextIdx].ruku > a.ruku) rukuEnd = true;
+        } else { rukuEnd = true; }
+
         if (curLineSegs.isNotEmpty && (curLineLen + mVis > lineCapacity + 4)) {
            pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart);
            isNextTextLineParaStart = false;
         }
+        
         curLineSegs.add(MushafLineSegment(text: marker, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: verseKey, isAyahEnd: true, ayahNumber: a.numberInSurah));
-        curLineAyahs.add(a.numberInSurah); curLineLen += mVis;
+        curLineAyahs.add(a.numberInSurah);
+        curLineLen += mVis;
 
-        bool isRukuEnd = false;
-        int nextAyahIdx = list.indexOf(a) + 1;
-        if (nextAyahIdx < list.length) {
-          if (list[nextAyahIdx].ruku > a.ruku) isRukuEnd = true;
-        } else { isRukuEnd = true; }
-
-        if (isRukuEnd) {
+        if (rukuEnd) {
           pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart, rukuNum: a.ruku, rukuEnd: true);
           isNextTextLineParaStart = false;
         }

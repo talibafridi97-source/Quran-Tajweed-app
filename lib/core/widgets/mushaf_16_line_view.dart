@@ -95,6 +95,7 @@ class Mushaf16LineView extends StatelessWidget {
             : null;
 
         return Stack(
+          clipBehavior: Clip.none, // Allow Ruku marker to sit in the margin
           children: [
             Column(
               children: List.generate(16, (index) {
@@ -105,6 +106,7 @@ class Mushaf16LineView extends StatelessWidget {
                   flex: (line?.isSurahHeader == true && isSpecialHeaderPage) ? 3 : 1,
                   child: Stack(
                     alignment: Alignment.center,
+                    clipBehavior: Clip.none,
                     children: [
                       Container(
                         width: double.infinity,
@@ -118,10 +120,10 @@ class Mushaf16LineView extends StatelessWidget {
                             : const SizedBox.shrink(),
                       ),
                       
-                      // Ruku Marker (ع) on the left margin
+                      // Ruku Marker (ع) on the RIGHT margin (Indo-Pak style)
                       if (line != null && line.isRukuEnd)
                         Positioned(
-                          left: 2,
+                          right: -14, // Move it outside the text area into the border margin
                           child: _buildRukuMarker(line.rukuNumber ?? 0),
                         ),
                     ],
@@ -136,21 +138,27 @@ class Mushaf16LineView extends StatelessWidget {
   }
 
   Widget _buildRukuMarker(int rukuNum) {
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: AppConstants.primaryGreen, width: 0.5),
-      ),
-      child: const Text(
-        'ع',
-        style: TextStyle(
-          fontFamily: AppConstants.uthmaniFont,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: AppConstants.primaryGreen,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          'ع',
+          style: TextStyle(
+            fontFamily: AppConstants.uthmaniFont,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1E6B5C),
+          ),
         ),
-      ),
+        Text(
+          TajweedParser.toArabicDigits(rukuNum),
+          style: const TextStyle(
+            fontSize: 8,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1E6B5C),
+          ),
+        ),
+      ],
     );
   }
 
@@ -175,7 +183,7 @@ class Mushaf16LineView extends StatelessWidget {
         fit: BoxFit.contain,
         alignment: Alignment.center,
         child: SizedBox(
-          width: 600, 
+          width: 580, // Optimized width for zero overflow
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween, 
             textDirection: TextDirection.rtl,

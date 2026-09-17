@@ -10,36 +10,46 @@ class _SpanToken {
 class TajweedParser {
   // Vibrant, high-contrast colors calibrated for Pakistani Tajweed Mushafs (Taj Company Style)
   static const Map<String, Color> _tajweedColors = {
-    // Silent & Wasl (Grey)
-    'h': Color(0xFF9E9E9E), // Hamzatul Wasl
-    's': Color(0xFF9E9E9E), // Silent letter
-    'l': Color(0xFF9E9E9E), // Lam Shamsiyyah
+    // Silent & Wasl (Muted Dark Gray)
+    'h': Color(0xFF757575), // Hamzatul Wasl
+    's': Color(0xFF757575), // Silent letter
+    'l': Color(0xFF757575), // Lam Shamsiyyah
     
-    // Ghunnah & Ikhfa / Nasalization rules (Green)
-    'n': Color(0xFF00C853), // Ghunnah
-    'g': Color(0xFF00C853), 
-    'i': Color(0xFF00C853), // Ikhfa
-    'p': Color(0xFF00C853), 
-    'c': Color(0xFF00C853), 
+    // Ghunnah (Vibrant Neon Orange/Amber)
+    'n': Color(0xFFFF9100), // Ghunnah
+    'g': Color(0xFFFF9100), 
 
-    // Idgham / Assimilation rules (Blue / Grey)
-    'm': Color(0xFF1976D2), // Idgham (Blue)
-    'u': Color(0xFF1976D2), 
-    'a': Color(0xFF1976D2), 
-    'r': Color(0xFF1976D2), 
+    // Idgham (Vibrant Forest Green)
+    'm': Color(0xFF00C853), // Idgham
+    'u': Color(0xFF00C853), 
+    'a': Color(0xFF00C853), 
+    'r': Color(0xFF00C853), 
 
-    // Iqlab (Blue)
-    'b': Color(0xFF1976D2), 
-    'd': Color(0xFF1976D2), 
+    // Iqlab (Vibrant Sky Blue)
+    'b': Color(0xFF00B0FF), 
+    'd': Color(0xFF00B0FF), 
 
-    // Qalqalah (Orange / Amber)
-    'q': Color(0xFFFF9100), 
+    // Ikhfa (Vibrant Royal Magenta)
+    'i': Color(0xFFFF00FF), 
+    'p': Color(0xFFFF00FF), 
+    'c': Color(0xFFFF00FF), 
 
-    // Madd-e-Muttasil & Mad-e-Munfasil (Pink / Magenta)
-    'w': Color(0xFFE91E63), // Madd 6
-    'o': Color(0xFFE91E63), // Madd 4-5
-    'j': Color(0xFFE91E63), // Madd 2
+    // Qalqalah (Electric Blue)
+    'q': Color(0xFF2979FF), 
+
+    // Madds (Pure Vibrant Red - Surkh)
+    'w': Color(0xFFFF1744), // Madd 6 (Long Surkh)
+    'o': Color(0xFFFF1744), // Madd 4-5
+    'j': Color(0xFFFF5252), // Madd 2
   };
+
+  static String toArabicDigits(int number) {
+    const arabicDigits = ['۰', '۱', '۲', '۳', '۴', '٥', '٦', '۷', '۸', '۹'];
+    return number.toString().split('').map((digit) {
+      final idx = int.tryParse(digit);
+      return idx != null ? arabicDigits[idx] : digit;
+    }).join();
+  }
 
   static bool isArabicCombiningMark(int cu) {
     return (cu >= 0x0610 && cu <= 0x061A) ||
