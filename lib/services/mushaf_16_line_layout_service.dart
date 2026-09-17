@@ -20,7 +20,7 @@ class Mushaf16LineLayoutService {
   bool _isBuilt = false;
 
   bool get isReady => _isBuilt && _allPagesCache != null && _allPagesCache!.isNotEmpty;
-  int get totalPages => 549; // Strictly matching the Taj Company Standard
+  int get totalPages => 549;
 
   static String toArabicDigits(int number) {
     const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -75,14 +75,6 @@ class Mushaf16LineLayoutService {
     bool isNextTextLineParaStart = true; 
     int currentManzil = 1;
 
-    bool consumeParaStart() {
-      if (isNextTextLineParaStart) {
-        isNextTextLineParaStart = false;
-        return true;
-      }
-      return false;
-    }
-
     void pushLine(int sNum, String sName, {bool paraStart = false, int rukuNum = 0, bool rukuEnd = false}) {
       if (curLineSegs.isEmpty) return;
       curPageLines.add(Mushaf16Line(
@@ -100,7 +92,10 @@ class Mushaf16LineLayoutService {
     }
 
     void finishPage(int sNum, String sName) {
-      if (curLineSegs.isNotEmpty) pushLine(sNum, sName, paraStart: consumeParaStart());
+      if (curLineSegs.isNotEmpty) {
+        pushLine(sNum, sName, paraStart: isNextTextLineParaStart);
+        isNextTextLineParaStart = false;
+      }
       if (curPageLines.isEmpty) return;
       while (curPageLines.length < 16) {
         curPageLines.add(Mushaf16Line(lineNumber: curPageLines.length + 1, type: MushafLineType.empty, surahNumber: sNum, surahName: sName, juzNumber: curJuzNum));
@@ -110,7 +105,10 @@ class Mushaf16LineLayoutService {
     }
 
     void addSpecial(MushafLineType t, int sNum, String sName) {
-      if (curLineSegs.isNotEmpty) pushLine(sNum, sName, paraStart: consumeParaStart());
+      if (curLineSegs.isNotEmpty) {
+        pushLine(sNum, sName, paraStart: isNextTextLineParaStart);
+        isNextTextLineParaStart = false;
+      }
       if (curPageLines.length >= 15) finishPage(sNum, sName);
       curPageLines.add(Mushaf16Line(lineNumber: curPageLines.length + 1, type: t, surahNumber: sNum, surahName: sName, juzNumber: curJuzNum, manzilNumber: currentManzil));
       if (curPageLines.length == 16) finishPage(sNum, sName);
@@ -150,7 +148,8 @@ class Mushaf16LineLayoutService {
           int visLen = _getVisualLength(text);
           
           if (curLineSegs.isNotEmpty && (curLineLen + visLen + 1 > lineCapacity)) {
-             pushLine(s.number, s.englishName, paraStart: consumeParaStart());
+             pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart);
+             isNextTextLineParaStart = false;
           }
           
           curLineSegs.add(MushafLineSegment(
@@ -158,29 +157,26 @@ class Mushaf16LineLayoutService {
             surahNumber: s.number, 
             ayahNumberInSurah: a.numberInSurah, 
             verseKey: verseKey,
-            translation: w.translation, // Populating Lafzi Tarjuma
+            translation: w.translation, 
           ));
           curLineAyahs.add(a.numberInSurah); 
           curLineLen += visLen + 1;
         }
 
-        // Ayah end marker and Ruku detection
         var marker = ' ﴿${toArabicDigits(a.numberInSurah)}﴾ ';
         int mVis = _getVisualLength(marker);
         
-        // Simple logic for Ruku detection: if it's the end of a ruku
-        // In some datasets 'ruku' field increment indicates a new ruku.
         bool isRukuEnd = false;
         int nextAyahIdx = list.indexOf(a) + 1;
         if (nextAyahIdx < list.length) {
           if (list[nextAyahIdx].ruku > a.ruku) isRukuEnd = true;
         } else {
-          // End of surah often end of ruku
           isRukuEnd = true;
         }
 
         if (curLineSegs.isNotEmpty && (curLineLen + mVis > lineCapacity + 4)) {
-           pushLine(s.number, s.englishName, paraStart: consumeParaStart());
+           pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart);
+           isNextTextLineParaStart = false;
         }
         
         curLineSegs.add(MushafLineSegment(text: marker, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: verseKey, isAyahEnd: true, ayahNumber: a.numberInSurah));
@@ -188,7 +184,8 @@ class Mushaf16LineLayoutService {
         curLineLen += mVis;
 
         if (isRukuEnd) {
-          pushLine(s.number, s.englishName, paraStart: consumeParaStart(), rukuNum: a.ruku, rukuEnd: true);
+          pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart, rukuNum: a.ruku, rukuEnd: true);
+          isNextTextLineParaStart = false;
         }
       }
     }
