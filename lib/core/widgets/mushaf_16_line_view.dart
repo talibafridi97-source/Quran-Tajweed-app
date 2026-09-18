@@ -27,53 +27,104 @@ class Mushaf16LineView extends StatelessWidget {
   });
 
   void _showLafziTarjuma(BuildContext context, MushafLineSegment segment) {
-    if (segment.translation == null || segment.translation!.isEmpty) return;
+    // If translation is not available, just play audio and return
+    if (segment.translation == null || segment.translation!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lafzi Tarjuma not available for this word.')),
+      );
+      return;
+    }
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, -5)),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 40, height: 4, 
-              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+              width: 45, height: 5, 
+              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
+            // Word Calligraphy
             Text(
               segment.text,
               style: TextStyle(
                 fontFamily: fontFamily,
-                fontSize: 36,
+                fontSize: 42,
                 fontWeight: FontWeight.w900,
                 color: AppConstants.primaryGreen,
               ),
               textDirection: TextDirection.rtl,
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Lafzi Tarjuma (لفظی ترجمہ)',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppConstants.gold),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              segment.translation!,
-              style: GoogleFonts.notoNastaliqUrdu(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF14171A),
-                height: 1.8,
-              ),
               textAlign: TextAlign.center,
-              textDirection: TextDirection.rtl,
+            ),
+            const SizedBox(height: 8),
+            const Divider(height: 32, thickness: 1, color: Color(0xFFF1F1F1)),
+            // Title
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.translate_rounded, size: 16, color: AppConstants.gold),
+                const SizedBox(width: 8),
+                Text(
+                  'Lafzi Tarjuma (Word Translation)',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12, 
+                    fontWeight: FontWeight.w800, 
+                    color: AppConstants.gold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Translation Text
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9F7F0),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppConstants.gold.withValues(alpha: 0.2)),
+              ),
+              child: Text(
+                segment.translation!,
+                style: GoogleFonts.notoNastaliqUrdu(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0D3B2E),
+                  height: 1.8,
+                ),
+                textAlign: TextAlign.center,
+                textDirection: TextDirection.rtl,
+              ),
             ),
             const SizedBox(height: 24),
+            // Close Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppConstants.primaryGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                child: const Text('Mashallah, Got it', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
           ],
         ),
       ),
@@ -95,7 +146,7 @@ class Mushaf16LineView extends StatelessWidget {
             : null;
 
         return Stack(
-          clipBehavior: Clip.none, // Allow Ruku marker to sit in the margin
+          clipBehavior: Clip.none, 
           children: [
             Column(
               children: List.generate(16, (index) {
@@ -120,10 +171,10 @@ class Mushaf16LineView extends StatelessWidget {
                             : const SizedBox.shrink(),
                       ),
                       
-                      // Ruku Marker (ع) on the RIGHT margin (Indo-Pak style)
+                      // Ruku Marker (ع) on the RIGHT margin
                       if (line != null && line.isRukuEnd)
                         Positioned(
-                          right: -14, // Move it outside the text area into the border margin
+                          right: -14, 
                           child: _buildRukuMarker(line.rukuNumber ?? 0),
                         ),
                     ],
@@ -183,7 +234,7 @@ class Mushaf16LineView extends StatelessWidget {
         fit: BoxFit.contain,
         alignment: Alignment.center,
         child: SizedBox(
-          width: 580, // Optimized width for zero overflow
+          width: 580, 
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween, 
             textDirection: TextDirection.rtl,
