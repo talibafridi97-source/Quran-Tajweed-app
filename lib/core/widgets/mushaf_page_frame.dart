@@ -8,6 +8,7 @@ import 'dart:math' as math;
 /// - High-fidelity Intricate Floral Borders.
 /// - Parchment paper texture effect.
 /// - Luxury Gold & Emerald color palette.
+/// - Integrated Navigation Controls.
 class MushafPageFrame extends StatelessWidget {
   final int pageNumber;
   final int totalPages;
@@ -17,6 +18,8 @@ class MushafPageFrame extends StatelessWidget {
   final bool isRead;
   final ValueChanged<bool?>? onReadChanged;
   final VoidCallback? onTap;
+  final VoidCallback? onNextPage; // New parameter
+  final VoidCallback? onPreviousPage; // New parameter
   final bool showControls;
   final List<Widget>? actions;
   final Widget child;
@@ -31,6 +34,8 @@ class MushafPageFrame extends StatelessWidget {
     this.isRead = false,
     this.onReadChanged,
     this.onTap,
+    this.onNextPage,
+    this.onPreviousPage,
     this.showControls = true,
     this.actions,
     required this.child,
@@ -51,7 +56,7 @@ class MushafPageFrame extends StatelessWidget {
     final bool isIlluminated = pageNumber >= 2 && pageNumber <= 3;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF07241C), // Dark Emerald
+      backgroundColor: const Color(0xFF07241C), 
       appBar: showControls
           ? AppBar(
               backgroundColor: const Color(0xFF0D3B2E),
@@ -81,7 +86,7 @@ class MushafPageFrame extends StatelessWidget {
                     width: calculatedWidth,
                     height: availableHeight,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFCFAF5), // Luxury Parchment
+                      color: const Color(0xFFFCFAF5), 
                       borderRadius: BorderRadius.circular(4),
                       boxShadow: [
                         BoxShadow(
@@ -115,6 +120,26 @@ class MushafPageFrame extends StatelessWidget {
                             ],
                           ),
                         ),
+
+                        // 3. Navigation Arrows (Professional Overlay)
+                        if (showControls) ...[
+                          Positioned(
+                            left: 4,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: _buildNavArrow(Icons.chevron_left_rounded, onPreviousPage),
+                            ),
+                          ),
+                          Positioned(
+                            right: 4,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: _buildNavArrow(Icons.chevron_right_rounded, onNextPage),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -124,7 +149,25 @@ class MushafPageFrame extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: showControls ? _buildLuxuryReadButton(context) : null,
+      bottomNavigationBar: showControls ? _buildLuxuryBottomBar(context) : null,
+    );
+  }
+
+  Widget _buildNavArrow(IconData icon, VoidCallback? onPressed) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: 0.15),
+          ),
+          child: Icon(icon, color: AppConstants.primaryGreen, size: 28),
+        ),
+      ),
     );
   }
 
@@ -193,38 +236,55 @@ class MushafPageFrame extends StatelessWidget {
     );
   }
 
-  Widget _buildLuxuryReadButton(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
+  Widget _buildLuxuryBottomBar(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     decoration: const BoxDecoration(
       color: Color(0xFF0D3B2E),
       border: Border(top: BorderSide(color: Color(0xFF174D3E), width: 1)),
     ),
     child: SafeArea(
-      child: InkWell(
-        onTap: () => onReadChanged?.call(!isRead),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isRead ? [const Color(0xFFD4AF37), const Color(0xFFC5A059)] : [const Color(0xFF144738), const Color(0xFF0A2E23)],
-            ),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
+      child: Row(
+        children: [
+          // 1. Navigation Arrows in Bottom Bar (Backup)
+          IconButton(
+            onPressed: onPreviousPage,
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white70, size: 20),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(isRead ? Icons.verified_rounded : Icons.radio_button_unchecked, color: isRead ? Colors.black87 : Colors.white),
-              const SizedBox(width: 14),
-              Text(
-                isRead ? 'صفحہ مکمل پڑھ لیا' : 'میں نے یہ پڑھ لیا',
-                style: GoogleFonts.notoNastaliqUrdu(color: isRead ? Colors.black87 : Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
+          const Spacer(),
+          // 2. Main Action Button
+          InkWell(
+            onTap: () => onReadChanged?.call(!isRead),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isRead ? [const Color(0xFFD4AF37), const Color(0xFFC5A059)] : [const Color(0xFF144738), const Color(0xFF0A2E23)],
+                ),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 10)],
               ),
-            ],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(isRead ? Icons.verified_rounded : Icons.radio_button_unchecked, color: isRead ? Colors.black87 : Colors.white, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    isRead ? 'پڑھ لیا ہے' : 'میں نے یہ پڑھ لیا',
+                    style: GoogleFonts.notoNastaliqUrdu(color: isRead ? Colors.black87 : Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
+          const Spacer(),
+          // 3. Navigation Arrows in Bottom Bar (Backup)
+          IconButton(
+            onPressed: onNextPage,
+            icon: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white70, size: 20),
+          ),
+        ],
       ),
     ),
   );
@@ -269,7 +329,7 @@ class LuxuryIndoPakBorderPainter extends CustomPainter {
   }
 
   void _drawCornerOrnaments(Canvas canvas, Size size) {
-    final p = Paint()..color = const Color(0xFFD4AF37)..style = PaintingStyle.fill;
+    final p = Paint()..color = const Color(0xFFD4AF37).withValues(alpha: 0.8)..style = PaintingStyle.fill;
     double s = 15;
     
     // Draw classic floral corners

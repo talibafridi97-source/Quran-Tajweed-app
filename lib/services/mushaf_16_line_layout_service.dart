@@ -1,7 +1,7 @@
+import 'package:flutter/material.dart';
 import '../models/ayah.dart';
 import '../models/surah.dart';
 import '../models/mushaf_16_line_model.dart';
-import '../models/quran_word.dart';
 
 /// Service responsible for building deterministic Tajweed Quran Mushaf (549 Pages).
 /// Strictly reproduces the Taj Company Limited pagination standard.
@@ -20,7 +20,7 @@ class Mushaf16LineLayoutService {
   bool _isBuilt = false;
 
   bool get isReady => _isBuilt && _allPagesCache != null && _allPagesCache!.isNotEmpty;
-  int get totalPages => 549; 
+  int get totalPages => 549;
 
   static String toArabicDigits(int number) {
     const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
@@ -52,8 +52,10 @@ class Mushaf16LineLayoutService {
   };
 
   List<Mushaf16LinePage> buildAllPages({required List<Surah> surahs, required List<Ayah> allAyahs}) {
+    // If cache exists and no new ayahs provided, return cache
     if (_isBuilt && _allPagesCache != null && allAyahs.isEmpty) return _allPagesCache!;
-    if (allAyahs.isEmpty) return _allPagesCache ?? [];
+    // If no ayahs available anywhere, return empty
+    if (allAyahs.isEmpty) return [];
 
     _pageCache.clear(); _surahStartPageMap.clear(); _juzStartPageMap.clear(); _ayahToPageMap.clear();
 
@@ -71,7 +73,7 @@ class Mushaf16LineLayoutService {
     List<MushafLineSegment> curLineSegs = [];
     Set<int> curLineAyahs = {};
     int curLineLen = 0;
-    const int lineCapacity = 20; // DECREASED TO 20 FOR ULTIMATE OVERFLOW PROTECTION
+    const int lineCapacity = 24; 
     bool isNextTextLineParaStart = true; 
     int currentManzil = 1;
 
@@ -92,8 +94,10 @@ class Mushaf16LineLayoutService {
     }
 
     void finishPage(int sNum, String sName) {
-      if (curLineSegs.isNotEmpty) pushLine(sNum, sName, paraStart: isNextTextLineParaStart);
-      isNextTextLineParaStart = false;
+      if (curLineSegs.isNotEmpty) {
+        pushLine(sNum, sName, paraStart: isNextTextLineParaStart);
+        isNextTextLineParaStart = false;
+      }
       if (curPageLines.isEmpty) return;
       while (curPageLines.length < 16) {
         curPageLines.add(Mushaf16Line(lineNumber: curPageLines.length + 1, type: MushafLineType.empty, surahNumber: sNum, surahName: sName, juzNumber: curJuzNum));
@@ -103,8 +107,10 @@ class Mushaf16LineLayoutService {
     }
 
     void addSpecial(MushafLineType t, int sNum, String sName) {
-      if (curLineSegs.isNotEmpty) pushLine(sNum, sName, paraStart: isNextTextLineParaStart);
-      isNextTextLineParaStart = false;
+      if (curLineSegs.isNotEmpty) {
+        pushLine(sNum, sName, paraStart: isNextTextLineParaStart);
+        isNextTextLineParaStart = false;
+      }
       if (curPageLines.length >= 15) finishPage(sNum, sName);
       curPageLines.add(Mushaf16Line(lineNumber: curPageLines.length + 1, type: t, surahNumber: sNum, surahName: sName, juzNumber: curJuzNum, manzilNumber: currentManzil));
       if (curPageLines.length == 16) finishPage(sNum, sName);
@@ -167,11 +173,11 @@ class Mushaf16LineLayoutService {
         var marker = ' ﴿${toArabicDigits(a.numberInSurah)}﴾ ';
         int mVis = _getVisualLength(marker);
         
-        bool rukuEnd = false;
-        int nextIdx = list.indexOf(a) + 1;
-        if (nextIdx < list.length) {
-          if (list[nextIdx].ruku > a.ruku) rukuEnd = true;
-        } else { rukuEnd = true; }
+        bool isRukuEnd = false;
+        int nextAyahIdx = list.indexOf(a) + 1;
+        if (nextAyahIdx < list.length) {
+          if (list[nextAyahIdx].ruku > a.ruku) isRukuEnd = true;
+        } else { isRukuEnd = true; }
 
         if (curLineSegs.isNotEmpty && (curLineLen + mVis > lineCapacity + 4)) {
            pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart);
@@ -182,7 +188,7 @@ class Mushaf16LineLayoutService {
         curLineAyahs.add(a.numberInSurah);
         curLineLen += mVis;
 
-        if (rukuEnd) {
+        if (isRukuEnd) {
           pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart, rukuNum: a.ruku, rukuEnd: true);
           isNextTextLineParaStart = false;
         }
