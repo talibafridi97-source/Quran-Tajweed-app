@@ -46,11 +46,20 @@ dependencies:
   cupertino_icons: ^1.0.8
   geolocator: ^12.0.0
   flutter_compass: ^0.8.0
+  fl_chart: ^0.69.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+  sqflite_common_ffi: ^2.3.3
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_logo.png"
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true

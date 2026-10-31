@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_routes.dart';
@@ -18,6 +19,9 @@ import 'services/audio_manager_service.dart';
 import 'providers/translation_provider.dart';
 import 'providers/search_provider.dart';
 import 'providers/notes_provider.dart';
+import 'providers/daytrack_provider.dart';
+import 'theme/daytrack_theme.dart';
+import 'screens/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,10 +37,14 @@ void main() async {
   final hadithApiService = HadithApiService(storageService: storageService);
   final hadithRepository = HadithRepository(hadithApiService);
 
+  final dayTrackProvider = DayTrackProvider(databaseService);
+  await dayTrackProvider.initialize();
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider.value(value: dayTrackProvider),
         ChangeNotifierProvider(create: (_) => QuranProvider(quranRepository)),
         ChangeNotifierProvider(create: (_) => HadithProvider(hadithRepository)),
         ChangeNotifierProvider(create: (_) => BookmarkProvider(storageService, databaseService: databaseService)),
@@ -47,31 +55,37 @@ void main() async {
         ChangeNotifierProvider(create: (_) => NotesProvider(databaseService: databaseService)),
         ChangeNotifierProvider.value(value: AudioManagerService.instance),
       ],
-      child: const TajweedQuranApp(),
+      child: const DayTrack24App(),
     ),
   );
 }
 
-class TajweedQuranApp extends StatelessWidget {
-  const TajweedQuranApp({super.key});
+class MyCustomScrollBehavior extends MaterialScrollBehavior {
+  const MyCustomScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => PointerDeviceKind.values.toSet();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+}
+
+class DayTrack24App extends StatelessWidget {
+  const DayTrack24App({super.key});
 
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     
     return MaterialApp(
-      title: 'Tajweed Quran & Hadith',
+      title: 'DayTrack 24',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.getTheme(
-        palette: settings.themePalette,
-        brightness: Brightness.light,
-      ),
-      darkTheme: AppTheme.getTheme(
-        palette: settings.themePalette,
-        brightness: Brightness.dark,
-      ),
+      scrollBehavior: const MyCustomScrollBehavior(),
+      theme: DayTrackTheme.lightTheme(),
+      darkTheme: DayTrackTheme.darkTheme(),
       themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      initialRoute: AppRoutes.splash,
+      home: const DashboardScreen(),
       routes: AppRoutes.routes,
     );
   }

@@ -18,7 +18,7 @@ class Mushaf16LineView extends StatelessWidget {
     super.key,
     required this.page,
     this.fontSize = 32.0, 
-    this.fontFamily = AppConstants.uthmaniFont,
+    this.fontFamily = AppConstants.indoPakFont,
     this.showTajweed = true,
     this.onAyahTap,
   });
@@ -192,7 +192,7 @@ class Mushaf16LineView extends StatelessWidget {
   }
 
   Widget _buildLineSlot(BuildContext context, Mushaf16Line line, String? activeKey, bool isSpecial) {
-    if (line.isSurahHeader) return _buildLuxuryHeader(context, line.surahName, line.surahNumber, isLarge: isSpecial);
+    if (line.isSurahHeader) return _buildLuxuryHeader(context, line, isLarge: isSpecial);
     if (line.isBismillah) return _buildLuxuryBismillah(context, isActive: activeKey == '${line.surahNumber}:0');
     if (line.isEmpty) return const SizedBox.shrink();
 
@@ -222,18 +222,22 @@ class Mushaf16LineView extends StatelessWidget {
               Widget w;
               if (seg.isAyahEnd) {
                 w = Container(
-                  padding: const EdgeInsets.all(2),
+                  width: fontSize * 0.85,
+                  height: fontSize * 0.85,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppConstants.gold, width: 1.5),
+                    color: const Color(0xFFFFF8E7),
+                    border: Border.all(color: const Color(0xFF1E6B5C), width: 1.4),
+                    boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 1)],
                   ),
                   child: Text(
                     seg.text.replaceAll('﴾', '').replaceAll('﴿', '').trim(), 
                     style: TextStyle(
-                      color: AppConstants.gold, 
-                      fontSize: fontSize * 0.5, 
+                      color: const Color(0xFF0D3B2E), 
+                      fontSize: fontSize * 0.38, 
                       fontWeight: FontWeight.w900, 
-                      backgroundColor: active ? const Color(0x44D4AF37) : null
+                      backgroundColor: active ? const Color(0x44D4AF37) : null,
                     )
                   ),
                 );
@@ -257,28 +261,42 @@ class Mushaf16LineView extends StatelessWidget {
     );
   }
 
-  Widget _buildLuxuryHeader(BuildContext context, String name, int sNum, {bool isLarge = false}) {
+  Widget _buildLuxuryHeader(BuildContext context, Mushaf16Line line, {bool isLarge = false}) {
+    final ayahs = line.ayahCount != null ? TajweedParser.toArabicDigits(line.ayahCount!) : '—';
+    final rukus = line.rukuCount != null ? TajweedParser.toArabicDigits(line.rukuCount!) : '—';
+    final revelation = (line.revelationType ?? '').toLowerCase().startsWith('med') ? 'مَدَنِيَّةٌ' : 'مَكِّيَّةٌ';
+
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 10),
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Colors.white, Color(0xFFF7F2E6)]),
-        borderRadius: BorderRadius.circular(8), 
-        border: Border.all(color: const Color(0xFF1E6B5C), width: isLarge ? 2.5 : 1.2), 
-        boxShadow: [BoxShadow(color: const Color(0xFFD4AF37).withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))]
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFFDF6), Color(0xFFF3E6C5), Color(0xFFFFFDF6)],
+        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF1E6B5C), width: isLarge ? 2.4 : 1.4),
+        boxShadow: [BoxShadow(color: const Color(0xFFD4AF37).withValues(alpha: 0.18), blurRadius: 4, offset: const Offset(0, 2))],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _metaBox('آياتُها', sNum == 1 ? '۷' : (sNum == 2 ? '۲۸۶' : '---')),
-            Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text('سُورَةُ', style: TextStyle(fontFamily: fontFamily, fontSize: 10, color: const Color(0xFF1E6B5C), fontWeight: FontWeight.bold)),
-              Text(name, style: TextStyle(fontFamily: fontFamily, fontSize: 24, fontWeight: FontWeight.w900, color: const Color(0xFF0D3B2E))),
-            ])),
-            _metaBox('رُكوعاتها', sNum == 1 ? '۱' : (sNum == 2 ? '۴۰' : '---')),
-          ]
+            _metaBox('آيَاتُهَا', ayahs),
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(line.surahName, style: TextStyle(fontFamily: fontFamily, fontSize: 22, fontWeight: FontWeight.w900, color: const Color(0xFF0D3B2E))),
+                    Text(revelation, style: TextStyle(fontFamily: fontFamily, fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1E6B5C))),
+                  ],
+                ),
+              ),
+            ),
+            _metaBox('رُكُوعَاتُهَا', rukus),
+          ],
         ),
       ),
     );
@@ -294,14 +312,37 @@ class Mushaf16LineView extends StatelessWidget {
   );
 
   Widget _buildLuxuryBismillah(BuildContext context, {bool isActive = false}) {
+    const tagged = 'بِسْمِ [h:1[ٱ]للَّهِ [h:2[ٱ][l[ل]رَّحْمَ[n[ـٰ]نِ [h:3[ٱ][l[ل]رَّح[p[ِي]مِ';
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 24), 
+      margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0x22D4AF37) : Colors.white, 
-        border: const Border.symmetric(horizontal: BorderSide(color: Color(0xFFD4AF37), width: 1.0))
-      ), 
-      child: Center(child: FittedBox(fit: BoxFit.scaleDown, child: Text('بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيمِ', style: TextStyle(fontFamily: AppConstants.uthmaniFont, fontSize: 24, fontWeight: FontWeight.w900, color: const Color(0xFF0D3B2E))))),
+        gradient: LinearGradient(
+          colors: isActive
+              ? const [Color(0xFFFFE082), Color(0xFFFFF8E1), Color(0xFFFFE082)]
+              : const [Color(0xFFF8EFC8), Color(0xFFFFF8E7), Color(0xFFF8EFC8)],
+        ),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFC5A059), width: 1.0),
+      ),
+      child: Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text.rich(
+            TextSpan(
+              children: TajweedParser.parse(
+                tagged,
+                fontSize: 22,
+                fontFamily: fontFamily,
+                defaultColor: const Color(0xFF0D3B2E),
+                showTajweed: showTajweed,
+              ),
+            ),
+            textDirection: TextDirection.rtl,
+          ),
+        ),
+      ),
     );
   }
 }

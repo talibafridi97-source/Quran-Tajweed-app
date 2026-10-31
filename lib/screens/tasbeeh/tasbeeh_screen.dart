@@ -68,12 +68,19 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
         ],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-          child: Column(
-            children: [
-              // Dhikr Selector Dropdown Card
-              _buildDhikrSelector(context, tasbeeh),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        // Dhikr Selector Dropdown Card
+                        _buildDhikrSelector(context, tasbeeh),
 
               const SizedBox(height: 16),
 
@@ -81,13 +88,21 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Target: ${tasbeeh.targetGoal > 0 ? tasbeeh.targetGoal : "Continuous"}',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: scheme.onSurface.withValues(alpha: 0.7)),
+                  Flexible(
+                    child: Text(
+                      'Target: ${tasbeeh.targetGoal > 0 ? tasbeeh.targetGoal : "Continuous"}',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: scheme.onSurface.withValues(alpha: 0.7)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  Text(
-                    'Completed: ${tasbeeh.completedCycles} cycles (${tasbeeh.counter} / ${tasbeeh.targetGoal})',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: scheme.primary),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'Completed: ${tasbeeh.completedCycles} cycles (${tasbeeh.counter} / ${tasbeeh.targetGoal})',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: scheme.primary),
+                      textAlign: TextAlign.end,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -271,12 +286,17 @@ class _TasbeehScreenState extends State<TasbeehScreen> with SingleTickerProvider
                 ),
               ),
               const SizedBox(height: 8),
-            ],
-          ),
-        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildDhikrSelector(BuildContext context, TasbeehProvider tasbeeh) {
     final scheme = Theme.of(context).colorScheme;

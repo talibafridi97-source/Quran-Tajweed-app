@@ -21,155 +21,148 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        top: false,
-        bottom: false,
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            _buildCompactHeader(context, colorScheme),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 12, 18, 110),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: AppBar(
+          elevation: 0,
+          scrolledUnderElevation: 0.5,
+          backgroundColor: theme.scaffoldBackgroundColor.withValues(alpha: 0.95),
+          toolbarHeight: 60,
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: colorScheme.primary.withValues(alpha: 0.25)),
+                ),
+                child: Icon(Icons.auto_stories_rounded, size: 19, color: colorScheme.primary),
+              ),
+              const SizedBox(width: 9),
+              Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 1. Last Read Hero Card (Quran First)
-                    _buildLastReadHeroCard(context, quranProvider, colorScheme, totalPages),
-
-                    const SizedBox(height: 24),
-
-                    // 2. Quran Navigation ("Explore Quran")
-                    _buildSectionHeader(
-                      context,
-                      title: 'Explore Quran',
-                      arabicTitle: 'تصفح القرآن',
-                      icon: Icons.menu_book_rounded,
+                    Text(
+                      'Tajweed Quran',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: colorScheme.onSurface,
+                        letterSpacing: -0.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 12),
-                    _buildQuranNavigationGrid(context, colorScheme, totalPages),
-
-                    const SizedBox(height: 24),
-
-                    // 3. Daily Quran Progress
-                    _buildProgressSection(context, quranProvider, khatamProvider, colorScheme, totalPages),
-
-                    const SizedBox(height: 24),
-
-                    // 4. Islamic Utility Tools
-                    _buildSectionHeader(
-                      context,
-                      title: 'Islamic Utilities',
-                      arabicTitle: 'الأدوات الإسلامية',
-                      icon: Icons.grid_view_rounded,
+                    Text(
+                      'القرآن الكريم والتجويد',
+                      style: TextStyle(
+                        fontFamily: AppConstants.uthmaniFont,
+                        fontSize: 11.5,
+                        color: colorScheme.primary,
+                        height: 1.1,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 12),
-                    _buildIslamicUtilitiesGrid(context, colorScheme),
-
-                    const SizedBox(height: 24),
-
-                    // 5. Tajweed & Learning Quick Access
-                    _buildSectionHeader(
-                      context,
-                      title: 'Learn & Explore',
-                      arabicTitle: 'التعليم والتجويد',
-                      icon: Icons.school_rounded,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildLearningGrid(context, colorScheme),
-
-                    const SizedBox(height: 24),
-
-                    // 6. Daily Inspiration Card
-                    _buildDailyInspirationCard(context, colorScheme),
                   ],
                 ),
               ),
+            ],
+          ),
+          actions: [
+            _buildHeaderActionButton(
+              context,
+              icon: Icons.search_rounded,
+              tooltip: 'Search Quran',
+              colorScheme: colorScheme,
+              onTap: () => Navigator.pushNamed(context, AppRoutes.search),
             ),
+            const SizedBox(width: 4),
+            _buildHeaderActionButton(
+              context,
+              icon: Icons.bookmark_rounded,
+              tooltip: 'Saved & Notes',
+              colorScheme: colorScheme,
+              onTap: () => Navigator.pushNamed(context, AppRoutes.bookmarksNotes),
+            ),
+            const SizedBox(width: 4),
+            _buildHeaderActionButton(
+              context,
+              icon: Icons.settings_rounded,
+              tooltip: 'Settings',
+              colorScheme: colorScheme,
+              onTap: () => Navigator.pushNamed(context, AppRoutes.settings),
+            ),
+            const SizedBox(width: 12),
           ],
         ),
       ),
-    );
-  }
-
-  // --- 1. Compact Professional Header ---
-  Widget _buildCompactHeader(BuildContext context, ColorScheme colorScheme) {
-    return SliverAppBar(
-      pinned: true,
-      elevation: 0,
-      scrolledUnderElevation: 0.5,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.95),
-      toolbarHeight: 60,
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: colorScheme.primary.withValues(alpha: 0.25)),
-            ),
-            child: Icon(Icons.auto_stories_rounded, size: 19, color: colorScheme.primary),
-          ),
-          const SizedBox(width: 9),
-          Flexible(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 110),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Tajweed Quran',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: colorScheme.onSurface,
-                    letterSpacing: -0.2,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                // 1. Last Read Hero Card (Quran First)
+                _buildLastReadHeroCard(context, quranProvider, colorScheme, totalPages),
+
+                const SizedBox(height: 24),
+
+                // 2. Quran Navigation ("Explore Quran")
+                _buildSectionHeader(
+                  context,
+                  title: 'Explore Quran',
+                  arabicTitle: 'تصفح القرآن',
+                  icon: Icons.menu_book_rounded,
                 ),
-                Text(
-                  'القرآن الكريم والتجويد',
-                  style: TextStyle(
-                    fontFamily: AppConstants.uthmaniFont,
-                    fontSize: 11.5,
-                    color: colorScheme.primary,
-                    height: 1.1,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 12),
+                _buildQuranNavigationGrid(context, colorScheme, totalPages),
+
+                const SizedBox(height: 24),
+
+                // 3. Daily Quran Progress
+                _buildProgressSection(context, quranProvider, khatamProvider, colorScheme, totalPages),
+
+                const SizedBox(height: 24),
+
+                // 4. Islamic Utility Tools
+                _buildSectionHeader(
+                  context,
+                  title: 'Islamic Utilities',
+                  arabicTitle: 'الأدوات الإسلامية',
+                  icon: Icons.grid_view_rounded,
                 ),
+                const SizedBox(height: 12),
+                _buildIslamicUtilitiesGrid(context, colorScheme),
+
+                const SizedBox(height: 24),
+
+                // 5. Tajweed & Learning Quick Access
+                _buildSectionHeader(
+                  context,
+                  title: 'Learn & Explore',
+                  arabicTitle: 'التعليم والتجويد',
+                  icon: Icons.school_rounded,
+                ),
+                const SizedBox(height: 12),
+                _buildLearningGrid(context, colorScheme),
+
+                const SizedBox(height: 24),
+
+                // 6. Daily Inspiration Card
+                _buildDailyInspirationCard(context, colorScheme),
               ],
             ),
           ),
-        ],
+        ),
       ),
-      actions: [
-        _buildHeaderActionButton(
-          context,
-          icon: Icons.search_rounded,
-          tooltip: 'Search Quran',
-          colorScheme: colorScheme,
-          onTap: () => Navigator.pushNamed(context, AppRoutes.search),
-        ),
-        _buildHeaderActionButton(
-          context,
-          icon: Icons.bookmarks_rounded,
-          tooltip: 'Saved & Notes',
-          colorScheme: colorScheme,
-          onTap: () => Navigator.pushNamed(context, AppRoutes.bookmarksNotes),
-        ),
-        _buildHeaderActionButton(
-          context,
-          icon: Icons.settings_outlined,
-          tooltip: 'Settings',
-          colorScheme: colorScheme,
-          onTap: () => Navigator.pushNamed(context, AppRoutes.settings),
-        ),
-        const SizedBox(width: 8),
-      ],
     );
   }
 

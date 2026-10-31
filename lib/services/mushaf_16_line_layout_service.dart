@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import '../models/ayah.dart';
 import '../models/surah.dart';
 import '../models/mushaf_16_line_model.dart';
+import '../core/utils/tajweed_parser.dart';
 
 /// Service responsible for building deterministic Tajweed Quran Mushaf (549 Pages).
 /// Strictly reproduces the Taj Company Limited pagination standard.
@@ -31,14 +31,15 @@ class Mushaf16LineLayoutService {
   }
 
   static int _getVisualLength(String text) {
+    final clean = TajweedParser.stripMarkup(text).replaceAll('\u00A0', ' ');
     int count = 0;
-    for (int i = 0; i < text.length; i++) {
-      int cu = text.codeUnitAt(i);
+    for (int i = 0; i < clean.length; i++) {
+      int cu = clean.codeUnitAt(i);
       if (!((cu >= 0x0610 && cu <= 0x061A) || (cu >= 0x064B && cu <= 0x065F) || cu == 0x0670 || (cu >= 0x06D6 && cu <= 0x06DC) || (cu >= 0x06DF && cu <= 0x06E4) || (cu >= 0x06E7 && cu <= 0x06E8) || (cu >= 0x06EA && cu <= 0x06ED))) {
         count++;
       }
     }
-    return count > 0 ? count : text.length;
+    return count > 0 ? count : clean.length;
   }
 
   // Exact Indo-Pak Juz Start Points (Surah:Ayah)
@@ -106,13 +107,23 @@ class Mushaf16LineLayoutService {
       curPageLines.clear();
     }
 
-    void addSpecial(MushafLineType t, int sNum, String sName) {
+    void addSpecial(MushafLineType t, int sNum, String sName, {String? revelationType, int? ayahCount, int? rukuCount}) {
       if (curLineSegs.isNotEmpty) {
         pushLine(sNum, sName, paraStart: isNextTextLineParaStart);
         isNextTextLineParaStart = false;
       }
       if (curPageLines.length >= 15) finishPage(sNum, sName);
-      curPageLines.add(Mushaf16Line(lineNumber: curPageLines.length + 1, type: t, surahNumber: sNum, surahName: sName, juzNumber: curJuzNum, manzilNumber: currentManzil));
+      curPageLines.add(Mushaf16Line(
+        lineNumber: curPageLines.length + 1,
+        type: t,
+        surahNumber: sNum,
+        surahName: sName,
+        juzNumber: curJuzNum,
+        manzilNumber: currentManzil,
+        revelationType: revelationType,
+        ayahCount: ayahCount,
+        rukuCount: rukuCount,
+      ));
       if (curPageLines.length == 16) finishPage(sNum, sName);
     }
 
@@ -130,8 +141,10 @@ class Mushaf16LineLayoutService {
         int? boundaryJuz;
         juzStartMap.forEach((j, key) { if (key == verseKey) boundaryJuz = j; });
 
+        final displayName = s.name.isNotEmpty ? s.name : s.englishName;
+
         if (boundaryJuz != null && boundaryJuz! > 1) {
-          finishPage(s.number, s.englishName);
+          finishPage(s.number, displayName);
           curJuzNum = boundaryJuz!;
           _juzStartPageMap[curJuzNum] = curPageNum;
           isNextTextLineParaStart = true;
@@ -139,8 +152,15 @@ class Mushaf16LineLayoutService {
 
         if (a.numberInSurah == 1) {
           _surahStartPageMap[s.number] = curPageNum;
-          addSpecial(MushafLineType.surahHeader, s.number, s.englishName);
-          if (s.number != 9) addSpecial(MushafLineType.bismillah, s.number, s.englishName);
+          addSpecial(
+            MushafLineType.surahHeader,
+            s.number,
+            displayName,
+            revelationType: s.revelationType,
+            ayahCount: s.numberOfAyahs,
+            rukuCount: list.isNotEmpty ? list.last.ruku : 1,
+          );
+          if (s.number != 9) addSpecial(MushafLineType.bismillah, s.number, displayName);
         }
 
         // Map words with translation (Lafzi Tarjuma)
@@ -150,19 +170,19 @@ class Mushaf16LineLayoutService {
             if (text.isEmpty) continue;
             int visLen = _getVisualLength(text);
             if (curLineSegs.isNotEmpty && (curLineLen + visLen + 1 > lineCapacity)) {
-               pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart);
+               pushLine(s.number, displayName, paraStart: isNextTextLineParaStart);
                isNextTextLineParaStart = false;
             }
             curLineSegs.add(MushafLineSegment(text: text, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: verseKey, translation: w.translation));
             curLineAyahs.add(a.numberInSurah); curLineLen += visLen + 1;
           }
         } else {
-          var words = a.text.replaceAll('\uFEFF', '').trim().split(RegExp(r'\s+'));
+          var words = TajweedParser.protectTaggedSpaces(a.text.replaceAll('\uFEFF', '').trim()).split(RegExp(r'\s+'));
           for (var w in words) {
             if (w.isEmpty) continue;
             int visLen = _getVisualLength(w);
             if (curLineSegs.isNotEmpty && (curLineLen + visLen + 1 > lineCapacity)) {
-               pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart);
+               pushLine(s.number, displayName, paraStart: isNextTextLineParaStart);
                isNextTextLineParaStart = false;
             }
             curLineSegs.add(MushafLineSegment(text: w, surahNumber: s.number, ayahNumberInSurah: a.numberInSurah, verseKey: verseKey));
@@ -180,7 +200,7 @@ class Mushaf16LineLayoutService {
         } else { isRukuEnd = true; }
 
         if (curLineSegs.isNotEmpty && (curLineLen + mVis > lineCapacity + 4)) {
-           pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart);
+           pushLine(s.number, displayName, paraStart: isNextTextLineParaStart);
            isNextTextLineParaStart = false;
         }
         
@@ -189,7 +209,7 @@ class Mushaf16LineLayoutService {
         curLineLen += mVis;
 
         if (isRukuEnd) {
-          pushLine(s.number, s.englishName, paraStart: isNextTextLineParaStart, rukuNum: a.ruku, rukuEnd: true);
+          pushLine(s.number, displayName, paraStart: isNextTextLineParaStart, rukuNum: a.ruku, rukuEnd: true);
           isNextTextLineParaStart = false;
         }
       }
@@ -201,8 +221,12 @@ class Mushaf16LineLayoutService {
       _pageCache[p.pageNumber] = p; 
       for (var l in p.lines) { 
         _surahStartPageMap.putIfAbsent(l.surahNumber, () => p.pageNumber);
-        if (l.juzNumber != null) _juzStartPageMap.putIfAbsent(l.juzNumber!, () => p.pageNumber);
-        for (var an in l.ayahNumbers) _ayahToPageMap['${l.surahNumber}:$an'] = p.pageNumber; 
+        if (l.juzNumber != null) {
+          _juzStartPageMap.putIfAbsent(l.juzNumber!, () => p.pageNumber);
+        }
+        for (var an in l.ayahNumbers) {
+          _ayahToPageMap['${l.surahNumber}:$an'] = p.pageNumber;
+        } 
       } 
     }
     _isBuilt = true; return pages;

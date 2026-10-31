@@ -9,6 +9,7 @@ import '../../core/widgets/mushaf_16_line_view.dart';
 import '../../core/widgets/loading_error_widget.dart';
 import '../../services/mushaf_16_line_layout_service.dart';
 import '../../services/audio_manager_service.dart';
+import '../../core/constants/constants.dart';
 
 class JuzDetailScreen extends StatefulWidget {
   final int juzNumber;
@@ -142,7 +143,7 @@ class _JuzDetailScreenState extends State<JuzDetailScreen> {
               child: Mushaf16LineView(
                 page: page,
                 fontSize: settings.arabicFontSize,
-                fontFamily: settings.arabicFontFamily,
+                fontFamily: AppConstants.indoPakFont,
                 showTajweed: settings.showTajweed,
               ),
             );

@@ -27,9 +27,19 @@ class QuranRepository {
     return apiSurahs;
   }
 
+  bool _isColorCoded(List<Ayah> ayahs) {
+    if (ayahs.isEmpty) return false;
+    int tagged = 0;
+    final sample = ayahs.length > 40 ? ayahs.sublist(0, 40) : ayahs;
+    for (final a in sample) {
+      if (a.text.contains('[')) tagged++;
+    }
+    return tagged >= 2;
+  }
+
   Future<List<Ayah>> getSurahTajweed(int chapterNumber) async {
     final localAyahs = await _databaseService.getAyahsForSurah(chapterNumber);
-    if (localAyahs.isNotEmpty) return localAyahs;
+    if (localAyahs.isNotEmpty && _isColorCoded(localAyahs)) return localAyahs;
 
     final apiAyahs = await _apiService.getSurahTajweed(chapterNumber);
     await _databaseService.saveAyahs(apiAyahs);
@@ -57,7 +67,7 @@ class QuranRepository {
 
   Future<List<Ayah>> ensureAllAyahsLoaded() async {
     final localAyahs = await _databaseService.getAllAyahs();
-    if (localAyahs.length >= 6236) {
+    if (localAyahs.length >= 6236 && _isColorCoded(localAyahs)) {
       return localAyahs;
     }
 

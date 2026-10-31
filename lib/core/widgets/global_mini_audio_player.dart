@@ -28,7 +28,10 @@ class _GlobalMiniAudioPlayerState extends State<GlobalMiniAudioPlayer>
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    );
+    if (_audioManager.isPlaying) {
+      _pulseController.repeat(reverse: true);
+    }
   }
 
   @override
@@ -39,6 +42,15 @@ class _GlobalMiniAudioPlayerState extends State<GlobalMiniAudioPlayer>
   }
 
   void _onStateChanged() {
+    if (_audioManager.isPlaying) {
+      if (!_pulseController.isAnimating) {
+        _pulseController.repeat(reverse: true);
+      }
+    } else {
+      if (_pulseController.isAnimating) {
+        _pulseController.stop();
+      }
+    }
     if (mounted) setState(() {});
   }
 

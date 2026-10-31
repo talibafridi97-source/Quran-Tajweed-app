@@ -37,7 +37,8 @@ class KhatamTrackerScreen extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context, KhatamProvider provider) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -51,9 +51,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     return Scaffold(
       body: Stack(
         children: [
-          IndexedStack(
-            index: _currentIndex,
-            children: _tabs,
+          Positioned.fill(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: _tabs,
+            ),
           ),
           const Positioned(
             left: 0,

@@ -85,69 +85,74 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
-            FadeTransition(
-              opacity: _fadeIn,
-              child: ScaleTransition(
-                scale: _scaleIn,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
-                          width: 1.5,
+            Center(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: FadeTransition(
+                  opacity: _fadeIn,
+                  child: ScaleTransition(
+                    scale: _scaleIn,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.menu_book_rounded,
+                            size: 84,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      child: const Icon(
-                        Icons.menu_book_rounded,
-                        size: 84,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    const Text(
-                      AppConstants.appName,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 34,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      height: 2,
-                      width: 56,
-                      decoration: BoxDecoration(
-                        color: AppConstants.gold,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'Read, Learn, and Reflect',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                        letterSpacing: 0.4,
-                      ),
-                    ),
-                    const SizedBox(height: 56),
-                    SizedBox(
-                      width: 26,
-                      height: 26,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white.withValues(alpha: 0.85),
+                        const SizedBox(height: 32),
+                        const Text(
+                          AppConstants.appName,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 34,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.1,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        Container(
+                          height: 2,
+                          width: 56,
+                          decoration: BoxDecoration(
+                            color: AppConstants.gold,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Read, Learn, and Reflect',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                        const SizedBox(height: 56),
+                        SizedBox(
+                          width: 26,
+                          height: 26,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

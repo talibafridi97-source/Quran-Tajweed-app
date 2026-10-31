@@ -8,40 +8,44 @@ class _SpanToken {
 }
 
 class TajweedParser {
-  // Vibrant, high-contrast colors calibrated for Pakistani Tajweed Mushafs (Taj Company Style)
+  /// Pakistani rangeen mushaf colors (Taj Company / 16-line style).
   static const Map<String, Color> _tajweedColors = {
-    // Silent & Wasl (Muted Dark Gray)
-    'h': Color(0xFF757575), // Hamzatul Wasl
-    's': Color(0xFF757575), // Silent letter
-    'l': Color(0xFF757575), // Lam Shamsiyyah
-    
-    // Ghunnah (Vibrant Neon Orange/Amber)
-    'n': Color(0xFFFF9100), // Ghunnah
-    'g': Color(0xFFFF9100), 
+    // Silent, Hamzatul Wasl, Lam Shamsiyyah
+    'h': Color(0xFF9E9E9E),
+    's': Color(0xFF9E9E9E),
+    'l': Color(0xFF9E9E9E),
 
-    // Idgham (Vibrant Forest Green)
-    'm': Color(0xFF00C853), // Idgham
-    'u': Color(0xFF00C853), 
-    'a': Color(0xFF00C853), 
-    'r': Color(0xFF00C853), 
+    // Ghunnah — orange
+    'n': Color(0xFFFF8F00),
+    'g': Color(0xFFFF6D00),
 
-    // Iqlab (Vibrant Sky Blue)
-    'b': Color(0xFF00B0FF), 
-    'd': Color(0xFF00B0FF), 
+    // Madd — red
+    'm': Color(0xFFE53935),
+    'p': Color(0xFFD32F2F),
+    'o': Color(0xFFB71C1C),
+    'w': Color(0xFFC62828),
+    'j': Color(0xFFEF5350),
 
-    // Ikhfa (Vibrant Royal Magenta)
-    'i': Color(0xFFFF00FF), 
-    'p': Color(0xFFFF00FF), 
-    'c': Color(0xFFFF00FF), 
+    // Qalqalah — blue
+    'q': Color(0xFF1565C0),
 
-    // Qalqalah (Electric Blue)
-    'q': Color(0xFF2979FF), 
+    // Ikhfa — pink / magenta
+    'f': Color(0xFFD81B60),
+    'i': Color(0xFFC2185B),
+    'c': Color(0xFFAD1457),
 
-    // Madds (Pure Vibrant Red - Surkh)
-    'w': Color(0xFFFF1744), // Madd 6 (Long Surkh)
-    'o': Color(0xFFFF1744), // Madd 4-5
-    'j': Color(0xFFFF5252), // Madd 2
+    // Idgham — green
+    'u': Color(0xFF2E7D32),
+    'a': Color(0xFF43A047),
+    'r': Color(0xFF1B5E20),
+    'e': Color(0xFF388E3C),
+
+    // Iqlab — sky blue
+    'b': Color(0xFF00B0FF),
+    'd': Color(0xFF0288D1),
   };
+
+  static final RegExp tajweedTag = RegExp(r'\[([a-zA-Z]+):?\d*\[([^\]]*)\]+');
 
   static String toArabicDigits(int number) {
     const arabicDigits = ['۰', '۱', '۲', '۳', '۴', '٥', '٦', '۷', '۸', '۹'];
@@ -49,6 +53,19 @@ class TajweedParser {
       final idx = int.tryParse(digit);
       return idx != null ? arabicDigits[idx] : digit;
     }).join();
+  }
+
+  static bool hasMarkup(String text) => text.contains('[');
+
+  static String stripMarkup(String text) {
+    if (!text.contains('[')) return text;
+    return text.replaceAllMapped(tajweedTag, (m) => m.group(2) ?? '').replaceAll('[', '').replaceAll(']', '');
+  }
+
+  /// Keep spaces that live inside tajweed tags so word-splitting does not break coloring.
+  static String protectTaggedSpaces(String text) {
+    if (!text.contains('[')) return text;
+    return text.replaceAllMapped(tajweedTag, (m) => m[0]!.replaceAll(' ', '\u00A0'));
   }
 
   static bool isArabicCombiningMark(int cu) {
@@ -87,28 +104,68 @@ class TajweedParser {
 
     const qalqalahLetters = {'ق', 'ط', 'ب', 'ج', 'د'};
     const ikhfaLetters = {'ت', 'ث', 'ج', 'د', 'ذ', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ف', 'ق', 'ك'};
-    const idghamLetters = {'ي', 'ر', 'م', 'ل', 'و', 'ن'};
+    const idghamWithGhunnah = {'ي', 'ن', 'م', 'و'};
+    const idghamWithoutGhunnah = {'ر', 'ل'};
 
     bool isTanween(String cl) => cl.contains('\u064B') || cl.contains('\u064C') || cl.contains('\u064D');
-    bool isPlainNoonSakinah(String cl) => cl.startsWith('ن') && !cl.contains('\u064E') && !cl.contains('\u0650') && !cl.contains('\u064F') && !cl.contains('\u0651') && !cl.contains('\u0652');
+    bool isPlainNoonSakinah(String cl) =>
+        cl.startsWith('ن') &&
+        !cl.contains('\u064E') &&
+        !cl.contains('\u0650') &&
+        !cl.contains('\u064F') &&
+        !cl.contains('\u0651') &&
+        !cl.contains('\u0652');
+    bool isPlainMeemSakinah(String cl) =>
+        cl.startsWith('م') &&
+        !cl.contains('\u064E') &&
+        !cl.contains('\u0650') &&
+        !cl.contains('\u064F') &&
+        !cl.contains('\u0651');
+
+    String? nextBase(int from) {
+      int nextIdx = from + 1;
+      while (nextIdx < clusters.length && clusters[nextIdx].trim().isEmpty) {
+        nextIdx++;
+      }
+      if (nextIdx >= clusters.length || clusters[nextIdx].isEmpty) return null;
+      return clusters[nextIdx][0];
+    }
 
     for (int i = 0; i < clusters.length; i++) {
       final cluster = clusters[i];
       if (cluster.isEmpty) continue;
       final base = cluster[0];
-      if (base == '\u0671') colors[i] = _tajweedColors['h']!;
-      else if (cluster.contains('\u06DF') || cluster.contains('\u06E0')) colors[i] = _tajweedColors['s']!;
-      else if ((base == 'ن' || base == 'م') && cluster.contains('\u0651')) colors[i] = _tajweedColors['n']!;
-      else if (cluster.contains('\u0653') || cluster.contains('\u06E4')) colors[i] = _tajweedColors['o']!;
-      else if (cluster.contains('\u06E2') || cluster.contains('\u06ED')) colors[i] = _tajweedColors['b']!;
-      else if (qalqalahLetters.contains(base) && (cluster.contains('\u0652') || cluster.contains('\u06E1'))) colors[i] = _tajweedColors['q']!;
-      else if (isPlainNoonSakinah(cluster) || isTanween(cluster)) {
-        int nextIdx = i + 1;
-        while (nextIdx < clusters.length && clusters[nextIdx].trim().isEmpty) nextIdx++;
-        if (nextIdx < clusters.length) {
-          final nextBase = clusters[nextIdx].isNotEmpty ? clusters[nextIdx][0] : '';
-          if (ikhfaLetters.contains(nextBase)) colors[i] = _tajweedColors['i']!;
-          else if (idghamLetters.contains(nextBase)) colors[i] = _tajweedColors['m']!;
+      if (base == '\u0671') {
+        colors[i] = _tajweedColors['h']!;
+      } else if (cluster.contains('\u06DF') || cluster.contains('\u06E0')) {
+        colors[i] = _tajweedColors['s']!;
+      } else if ((base == 'ن' || base == 'م') && cluster.contains('\u0651')) {
+        colors[i] = _tajweedColors['n']!;
+      } else if (cluster.contains('\u0653') || cluster.contains('\u06E4') || cluster.contains('\u06E5')) {
+        colors[i] = _tajweedColors['o']!;
+      } else if (cluster.contains('\u06E2') || cluster.contains('\u06ED')) {
+        colors[i] = _tajweedColors['b']!;
+      } else if (qalqalahLetters.contains(base) && (cluster.contains('\u0652') || cluster.contains('\u06E1'))) {
+        colors[i] = _tajweedColors['q']!;
+      } else if (isPlainNoonSakinah(cluster) || isTanween(cluster)) {
+        final next = nextBase(i);
+        if (next != null) {
+          if (ikhfaLetters.contains(next)) {
+            colors[i] = _tajweedColors['f']!;
+          } else if (idghamWithGhunnah.contains(next)) {
+            colors[i] = _tajweedColors['u']!;
+          } else if (idghamWithoutGhunnah.contains(next)) {
+            colors[i] = _tajweedColors['a']!;
+          } else if (next == 'ب') {
+            colors[i] = _tajweedColors['b']!;
+          }
+        }
+      } else if (isPlainMeemSakinah(cluster)) {
+        final next = nextBase(i);
+        if (next == 'م') {
+          colors[i] = _tajweedColors['u']!;
+        } else if (next == 'ب') {
+          colors[i] = _tajweedColors['c']!;
         }
       }
     }
@@ -117,43 +174,52 @@ class TajweedParser {
     StringBuffer buffer = StringBuffer();
     Color currentColor = colors.isNotEmpty ? colors[0] : resolvedColor;
     for (int i = 0; i < clusters.length; i++) {
-      if (colors[i] == currentColor) buffer.write(clusters[i]);
-      else {
-        if (buffer.isNotEmpty) spans.add(TextSpan(text: buffer.toString(), style: style.copyWith(color: currentColor)));
-        buffer.clear(); currentColor = colors[i]; buffer.write(clusters[i]);
+      if (colors[i] == currentColor) {
+        buffer.write(clusters[i]);
+      } else {
+        if (buffer.isNotEmpty) {
+          spans.add(TextSpan(text: buffer.toString(), style: style.copyWith(color: currentColor)));
+        }
+        buffer.clear();
+        currentColor = colors[i];
+        buffer.write(clusters[i]);
       }
     }
-    if (buffer.isNotEmpty) spans.add(TextSpan(text: buffer.toString(), style: style.copyWith(color: currentColor)));
+    if (buffer.isNotEmpty) {
+      spans.add(TextSpan(text: buffer.toString(), style: style.copyWith(color: currentColor)));
+    }
     return spans;
   }
 
-  static List<InlineSpan> parse(String text, {double? fontSize, Color? defaultColor, String? fontFamily, bool showTajweed = true}) {
-    final selectedFont = (fontFamily != null && fontFamily.isNotEmpty) ? fontFamily : AppConstants.uthmaniFont;
-    final resolvedColor = defaultColor ?? Colors.black;
+  static List<InlineSpan> parse(
+    String text, {
+    double? fontSize,
+    Color? defaultColor,
+    String? fontFamily,
+    bool showTajweed = true,
+  }) {
+    final selectedFont = (fontFamily != null && fontFamily.isNotEmpty) ? fontFamily : AppConstants.indoPakFont;
+    final resolvedColor = defaultColor ?? const Color(0xFF1A1A1A);
 
     TextStyle getStyle(Color col) => TextStyle(
       color: col,
       fontSize: fontSize ?? 24,
       fontFamily: selectedFont,
-      fontWeight: FontWeight.w900, // Thickest possible weight for Pakistani look
+      fontWeight: FontWeight.w700,
       height: 1.15,
-      letterSpacing: -0.4,
+      letterSpacing: -0.2,
     );
 
-    if (!text.contains('[')) return _parseCanonicalUthmani(text, getStyle(resolvedColor), resolvedColor, showTajweed);
+    if (!text.contains('[')) {
+      return _parseCanonicalUthmani(text, getStyle(resolvedColor), resolvedColor, showTajweed);
+    }
 
     if (!showTajweed) {
-      String clean = text;
-      while (clean.contains(RegExp(r'\[[a-zA-Z]+:?\d*\['))) {
-        clean = clean.replaceAllMapped(RegExp(r'\[[a-zA-Z]+:?\d*\[([^\[\]]+)\]+'), (m) => m.group(1) ?? '');
-      }
-      clean = clean.replaceAll('[', '').replaceAll(']', '').replaceAll(RegExp(r'<[^>]*>'), '').replaceAll('\u0672', '\u0670').replaceAll('\u0640\u0670', '\u0670');
-      return [TextSpan(text: clean, style: getStyle(resolvedColor))];
+      return [TextSpan(text: stripMarkup(text), style: getStyle(resolvedColor))];
     }
 
     String str = text.replaceAll(RegExp(r'<[^>]*>'), '').replaceAll('\u0672', '\u0670').replaceAll('\u0640\u0670', '\u0670');
-    final RegExp tagRegex = RegExp(r'\[([a-zA-Z]+):?\d*\[([^\]]+)\]+');
-    final matches = tagRegex.allMatches(str);
+    final matches = tajweedTag.allMatches(str);
     final List<_SpanToken> tokens = [];
     int index = 0;
 
@@ -176,7 +242,9 @@ class TajweedParser {
       final current = tokens[i];
       if (current.text.isEmpty) continue;
       int prefixCombiningLen = 0;
-      while (prefixCombiningLen < current.text.length && isArabicCombiningMark(current.text.codeUnitAt(prefixCombiningLen))) prefixCombiningLen++;
+      while (prefixCombiningLen < current.text.length && isArabicCombiningMark(current.text.codeUnitAt(prefixCombiningLen))) {
+        prefixCombiningLen++;
+      }
       if (prefixCombiningLen > 0) {
         tokens[i - 1].text += current.text.substring(0, prefixCombiningLen);
         current.text = current.text.substring(prefixCombiningLen);
@@ -186,8 +254,11 @@ class TajweedParser {
     final List<_SpanToken> merged = [];
     for (final tok in tokens) {
       if (tok.text.isEmpty) continue;
-      if (merged.isNotEmpty && merged.last.color == tok.color) merged.last.text += tok.text;
-      else merged.add(tok);
+      if (merged.isNotEmpty && merged.last.color == tok.color) {
+        merged.last.text += tok.text;
+      } else {
+        merged.add(tok);
+      }
     }
 
     return merged.map((t) => TextSpan(text: t.text, style: getStyle(t.color ?? resolvedColor))).toList();

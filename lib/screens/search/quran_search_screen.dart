@@ -73,44 +73,54 @@ class _QuranSearchScreenState extends State<QuranSearchScreen> {
           ),
 
           // Search Suggestions / Chips
-          if (_controller.text.isEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildSearchChip('الحمد', 'Al-Hamd'),
-                  _buildSearchChip('الرحمن', 'Ar-Rahman'),
-                  _buildSearchChip('الصراط', 'As-Sirat'),
-                  _buildSearchChip('الملك', 'Al-Mulk'),
-                  _buildSearchChip('Baqarah', 'Al-Baqarah'),
-                  _buildSearchChip('Kahf', 'Al-Kahf'),
-                  _buildSearchChip('Yasin', 'Ya-Sin'),
-                ],
+          if (_controller.text.isEmpty)
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildSearchChip('الحمد', 'Al-Hamd'),
+                          _buildSearchChip('الرحمن', 'Ar-Rahman'),
+                          _buildSearchChip('الصراط', 'As-Sirat'),
+                          _buildSearchChip('الملك', 'Al-Mulk'),
+                          _buildSearchChip('Baqarah', 'Al-Baqarah'),
+                          _buildSearchChip('Kahf', 'Al-Kahf'),
+                          _buildSearchChip('Yasin', 'Ya-Sin'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.search_rounded, size: 64, color: Colors.grey[300]),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Search all 114 Surahs & 6,236 Ayahs',
+                            style: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Works offline and diacritic-insensitively',
+                            style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
-            ),
-            const Spacer(),
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.search_rounded, size: 64, color: Colors.grey[300]),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Search all 114 Surahs & 6,236 Ayahs',
-                    style: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Works offline and diacritic-insensitively',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-            const Spacer(),
-          ] else ...[
+            )
+          else ...[
             // Results Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

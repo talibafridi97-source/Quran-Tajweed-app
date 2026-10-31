@@ -63,6 +63,9 @@ class Mushaf16Line {
   final bool isSajda;
   final int manzilNumber;
   final bool isManzilStart;
+  final String? revelationType;
+  final int? ayahCount;
+  final int? rukuCount;
 
   const Mushaf16Line({
     required this.lineNumber,
@@ -80,6 +83,9 @@ class Mushaf16Line {
     this.isSajda = false,
     this.manzilNumber = 1,
     this.isManzilStart = false,
+    this.revelationType,
+    this.ayahCount,
+    this.rukuCount,
   });
 
   bool get isSurahHeader => type == MushafLineType.surahHeader;
@@ -105,6 +111,9 @@ class Mushaf16Line {
     'isSajda': isSajda,
     'manzilNumber': manzilNumber,
     'isManzilStart': isManzilStart,
+    'revelationType': revelationType,
+    'ayahCount': ayahCount,
+    'rukuCount': rukuCount,
   };
 
   factory Mushaf16Line.fromJson(Map<String, dynamic> json) {
@@ -129,6 +138,9 @@ class Mushaf16Line {
       isSajda: json['isSajda'] as bool? ?? false,
       manzilNumber: json['manzilNumber'] as int? ?? 1,
       isManzilStart: json['isManzilStart'] as bool? ?? false,
+      revelationType: json['revelationType'] as String?,
+      ayahCount: json['ayahCount'] as int?,
+      rukuCount: json['rukuCount'] as int?,
     );
   }
 }

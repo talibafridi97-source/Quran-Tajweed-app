@@ -115,71 +115,81 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
                 itemBuilder: (context, index) {
                   final slide = _slides[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Decorative Icon Badge
-                        Container(
-                          width: 140,
-                          height: 140,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: slide.accentColor.withValues(alpha: 0.12),
-                            border: Border.all(
-                              color: slide.accentColor.withValues(alpha: 0.35),
-                              width: 2,
-                            ),
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 12.0),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight - 24.0,
                           ),
-                          child: Icon(
-                            slide.icon,
-                            size: 68,
-                            color: slide.accentColor,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Decorative Icon Badge
+                              Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: slide.accentColor.withValues(alpha: 0.12),
+                                  border: Border.all(
+                                    color: slide.accentColor.withValues(alpha: 0.35),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: Icon(
+                                  slide.icon,
+                                  size: 68,
+                                  color: slide.accentColor,
+                                ),
+                              ),
+
+                              const SizedBox(height: 36),
+
+                              // Arabic Title
+                              Text(
+                                slide.arabicTitle,
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: slide.accentColor,
+                                  fontFamily: AppConstants.uthmaniFont,
+                                ),
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              // English Title
+                              Text(
+                                slide.title,
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: scheme.onSurface,
+                                  letterSpacing: -0.5,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+
+                              const SizedBox(height: 14),
+
+                              // Description
+                              Text(
+                                slide.description,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  height: 1.5,
+                                  color: scheme.onSurface.withValues(alpha: 0.75),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ),
-
-                        const SizedBox(height: 36),
-
-                        // Arabic Title
-                        Text(
-                          slide.arabicTitle,
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: slide.accentColor,
-                            fontFamily: AppConstants.uthmaniFont,
-                          ),
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        // English Title
-                        Text(
-                          slide.title,
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: scheme.onSurface,
-                            letterSpacing: -0.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        // Description
-                        Text(
-                          slide.description,
-                          style: TextStyle(
-                            fontSize: 15,
-                            height: 1.5,
-                            color: scheme.onSurface.withValues(alpha: 0.75),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               ),
